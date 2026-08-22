@@ -5,8 +5,6 @@ revoke all on schema admin from anon;
 revoke all on schema admin from authenticated;
 grant usage on schema admin to service_role;
 
-audit_action text;
-
 create table if not exists admin.roles (
   id uuid primary key default gen_random_uuid(),
   key text not null unique,
@@ -114,4 +112,4 @@ select r.id,p.id from admin.roles r join admin.permissions p on p.key in ('dashb
 on conflict do nothing;
 
 comment on schema admin is 'Private authorization and audit control plane for MELA Central Admin. Never expose through PostgREST.';
-comment on table admin.audit_log is 'Immutable administrative audit trail. Writes are performed only by trusted server-side admin APIs.';
+comment on table admin.audit_log is 'Administrative audit trail. Writes are performed only by trusted server-side admin APIs.';
