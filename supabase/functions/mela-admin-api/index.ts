@@ -1,11 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const cors = {
-  'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://mela-central-dashboard.netlify.app',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
+const cors = { 'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://mela-central-dashboard.netlify.app', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 
 Deno.serve(async (req) => {
@@ -19,17 +15,13 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const caller = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } })
   const adminDb = createClient(supabaseUrl, serviceKey)
-
   const { data: { user }, error: userError } = await caller.auth.getUser()
   if (userError || !user) return json({ error: 'Invalid session' }, 401)
 
-  const { data: adminUser, error: adminError } = await adminDb.schema('admin').from('admin_users')
-    .select('user_id, role_id, active, mfa_required').eq('user_id', user.id).eq('active', true).maybeSingle()
+  const { data: adminUser, error: adminError } = await adminDb.schema('admin').from('admin_users').select('user_id, role_id, active, mfa_required').eq('user_id', user.id).eq('active', true).maybeSingle()
   if (adminError || !adminUser) return json({ error: 'Admin access denied' }, 403)
-
   const { data: role, error: roleError } = await adminDb.schema('admin').from('roles').select('key,name').eq('id', adminUser.role_id).single()
   if (roleError || !role) return json({ error: 'Admin role is invalid' }, 403)
-
   const { data: assurance } = await caller.auth.mfa.getAuthenticatorAssuranceLevel()
   if (adminUser.mfa_required && assurance?.currentLevel !== 'aal2') return json({ error: 'MFA required', code: 'MFA_REQUIRED' }, 403)
 
@@ -44,6 +36,17 @@ Deno.serve(async (req) => {
   const action = body.action ?? 'me'
 
   if (action === 'me') return json({ user: { id: user.id, email: user.email }, role, permissions, mfa: assurance })
+
+  if (action === 'authorization.matrix') {
+    if (!permissions.includes('authorization.manage')) return json({ error: 'Permission denied' }, 403)
+    const [{ data: roles, error: rolesError }, { data: allPermissions, error: permissionsError }, { data: mappings, error: mappingsError }] = await Promise.all([
+      adminDb.schema('admin').from('roles').select('id,key,name,description,is_privileged').order('name'),
+      adminDb.schema('admin').from('permissions').select('id,key,name,description').order('key'),
+      adminDb.schema('admin').from('role_permissions').select('role_id,permission_id')
+    ])
+    if (rolesError || permissionsError || mappingsError) return json({ error: 'Authorization matrix unavailable' }, 500)
+    return json({ roles, permissions: allPermissions, mappings })
+  }
 
   if (action === 'audit.list') {
     if (!permissions.includes('audit.read')) return json({ error: 'Permission denied' }, 403)
