@@ -2,7 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const cors = {
-  'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://admin.mela.app',
+  'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://mela-central-dashboard.netlify.app',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
@@ -33,8 +33,7 @@ Deno.serve(async (req) => {
   const { data: assurance } = await caller.auth.mfa.getAuthenticatorAssuranceLevel()
   if (adminUser.mfa_required && assurance?.currentLevel !== 'aal2') return json({ error: 'MFA required', code: 'MFA_REQUIRED' }, 403)
 
-  const { data: rolePermissions, error: permissionError } = await adminDb.schema('admin').from('role_permissions')
-    .select('permission_id').eq('role_id', adminUser.role_id)
+  const { data: rolePermissions, error: permissionError } = await adminDb.schema('admin').from('role_permissions').select('permission_id').eq('role_id', adminUser.role_id)
   if (permissionError) return json({ error: 'Permission resolution failed' }, 500)
   const ids = (rolePermissions ?? []).map((row: any) => row.permission_id)
   const { data: permissionRows } = ids.length ? await adminDb.schema('admin').from('permissions').select('key').in('id', ids) : { data: [] as any[] }
@@ -64,12 +63,7 @@ Deno.serve(async (req) => {
   if (action === 'audit.append') {
     if (!permissions.includes('authorization.manage')) return json({ error: 'Permission denied' }, 403)
     const audit = body.audit ?? {}
-    const { error } = await adminDb.schema('admin').from('audit_log').insert({
-      actor_user_id:user.id, actor_role:role.key, action:audit.action ?? 'admin.action',
-      target_schema:audit.target_schema ?? null, target_table:audit.target_table ?? null, target_id:audit.target_id ?? null,
-      before_data:audit.before_data ?? null, after_data:audit.after_data ?? null,
-      metadata:{ ...(audit.metadata ?? {}), source:'mela-central-dashboard' }, request_id:requestId,
-    })
+    const { error } = await adminDb.schema('admin').from('audit_log').insert({ actor_user_id:user.id, actor_role:role.key, action:audit.action ?? 'admin.action', target_schema:audit.target_schema ?? null, target_table:audit.target_table ?? null, target_id:audit.target_id ?? null, before_data:audit.before_data ?? null, after_data:audit.after_data ?? null, metadata:{ ...(audit.metadata ?? {}), source:'mela-central-dashboard' }, request_id:requestId })
     if (error) return json({ error: error.message }, 500)
     return json({ ok:true })
   }
