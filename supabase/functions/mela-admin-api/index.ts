@@ -3,6 +3,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const cors = { 'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://mela-central-dashboard.netlify.app', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
+const safeCount = async (db: any, table: string, column = 'id') => {
+  const { count, error } = await db.from(table).select(column, { count: 'exact', head: true })
+  return error ? null : count
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
@@ -34,8 +38,32 @@ Deno.serve(async (req) => {
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
   const body = await req.json().catch(() => ({}))
   const action = body.action ?? 'me'
+  const canReadOperations = permissions.includes('dashboard.read') || permissions.includes('platform.read') || role.key === 'super_admin'
 
   if (action === 'me') return json({ user: { id: user.id, email: user.email }, role, permissions, mfa: assurance })
+
+  if (action === 'dashboard' || action === 'queues') {
+    if (!canReadOperations) return json({ error: 'Permission denied' }, 403)
+    const tables = ['profiles','payments','payout_requests','employer_registrations','mentor_verifications','content_reports']
+    const counts = await Promise.all(tables.map(async t => [t, await safeCount(adminDb, t)]))
+    const metrics: Record<string, unknown> = { table_counts: Object.fromEntries(counts) }
+    if (action === 'dashboard') return json({ metrics, generated_at: new Date().toISOString() })
+
+    const queues: Record<string, unknown[]> = {}
+    const queueSpecs: [string,string,string][] = [
+      ['employer_registrations','employer_registrations','status'],
+      ['mentor_verifications','mentor_verifications','status'],
+      ['reports','content_reports','status'],
+      ['payouts','payout_requests','status'],
+      ['proctor_reviews','assessment_attempts','status'],
+      ['arena_integrity','arena_matches','status'],
+    ]
+    for (const [key, table, statusColumn] of queueSpecs) {
+      const { data } = await adminDb.from(table).select('*').in(statusColumn, ['pending','queued','review','review_required','flagged','failed']).order('created_at', { ascending: false }).limit(50)
+      queues[key] = data ?? []
+    }
+    return json(queues)
+  }
 
   if (action === 'authorization.matrix') {
     if (!permissions.includes('authorization.manage')) return json({ error: 'Permission denied' }, 403)
