@@ -1,0 +1,4 @@
+project_id = "duizgtmbptmlbyipreqg"
+
+[functions.mela-admin-api]
+verify_jwt = true
