@@ -5,9 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1020" />
     <title>MELA Central Admin</title>
+    <style>
+      #startup-status{display:none;min-height:100vh;box-sizing:border-box;padding:32px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b1020;color:#f8fafc;align-items:center;justify-content:center}
+      #startup-status .box{width:min(680px,100%);box-sizing:border-box;padding:28px;border:1px solid #334155;border-radius:16px;background:#111827;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+      #startup-status h1{margin:0 0 10px;font-size:24px}.startup-muted{color:#94a3b8;line-height:1.6}.startup-error{margin-top:18px;padding:14px;border-radius:10px;background:#1e293b;color:#fca5a5;white-space:pre-wrap;overflow-wrap:anywhere}.startup-code{margin-top:16px;color:#cbd5e1;font-size:13px}
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="startup-status" role="alert" aria-live="assertive">
+      <div class="box">
+        <h1>MELA Central Admin could not start</h1>
+        <p class="startup-muted">The production bundle loaded, but the application failed during startup. This screen is intentionally visible instead of leaving a blank/dark page.</p>
+        <div id="startup-error" class="startup-error"></div>
+        <div class="startup-code">Check the Vercel deployment environment variables and browser console for the underlying error.</div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var status = document.getElementById('startup-status');
+        var errorBox = document.getElementById('startup-error');
+        window.__melaShowStartupError = function (message) {
+          status.style.display = 'flex';
+          errorBox.textContent = String(message || 'Unknown startup error');
+        };
+        window.addEventListener('error', function (event) {
+          window.__melaShowStartupError(event.error && event.error.message ? event.error.message : event.message);
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event.reason;
+          window.__melaShowStartupError(reason && reason.message ? reason.message : reason);
+        });
+      }());
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
