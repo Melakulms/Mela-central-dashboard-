@@ -24,6 +24,7 @@ export async function listInvitationCommissions(client:SupabaseClient,filters:{s
 
 export async function cancelInvitationCommission(client:SupabaseClient,commissionId:string,reason:string){
   const clean=reason.trim()
+  if(!commissionId)throw new Error('Commission ID is required')
   if(!clean)throw new Error('A cancellation reason is required')
   if(clean.length>500)throw new Error('Cancellation reason must be 500 characters or fewer')
   return adminApi(client,'commission.cancel',{commission_id:commissionId,reason:clean,commission_type:'invitation_registration'})
@@ -32,3 +33,13 @@ export async function cancelInvitationCommission(client:SupabaseClient,commissio
 export async function getInvitationCommission(client:SupabaseClient,commissionId:string){
   return adminApi(client,'commission.inspect',{commission_id:commissionId,commission_type:'invitation_registration'})
 }
+
+/** Trusted registration backend contract. Never calculate money in the browser. */
+export interface RegistrationCommissionEvent{
+  registered_user_id:string
+  invitation_code:string
+  registration_id:string
+}
+
+/** The registration backend must atomically validate the invitation and create at most one commission. */
+export const INVITATION_COMMISSION_RULE='registration_invitation'
