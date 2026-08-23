@@ -39,6 +39,22 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}))
   const action = body.action ?? 'me'
   const canReadOperations = permissions.includes('dashboard.read') || permissions.includes('platform.read') || role.key === 'super_admin'
+  const canManageFinance = permissions.includes('finance.manage') || role.key === 'super_admin'
+
+  const appendAudit = async (audit: any) => {
+    await adminDb.schema('admin').from('audit_log').insert({
+      actor_user_id: user.id,
+      actor_role: role.key,
+      action: audit.action,
+      target_schema: audit.target_schema ?? 'public',
+      target_table: audit.target_table ?? null,
+      target_id: audit.target_id ?? null,
+      before_data: audit.before_data ?? null,
+      after_data: audit.after_data ?? null,
+      metadata: { ...(audit.metadata ?? {}), source: 'mela-central-dashboard' },
+      request_id: requestId
+    })
+  }
 
   if (action === 'me') return json({ user: { id: user.id, email: user.email }, role, permissions, mfa: assurance })
 
@@ -63,6 +79,48 @@ Deno.serve(async (req) => {
       queues[key] = data ?? []
     }
     return json(queues)
+  }
+
+  if (action === 'commission.list') {
+    if (!canManageFinance) return json({ error: 'Permission denied' }, 403)
+    const limit = Math.min(Math.max(Number(body.limit ?? 50), 1), 200)
+    let query = adminDb.from('invitation_commissions').select('*').order('created_at', { ascending: false }).limit(limit)
+    if (body.status) query = query.eq('status', body.status)
+    if (body.search) {
+      const search = String(body.search).trim().replace(/[%_]/g, '')
+      if (search) query = query.or(`invitation_code.ilike.%${search}%,transaction_reference.ilike.%${search}%`)
+    }
+    const { data, error } = await query
+    if (error) return json({ error: error.message }, 500)
+    return json({ data: data ?? [] })
+  }
+
+  if (action === 'commission.inspect') {
+    if (!canManageFinance) return json({ error: 'Permission denied' }, 403)
+    const commissionId = String(body.commission_id ?? '')
+    if (!commissionId) return json({ error: 'Commission ID is required' }, 400)
+    const { data, error } = await adminDb.from('invitation_commissions').select('*').eq('id', commissionId).maybeSingle()
+    if (error) return json({ error: error.message }, 500)
+    if (!data) return json({ error: 'Commission not found' }, 404)
+    return json({ data })
+  }
+
+  if (action === 'commission.cancel') {
+    if (!canManageFinance) return json({ error: 'Permission denied' }, 403)
+    const commissionId = String(body.commission_id ?? '')
+    const reason = String(body.reason ?? '').trim()
+    if (!commissionId || !reason) return json({ error: 'Commission ID and cancellation reason are required' }, 400)
+    if (reason.length > 500) return json({ error: 'Cancellation reason must be 500 characters or fewer' }, 400)
+    const { data: existing, error: readError } = await adminDb.from('invitation_commissions').select('*').eq('id', commissionId).maybeSingle()
+    if (readError) return json({ error: readError.message }, 500)
+    if (!existing) return json({ error: 'Commission not found' }, 404)
+    if (existing.status === 'cancelled') return json({ data: existing, already_cancelled: true })
+    if (existing.status === 'paid') return json({ error: 'Paid commissions require a separate reversal workflow' }, 409)
+    const { data: updated, error: updateError } = await adminDb.from('invitation_commissions').update({ status: 'cancelled', cancelled_at: new Date().toISOString(), cancellation_reason: reason }).eq('id', commissionId).eq('status', 'pending').select('*').maybeSingle()
+    if (updateError) return json({ error: updateError.message }, 500)
+    if (!updated) return json({ error: 'Commission changed concurrently; no cancellation performed' }, 409)
+    await appendAudit({ action: 'commission.cancel', target_table: 'invitation_commissions', target_id: commissionId, before_data: existing, after_data: updated, metadata: { reason } })
+    return json({ data: updated })
   }
 
   if (action === 'authorization.matrix') {
