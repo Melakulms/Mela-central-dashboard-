@@ -81,6 +81,59 @@ Deno.serve(async (req) => {
     return json(queues)
   }
 
+  if (action === 'users.list') {
+    if (!permissions.includes('users.read') && role.key !== 'super_admin') return json({ error: 'Permission denied' }, 403)
+    const limit = Math.min(Math.max(Number(body.limit ?? 50), 1), 100)
+    const offset = Math.max(Number(body.offset ?? 0), 0)
+    let query = adminDb.from('profiles').select('id,full_name,email,phone_number,role,region,city,account_status,email_verified,phone_verified,profile_completion,created_at,updated_at,deleted_at,availability_status', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + limit - 1)
+    if (body.role) query = query.eq('role', body.role)
+    if (body.status) query = query.eq('account_status', body.status)
+    if (body.search) {
+      const search = String(body.search).trim().replace(/[%,_]/g, '')
+      if (search) query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone_number.ilike.%${search}%,id.eq.${search}`)
+    }
+    const { data, error, count } = await query
+    if (error) return json({ error: 'Unable to load users' }, 500)
+    return json({ data: data ?? [], total: count ?? 0, offset, limit })
+  }
+
+  if (action === 'user.inspect') {
+    if (!permissions.includes('users.read') && role.key !== 'super_admin') return json({ error: 'Permission denied' }, 403)
+    const userId = String(body.user_id ?? '')
+    if (!userId) return json({ error: 'User ID is required' }, 400)
+    const [{ data: profile, error: profileError }, { data: authUser, error: authError }] = await Promise.all([
+      adminDb.from('profiles').select('*').eq('id', userId).maybeSingle(),
+      adminDb.auth.admin.getUserById(userId)
+    ])
+    if (profileError) return json({ error: 'Unable to inspect user' }, 500)
+    if (!profile && (authError || !authUser?.user)) return json({ error: 'User not found' }, 404)
+    const au = authUser?.user
+    return json({ data: { profile: profile ?? null, auth: au ? { id: au.id, email: au.email, phone: au.phone, email_confirmed_at: au.email_confirmed_at, phone_confirmed_at: au.phone_confirmed_at, created_at: au.created_at, last_sign_in_at: au.last_sign_in_at, banned_until: au.banned_until } : null } })
+  }
+
+  if (action === 'user.update') {
+    if (!permissions.includes('users.manage') && role.key !== 'super_admin') return json({ error: 'Permission denied' }, 403)
+    const userId = String(body.user_id ?? '')
+    const nextStatus = body.account_status === undefined ? undefined : String(body.account_status)
+    const allowedStatuses = ['active','suspended','pending','restricted','deactivated']
+    if (!userId) return json({ error: 'User ID is required' }, 400)
+    if (nextStatus !== undefined && !allowedStatuses.includes(nextStatus)) return json({ error: 'Invalid account status' }, 400)
+    if (userId === user.id && nextStatus && nextStatus !== 'active') return json({ error: 'You cannot deactivate or suspend your current admin account here' }, 409)
+    const { data: existing, error: readError } = await adminDb.from('profiles').select('id,account_status,email_verified,phone_verified').eq('id', userId).maybeSingle()
+    if (readError) return json({ error: 'Unable to read user' }, 500)
+    if (!existing) return json({ error: 'User not found' }, 404)
+    const patch: Record<string, unknown> = {}
+    if (nextStatus !== undefined) patch.account_status = nextStatus
+    if (body.email_verified !== undefined) patch.email_verified = Boolean(body.email_verified)
+    if (body.phone_verified !== undefined) patch.phone_verified = Boolean(body.phone_verified)
+    if (!Object.keys(patch).length) return json({ error: 'No supported changes supplied' }, 400)
+    const { data: updated, error: updateError } = await adminDb.from('profiles').update(patch).eq('id', userId).select('id,account_status,email_verified,phone_verified,updated_at').maybeSingle()
+    if (updateError) return json({ error: 'Unable to update user' }, 500)
+    if (!updated) return json({ error: 'User changed concurrently; no update performed' }, 409)
+    await appendAudit({ action: 'user.update', target_table: 'profiles', target_id: userId, before_data: existing, after_data: updated, metadata: { changed_fields: Object.keys(patch) } })
+    return json({ data: updated })
+  }
+
   if (action === 'commission.list') {
     if (!canManageFinance) return json({ error: 'Permission denied' }, 403)
     const limit = Math.min(Math.max(Number(body.limit ?? 50), 1), 200)
