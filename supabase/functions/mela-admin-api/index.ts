@@ -1,7 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const cors = { 'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://mela-central-dashboard.netlify.app', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
+const cors = { 'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://central-dashboard-gamma.vercel.app', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 const safeCount = async (db: any, table: string, column = 'id') => { const { count, error } = await db.from(table).select(column, { count: 'exact', head: true }); return error ? null : count }
 const cleanSearch = (value: unknown) => String(value ?? '').trim().replace(/[%_,]/g, '')
@@ -42,7 +42,9 @@ Deno.serve(async (req) => {
     if (!allowed('dashboard.read') && !allowed('platform.read')) return json({ error:'Permission denied' },403)
     const specs = [['users','profiles'],['payments','payments'],['payouts','payout_requests'],['employer_registrations','employer_registration_requests'],['opportunities','opportunities'],['reports','reports'],['integrity_events','arena_integrity_events'],['feature_flags','platform_feature_flags']] as const
     const counts = await Promise.all(specs.map(async ([key,table]) => [key, await safeCount(adminDb,table)]))
-    return json({ metrics:{table_counts:Object.fromEntries(counts)}, generated_at:new Date().toISOString() })
+    const userRoles = ['student','parent','teacher','employer','mentor','admin','administrator']
+    const usersByRole = await Promise.all(userRoles.map(async (roleName) => ({ role: roleName, count: await safeCount(adminDb, 'profiles', 'id').then(async (total) => { const { count, error } = await adminDb.from('profiles').select('id', { count:'exact', head:true }).eq('role', roleName); return error ? 0 : (count ?? 0) }) })))
+    return json({ metrics:{table_counts:Object.fromEntries(counts),users_by_role:usersByRole}, generated_at:new Date().toISOString() })
   }
 
   if (action === 'queues') {
