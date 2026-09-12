@@ -19,56 +19,94 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
 
   useEffect(() => {
     let active = true
-    ;(async () => {
+
+    const prepareEnrollment = async () => {
       setLoading(true)
       setError('')
-      const { data, error: enrollError } = await client.auth.mfa.enroll({
-        factorType: 'totp',
-        friendlyName: email ? `MELA Central Admin - ${email}` : 'MELA Central Admin',
-      })
-      if (!active) return
-      if (enrollError) {
-        setError(enrollError.message)
-        setLoading(false)
-        return
+      setFactorId('')
+      setQr('')
+      setSecret('')
+      setCode('')
+
+      try {
+        // Do not create another factor when an already-verified admin factor exists.
+        // If a previous enrollment was abandoned, remove only unverified TOTP factors
+        // before starting a fresh enrollment. Supabase enroll() creates a new factor.
+        const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
+        if (factorsError) throw factorsError
+
+        const verifiedTotp = factors?.totp?.find((factor) => factor.status === 'verified')
+        if (verifiedTotp) {
+          throw new Error('Administrator MFA is already configured. Sign out and complete the MFA verification step instead of enrolling another factor.')
+        }
+
+        const unverifiedTotp = factors?.totp?.filter((factor) => factor.status !== 'verified') ?? []
+        for (const factor of unverifiedTotp) {
+          const { error: unenrollError } = await client.auth.mfa.unenroll({ factorId: factor.id })
+          if (unenrollError) throw unenrollError
+        }
+
+        const { data, error: enrollError } = await client.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: email ? `MELA Central Admin - ${email}` : 'MELA Central Admin',
+        })
+        if (enrollError) throw enrollError
+        if (!active) return
+
+        setFactorId(data.id)
+        setQr(data.totp.qr_code)
+        setSecret(data.totp.secret)
+      } catch (cause) {
+        if (!active) return
+        setError(cause instanceof Error ? cause.message : 'Unable to start MFA enrollment. Please sign in again and retry.')
+      } finally {
+        if (active) setLoading(false)
       }
-      setFactorId(data.id)
-      setQr(data.totp.qr_code)
-      setSecret(data.totp.secret)
-      setLoading(false)
-    })()
-    return () => { active = false }
+    }
+
+    void prepareEnrollment()
+    return () => {
+      active = false
+    }
   }, [client, email])
 
   const verify = async () => {
     if (!factorId || !/^\d{6}$/.test(code)) return
+
     setVerifying(true)
     setError('')
-    const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId })
-    if (challengeError) {
-      setError(challengeError.message)
+
+    try {
+      const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId })
+      if (challengeError) throw challengeError
+
+      const { error: verifyError } = await client.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.id,
+        code,
+      })
+      if (verifyError) throw verifyError
+
+      // Force the client to obtain the new AAL2 JWT before continuing to the admin board.
+      await client.auth.refreshSession()
+      const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (assuranceError) throw assuranceError
+
+      if (assurance?.currentLevel !== 'aal2' || assurance.nextLevel !== 'aal2') {
+        throw new Error('MFA verification succeeded but the session is not at AAL2. Sign out, sign in again, and retry.')
+      }
+
+      onEnrolled()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'MFA verification failed. Check the 6-digit code and try again.')
+    } finally {
       setVerifying(false)
-      return
     }
-    const { error: verifyError } = await client.auth.mfa.verify({
-      factorId,
-      challengeId: challenge.id,
-      code,
-    })
-    setVerifying(false)
-    if (verifyError) {
-      setError(verifyError.message)
-      return
-    }
-    const { data: assurance } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
-    if (assurance?.currentLevel !== 'aal2') {
-      setError('MFA verification completed but the session did not reach AAL2. Sign in again and retry.')
-      return
-    }
-    onEnrolled()
   }
 
-  if (loading) return <div className="center"><div className="card login"><h1>Setting up MFA…</h1><p className="muted">Preparing your secure authenticator enrollment.</p></div></div>
+  if (loading) {
+    return <div className="center"><div className="card login"><h1>Setting up MFA…</h1><p className="muted">Preparing your secure authenticator enrollment.</p></div></div>
+  }
 
   return <div className="center">
     <div className="card login">
