@@ -29,17 +29,21 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       setCode('')
 
       try {
-        // Do not create another factor when an already-verified admin factor exists.
-        // If a previous enrollment was abandoned, remove only unverified TOTP factors
-        // before starting a fresh enrollment. Supabase enroll() creates a new factor.
         const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
         if (factorsError) throw factorsError
 
+        // A verified factor already exists. Do not call enroll() again: the existing
+        // factor is the factor that must be challenged during administrator login.
         const verifiedTotp = factors?.totp?.find((factor) => factor.status === 'verified')
         if (verifiedTotp) {
-          throw new Error('Administrator MFA is already configured. Sign out and complete the MFA verification step instead of enrolling another factor.')
+          if (!active) return
+          setError('Administrator MFA is already configured. Continuing to MFA verification…')
+          onEnrolled()
+          return
         }
 
+        // Remove abandoned/unverified TOTP factors before creating a fresh enrollment.
+        // Only unverified factors are removed; a verified factor is never deleted here.
         const unverifiedTotp = factors?.totp?.filter((factor) => factor.status !== 'verified') ?? []
         for (const factor of unverifiedTotp) {
           const { error: unenrollError } = await client.auth.mfa.unenroll({ factorId: factor.id })
@@ -68,7 +72,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
     return () => {
       active = false
     }
-  }, [client, email])
+  }, [client, email, onEnrolled])
 
   const verify = async () => {
     if (!factorId || !/^\d{6}$/.test(code)) return
@@ -87,7 +91,6 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       })
       if (verifyError) throw verifyError
 
-      // Force the client to obtain the new AAL2 JWT before continuing to the admin board.
       await client.auth.refreshSession()
       const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
       if (assuranceError) throw assuranceError
