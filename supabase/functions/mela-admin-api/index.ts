@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
     const load = async (key:string, table:string, statuses:string[], permission:string) => { if (!allowed(permission)) return; const {data,error}=await adminDb.from(table).select('*').in('status',statuses).order('created_at',{ascending:false}).limit(50); queues[key]=error?[]:(data??[]) }
     await load('employer_registrations','employer_registration_requests',['pending','under_review','review','review_required'],'employers.manage')
     await load('opportunities','opportunities',['pending_review','review','flagged'],'employers.manage')
-    await load('reports','reports',['pending','open','review','escalated'],'moderation.manage')
+    await load('reports','reports',['pending','open','review','reviewing','escalated'],'moderation.manage')
     await load('payouts','payout_requests',['pending','queued','failed','review'],'finance.manage')
     if (allowed('moderation.manage')) {
     const {data:attempts}=await adminDb.from('assessment_attempts').select('*').in('proctor_status',['pending_review','review','flagged']).order('started_at',{ascending:false}).limit(50); queues.proctor_reviews=attempts??[]
@@ -172,13 +172,17 @@ Deno.serve(async (req) => {
 
   if (action === 'moderation.list') {
     if (!allowed('moderation.manage')) return json({error:'Permission denied'},403)
-    const [{data:reports},{data:integrity},{data:flaggedOpportunities}]=await Promise.all([adminDb.from('reports').select('*').in('status',['pending','open','review','escalated']).order('created_at',{ascending:false}).limit(50),adminDb.from('arena_integrity_events').select('*').gte('severity',2).order('created_at',{ascending:false}).limit(50),adminDb.from('opportunities').select('id,title,organization_name,status,moderation_status,moderation_notes,created_at').in('moderation_status',['flagged','pending_review','rejected']).order('created_at',{ascending:false}).limit(50)])
-    return json({reports:reports??[],integrity_events:integrity??[],flagged_opportunities:flaggedOpportunities??[]})
+    const [reports,integrity,flaggedOpportunities]=await Promise.all([adminDb.from('reports').select('*').in('status',['pending','open','review','reviewing','escalated']).order('created_at',{ascending:false}).limit(50),adminDb.from('arena_integrity_events').select('*').gte('severity',2).order('created_at',{ascending:false}).limit(50),adminDb.from('opportunities').select('id,title,organization_name,status,moderation_status,moderation_notes,created_at').in('moderation_status',['flagged','pending_review','rejected']).order('created_at',{ascending:false}).limit(50)])
+    if(reports.error||integrity.error||flaggedOpportunities.error)return json({error:'Moderation records unavailable. Please retry.'},500)
+    return json({reports:reports.data??[],integrity_events:integrity.data??[],flagged_opportunities:flaggedOpportunities.data??[]})
   }
   if (action === 'report.resolve') {
     if (!allowed('moderation.manage')) return json({error:'Permission denied'},403)
     const id=String(body.report_id??''); const status=String(body.status??'resolved'); const notes=String(body.resolution_notes??'').trim(); if(!id||!['resolved','dismissed','reviewing'].includes(status))return json({error:'Report ID and valid status are required'},400)
     const {data:existing,error:r}=await adminDb.from('reports').select('*').eq('id',id).maybeSingle(); if(r)return json({error:'Unable to read report'},500); if(!existing)return json({error:'Report not found'},404)
+    if(existing.target_type==='freelance_contract'||existing.reason==='contract_dispute')return json({error:'Contract disputes require settlement review in Disputes; general moderation cannot close them.',code:'DISPUTE_SETTLEMENT_REQUIRED'},409)
+    if(!['open','reviewing'].includes(existing.status))return json({error:'Report is already closed or cannot be reviewed. Refresh before retrying.'},409)
+    if(notes.length>2000||(['resolved','dismissed'].includes(status)&&!notes))return json({error:'A resolution reason of 1–2000 characters is required'},400)
     return auditedUpdate(id,existing,{status,resolution_notes:notes||null,assigned_to:user.id,resolved_at:status==='resolved'||status==='dismissed'?new Date().toISOString():null},{status})
   }
 

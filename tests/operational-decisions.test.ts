@@ -19,3 +19,8 @@ describe('Operational review controls',()=>{
   expect(decisionFor('Opportunities',{moderation_status:'approved'},['*'])?.choices).toEqual(['flagged'])
  })
 })
+
+it('does not offer generic closure for contract disputes',()=>{
+ expect(decisionFor('Reports',{status:'open',target_type:'freelance_contract'},['*'])).toBeNull()
+ expect(decisionFor('Reports',{status:'open',reason:'contract_dispute'},['moderation.manage'])).toBeNull()
+})

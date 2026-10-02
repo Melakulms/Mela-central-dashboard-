@@ -9,9 +9,11 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
   let handler: (request: Request) => Promise<Response>
   const queried: string[] = []
   const ranges: unknown[][] = []
+  const filters: unknown[][] = []
   function query(result: object) {
     const builder: any = {}
     for (const method of ['select', 'eq', 'in', 'order', 'limit', 'gte', 'or']) builder[method] = () => builder
+    builder.in = (...args: unknown[]) => { filters.push(args); return builder }
     builder.range = (...args: unknown[]) => { ranges.push(args); return builder }
     builder.update = () => builder
     builder.insert = () => Promise.resolve(result)
@@ -46,7 +48,7 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
   const request = (body: unknown, authenticated = true, origin?:string) => handler!(new Request('https://example.invalid/admin', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(origin?{Origin:origin}:{}), ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) }, body: JSON.stringify(body),
   }))
-  return { request, queried, ranges, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
+  return { request, queried, ranges, filters, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
 }
 
 describe('Admin API security boundary', () => {
@@ -137,4 +139,39 @@ describe('Contract dispute inbox', () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({reports:[{id:'report'}],contracts:[{id:'contract',status:'disputed'}]})
   })
+})
+
+describe('Moderation settlement safety', () => {
+  it.each(['resolved','dismissed','reviewing'])('blocks generic %s decisions on contract disputes',async status=>{
+    const api=server(['moderation.manage'],{fixtures:{reports:{data:{id:'report',status:'open',target_type:'freelance_contract',reason:'contract_dispute'}}}})
+    const response=await api.request({action:'report.resolve',report_id:'report',status,resolution_notes:'Reviewed'})
+    expect(response.status).toBe(409)
+    expect((await response.json()).code).toBe('DISPUTE_SETTLEMENT_REQUIRED')
+    expect(api.rpc).not.toHaveBeenCalled()
+  })
+  it('rejects closed reports and unexplained closure',async()=>{
+    const closed=server(['moderation.manage'],{fixtures:{reports:{data:{id:'report',status:'resolved'}}}})
+    expect((await closed.request({action:'report.resolve',report_id:'report',status:'reviewing'})).status).toBe(409)
+    expect(closed.rpc).not.toHaveBeenCalled()
+    const open=server(['moderation.manage'],{fixtures:{reports:{data:{id:'report',status:'open'}}}})
+    expect((await open.request({action:'report.resolve',report_id:'report',status:'resolved'})).status).toBe(400)
+    expect(open.rpc).not.toHaveBeenCalled()
+    expect((await open.request({action:'report.resolve',report_id:'report',status:'resolved',resolution_notes:'Issue corrected'})).status).toBe(200)
+    expect(open.rpc).toHaveBeenCalledOnce()
+  })
+  it('reports query failures instead of a false empty moderation queue',async()=>{
+    const api=server(['moderation.manage'],{fixtures:{reports:{data:null,error:{message:'database unavailable'}}}})
+    const response=await api.request({action:'moderation.list'})
+    expect(response.status).toBe(500)
+    expect((await response.json()).error).toContain('Moderation records unavailable')
+  })
+})
+
+it('retains reviewing reports in both moderation queues',async()=>{
+ const api=server(['moderation.manage','dashboard.read'])
+ expect((await api.request({action:'moderation.list'})).status).toBe(200)
+ expect(api.filters).toContainEqual(['status',['pending','open','review','reviewing','escalated']])
+ api.filters.length=0
+ expect((await api.request({action:'queues'})).status).toBe(200)
+ expect(api.filters).toContainEqual(['status',['pending','open','review','reviewing','escalated']])
 })

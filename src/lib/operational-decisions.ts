@@ -10,6 +10,7 @@ export function decisionFor(group: string, row: Record<string, unknown>, permiss
     const choices = transitions[String(row.moderation_status)]
     if (choices) return {action:'opportunity.review',idField:'opportunity_id',statusField:'moderation_status',notesField:'moderation_notes',choices}
   }
+  if (row.target_type === 'freelance_contract' || row.reason === 'contract_dispute') return null
   if (group === 'Reports' && can('moderation.manage') && ['open','reviewing'].includes(String(row.status))) {
     return {action:'report.resolve',idField:'report_id',statusField:'status',notesField:'resolution_notes',choices:['reviewing','resolved','dismissed']}
   }
