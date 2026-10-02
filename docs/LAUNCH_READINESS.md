@@ -11,7 +11,7 @@ Both frontends are deployed to GitHub Pages. The database repairs below are appl
 - Deployed `mela-admin-api` version 20 with JWT enforcement. It checks MFA against the validated bearer token, restricts operational queues by module permission, bounds pagination, validates request shapes, prevents caching, and applies privileged changes together with their audit records in one database transaction.
 - Imported existing deployed API corrections into the repository, including moderation statuses, feature-flag counts, commission summaries, and access-request role names.
 
-The eleven new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
+The twelve new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
 
 - Added a service-only, action/column-whitelisted audited update RPC, permission checks, target-row locks, and stale-record conflict rejection. Corrected user/employer/report status lists against live constraints and rejected string booleans.
 - Live transactional regression confirms update plus audit, stale-write rejection, unsupported-column rejection, non-admin rejection, and denied browser execution. Test records were rolled back. API regression simulates database RPC failures; an actual audit-insert outage was not induced.
@@ -27,8 +27,8 @@ The eleven new migration filenames match the versions recorded in the live datab
 
 ## Verification evidence
 
-- Consumer app: 10 regression tests; production build passes.
-- Admin app/API: 110 regression tests; production build passes.
+- Consumer app: 20 regression tests; production build passes.
+- Admin app/API: 29 regression tests; production build passes.
 - Live database: transactional tests pass for creation and confirmation triggers for student, parent, teacher, and company accounts; parent/teacher/company profile completion; practice start/submit/complete; parent invitation redemption; and rejection of self-promotion. All test records were rolled back. These tests do not replace an HTTP signup and email-delivery test.
 - Live admin endpoint: requests without authentication return HTTP 401.
 - 263 public/admin tables inspected; all have RLS enabled.
@@ -39,7 +39,7 @@ The eleven new migration filenames match the versions recorded in the live datab
 1. Frontend publication completed on GitHub Pages: https://melakulms.github.io/mela-app/ and https://melakulms.github.io/Mela-central-dashboard-/. Both deployment jobs and main CI checks succeeded.
 2. Verify signup email delivery, configured redirect allowlists, password reset, and administrator MFA in an authenticated browser. The cloud browser loads the published public screens. A secure administrator sign-in attempt returned Failed to fetch; backend Auth settings and preflight checks returned HTTP 200, so authenticated access is not verified. No credentials were inspected or retained in this report.
 4. Implement and test the dedicated dispute and provider payout workflows. Registration, verification, opportunity-review, and report-resolution controls are implemented; frontend browser verification remains outstanding.
-5. Complete payment-provider sandbox verification and a two-player Arena test. Employer registration, separate verification, posting, approval, application and suspension visibility passed rollback-only database tests; browser verification remains outstanding.
+5. Complete payment-provider sandbox verification and authenticated two-player Arena browser verification. Employer registration, separate verification, posting, approval, application and suspension visibility passed rollback-only database tests; browser verification remains outstanding.
 6. Review the remaining callable SECURITY DEFINER functions individually. The Supabase advisor reports 109 notices; many are intentional wrappers, so blanket revocation would break features. Leaked-password protection is also reported as disabled and needs configuration.
 
 The no-policy notices for private admin/service-only tables are not evidence that those tables should be granted browser access.
@@ -55,3 +55,12 @@ Payments, payouts and paid work remain disabled in the live feature flags. There
 ## Publication evidence
 
 Merged consumer PR #5 and admin PR #1. Runtime correction commits: consumer `9b5e5efe8552be2c72974f9c337e8aeee2f44805`; admin `cbf5d68ec0932b5202c81cf213b51f8246a3d94f`. Pages workflow runs `36973141852` (consumer) and `36973171010` (admin) succeeded. Public browser checks confirm consumer login, signup role choices, empty-email reset validation, and admin sign-in rendering. Backend preflight allows the GitHub Pages origin. These checks are not authenticated end-to-end verification.
+
+## Learning-flow repairs and verification
+
+- Arena now provides participant readiness and creator-only start controls, polls matchmaking and live state, surfaces retryable load errors, restores already-submitted answers, submits choice IDs in the JSON-string format expected by the answer keys, and displays actual server scores rather than assuming an `is_correct` response field.
+- Applied `repair_arena_start_and_question_choices` (`20261002081043`): require an authenticated creator/admin, require all joined players to be ready, and copy assessment choices into the eight generated quiz rounds. No answer keys are copied into round configuration.
+- Rollback-only two-player database regression passes for queue matching, readiness enforcement, creator authorization, eight-round generation, choice availability, correct/incorrect scoring, duplicate-submission rejection and outsider rejection. Full timed progression, rating settlement, and two authenticated browsers remain unverified.
+- Study Materials now opens content through the existing entitlement-checking material RPC and respects a locked response even if library access has changed. Content is rendered as text, without executing embedded HTML. Live RPC verification confirms free access and paid-content locking without an entitlement.
+- Practice now accepts written answers for questions without choices, blocks additional submissions while saving, and shows pending grading without labeling it incorrect.
+- Current local regression totals: 20 consumer tests plus 29 admin/API/finance tests, all passing. Both production builds pass. Security-advisor counts remain 109 authenticated SECURITY DEFINER notices, nine no-policy informational notices, and the existing leaked-password-protection warning.
