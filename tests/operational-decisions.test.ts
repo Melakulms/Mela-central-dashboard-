@@ -18,6 +18,12 @@ describe('Operational review controls',()=>{
   expect(decisionFor('Opportunities',{moderation_status:'rejected'},['employers.manage'])?.choices).toEqual(['pending_review'])
   expect(decisionFor('Opportunities',{moderation_status:'approved'},['*'])?.choices).toEqual(['flagged'])
  })
+ it('offers only clear or void for review-required proctored attempts',()=>{
+  expect(decisionFor('Proctor reviews',{status:'review_required'},['moderation.manage'])?.action).toBe('review_proctored_attempt')
+  expect(decisionFor('Proctor reviews',{status:'review_required'},['moderation.manage'])?.choices).toEqual(['clear','void'])
+  expect(decisionFor('Proctor reviews',{status:'graded'},['moderation.manage'])).toBeNull()
+  expect(decisionFor('Proctor reviews',{status:'review_required'},['dashboard.read'])).toBeNull()
+ })
 })
 
 it('does not offer generic closure for contract disputes',()=>{
