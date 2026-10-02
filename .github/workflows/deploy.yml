@@ -48,3 +48,18 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
+
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify admin app and backend health
+        env:
+          APP_URL: https://melakulms.github.io/Mela-central-dashboard-/
+          SUPABASE_URL: https://duizgtmbptmlbyipreqg.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_flQNx6AE3_dbPDHfYGNwWQ_7cMSsAng
+          ADMIN_API_URL: https://duizgtmbptmlbyipreqg.supabase.co/functions/v1/mela-admin-api
+        run: bash scripts/production-smoke.sh
