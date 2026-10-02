@@ -150,6 +150,17 @@ Deno.serve(async (req) => {
     return auditedUpdate(id,existing,patch,{status})
   }
 
+  if (action === 'disputes.list') {
+    if (!allowed('support.manage')) return json({error:'Permission denied'},403)
+    const limit=limitOf(body.limit)
+    const [reports,contracts]=await Promise.all([
+      adminDb.from('reports').select('id,reporter_id,target_id,details,status,created_at,resolution_notes').eq('target_type','freelance_contract').eq('reason','contract_dispute').order('created_at',{ascending:false}).limit(limit),
+      adminDb.from('freelance_contracts').select('id,task_id,employer_id,freelancer_id,status,funding_status,agreed_amount,currency,updated_at').eq('status','disputed').order('updated_at',{ascending:false}).limit(limit),
+    ])
+    if(reports.error||contracts.error)return json({error:'Dispute records unavailable'},500)
+    return json({reports:reports.data??[],contracts:contracts.data??[]})
+  }
+
   if (action === 'payments.list') {
     if (!allowed('finance.manage')) return json({error:'Permission denied'},403)
     let q=adminDb.from('payments').select('id,user_id,course_id,provider,mode,tx_ref,provider_ref,expected_amount_cents,expected_currency,status,provider_status,provider_method,provider_type,provider_charge,failure_reason,created_at,updated_at,paid_at,last_verified_at').order('created_at',{ascending:false}).limit(limitOf(body.limit,200)); if(body.status)q=q.eq('status',body.status); const search=cleanSearch(body.search); if(search)q=q.or(`tx_ref.ilike.%${search}%,provider_ref.ilike.%${search}%`); const {data,error}=await q; if(error)return json({error:'Unable to load payments'},500); return json({data:data??[]})

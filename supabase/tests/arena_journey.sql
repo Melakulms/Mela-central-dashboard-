@@ -41,6 +41,15 @@ begin
   perform public.start_arena(test_match);
   if (public.get_arena_live_state(test_match)->>'status')<>'live' then raise exception 'match did not start'; end if;
   if (select count(*) from public.arena_rounds where arena_rounds.match_id=test_match)<>8 then raise exception 'match does not have eight rounds'; end if;
+  execute 'reset role';
+  update public.arena_matches set round_ends_at=now()-interval '1 minute' where id=test_match;
+  execute 'set local role authenticated';
+  blocked:=false;
+  begin perform public.finish_arena(test_match); exception when others then blocked:=true; end;
+  if not blocked then raise exception 'creator skipped seven rounds by finishing after round one'; end if;
+  execute 'reset role';
+  update public.arena_matches set round_ends_at=now()+interval '1 minute' where id=test_match;
+  execute 'set local role authenticated';
   select r.id into round_id from public.arena_rounds r where r.match_id=test_match and round_order=1;
   if (select config->'choices'->0->>'id' from public.arena_rounds where id=round_id)<>'A' then raise exception 'choices were not copied'; end if;
   submission:=public.submit_arena_round(round_id,'"A"'::jsonb,null);

@@ -123,3 +123,18 @@ describe('Admin API security boundary', () => {
     expect(api.rpc).not.toHaveBeenCalled()
   })
 })
+
+describe('Contract dispute inbox', () => {
+  it('requires support permission before reading dispute records', async () => {
+    const api=server(['dashboard.read'])
+    expect((await api.request({action:'disputes.list'})).status).toBe(403)
+    expect(api.queried).not.toContain('reports')
+    expect(api.queried).not.toContain('freelance_contracts')
+  })
+  it('returns reports and held contracts to an MFA-verified support administrator', async () => {
+    const api=server(['support.manage'],{fixtures:{reports:{data:[{id:'report'}]},freelance_contracts:{data:[{id:'contract',status:'disputed'}]}}})
+    const response=await api.request({action:'disputes.list'})
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({reports:[{id:'report'}],contracts:[{id:'contract',status:'disputed'}]})
+  })
+})

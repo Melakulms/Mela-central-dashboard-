@@ -8,10 +8,10 @@ Both frontends are deployed to GitHub Pages. The database repairs below are appl
 - Removed equivalent owner-role shortcuts from profile security triggers.
 - Repaired signup and profile-completion language values to match the actual profile constraint.
 - Allowed the trusted signup trigger to create referral codes without an end-user session. Removed anonymous and authenticated execution of the automatic commission-processing function.
-- Deployed `mela-admin-api` version 20 with JWT enforcement. It checks MFA against the validated bearer token, restricts operational queues by module permission, bounds pagination, validates request shapes, prevents caching, and applies privileged changes together with their audit records in one database transaction.
+- Deployed `mela-admin-api` version 21 with JWT enforcement. It checks MFA against the validated bearer token, restricts operational queues by module permission, bounds pagination, validates request shapes, prevents caching, and applies privileged changes together with their audit records in one database transaction.
 - Imported existing deployed API corrections into the repository, including moderation statuses, feature-flag counts, commission summaries, and access-request role names.
 
-The thirteen new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
+The sixteen new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
 
 - Added a service-only, action/column-whitelisted audited update RPC, permission checks, target-row locks, and stale-record conflict rejection. Corrected user/employer/report status lists against live constraints and rejected string booleans.
 - Live transactional regression confirms update plus audit, stale-write rejection, unsupported-column rejection, non-admin rejection, and denied browser execution. Test records were rolled back. API regression simulates database RPC failures; an actual audit-insert outage was not induced.
@@ -27,8 +27,8 @@ The thirteen new migration filenames match the versions recorded in the live dat
 
 ## Verification evidence
 
-- Consumer app: 20 regression tests; production build passes.
-- Admin app/API: 29 regression tests; production build passes.
+- Consumer app: 22 regression tests; production build passes.
+- Admin app/API: 31 regression tests; production build passes.
 - Live database: transactional tests pass for creation and confirmation triggers for student, parent, teacher, and company accounts; parent/teacher/company profile completion; practice start/submit/complete; parent invitation redemption; and rejection of self-promotion. All test records were rolled back. These tests do not replace an HTTP signup and email-delivery test.
 - Live admin endpoint: requests without authentication return HTTP 401.
 - 263 public/admin tables inspected; all have RLS enabled.
@@ -50,7 +50,7 @@ The owner selected GitHub Pages on 2 October 2026. Email confirmation and recove
 
 `mela-finance` version 5 validates users through Auth, separates payout verification from initiation, claims pending requests in the database before provider submission, avoids resubmitting queued/failed requests, and refuses to finalize transfers from a mere API success envelope or mismatched reference/amount/currency. Escrow verification now uses the same atomic finalizer as the callback. Nine mocked finance tests pass; service-only claim privileges and the disabled payout gate were checked live. Successful claims under enabled payouts, real provider transactions, and settlement remain unverified.
 
-Payments, payouts and paid work remain disabled in the live feature flags. There is no dispute table or user dispute workflow in the current schema; the placeholder is not a completed settlement system. Do not enable the financial features before sandbox and dispute-readiness work passes.
+Payments, payouts and paid work remain disabled in the live feature flags. Disputes use the existing contract/escrow hold RPC and reports table. A user filing screen and MFA/permission-protected support inbox are now implemented. Provider reconciliation, payout/refund settlement, and a complete resolution workflow remain unfinished. Do not enable the financial features before sandbox and dispute-readiness work passes.
 
 ## Publication evidence
 
@@ -63,6 +63,15 @@ Merged consumer PR #5 and admin PR #1. Runtime correction commits: consumer `9b5
 - Rollback-only two-player database regression passes for queue matching, readiness enforcement, creator authorization, eight-round generation, choice availability, correct/incorrect scoring, duplicate-submission rejection and outsider rejection. Full timed progression, rating settlement, and two authenticated browsers remain unverified.
 - Study Materials now opens content through the existing entitlement-checking material RPC and respects a locked response even if library access has changed. Content is rendered as text, without executing embedded HTML. Live RPC verification confirms free access and paid-content locking without an entitlement.
 - Practice now accepts written answers for questions without choices, blocks additional submissions while saving, and shows pending grading without labeling it incorrect.
-- Current local regression totals: 20 consumer tests plus 29 admin/API/finance tests, all passing. Both production builds pass. Security-advisor counts remain 109 authenticated SECURITY DEFINER notices, nine no-policy informational notices, and the existing leaked-password-protection warning.
+- Current local regression totals: 22 consumer tests plus 31 admin/API/finance tests, all passing. Both production builds pass. Security-advisor counts remain 109 authenticated SECURITY DEFINER notices, nine no-policy informational notices, and the existing leaked-password-protection warning.
 
 - A four-player batch regression initially reproduced duplicate matchmaking: a cursor row already paired as another player was reused. The matcher now skips queue rows already marked matched. The same rollback-only regression passes with exactly two matches and one match per player.
+
+## Next-phase security and dispute repair
+
+- Reproduced and repaired premature Arena finalization: non-admin creators must reach the final round before ending a match.
+- Repaired two marketplace/membership caller-role triggers by making them SECURITY INVOKER. Direct-client assignment and completion forgery are denied; ordinary posting/editing and authorized task awarding still pass rollback-only tests.
+- Added user contract dispute controls in Earn & Work and Employer Portal, plus a support-only administrator dispute inbox. Filing freezes the contract/undisbursed escrow and creates one report; retries do not create duplicates. This does not initiate refunds or settle transfers already in flight.
+- The original no-dispute workflow statement is superseded: an existing hold/report RPC was discovered and connected. There is still no dedicated settlement/resolution workflow.
+- Current verification: 53 automated tests (22 consumer, 31 admin/API/finance), both builds, transactional Arena/marketplace/dispute tests. See SECURITY_REVIEW.md for the 109-function inventory and the limits of this targeted review.
+- Remaining concrete configuration gates: authenticated admin/email verification, unavailable Auth configuration access for leaked-password protection, and real Chapa sandbox evidence. Financial flags remain disabled.

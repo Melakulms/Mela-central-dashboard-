@@ -27,6 +27,9 @@ export default function OperationalModule({ client, section, permissions }: { cl
         if (section === 'opportunities') {
           const [employers, accounts, opportunities] = await Promise.all([adminApi(client, 'employers.list'), adminApi(client, 'employers.accounts'), adminApi(client, 'opportunities.list')])
           next = [{ title: 'Employer registrations', rows: employers.data }, {title:'Employer accounts',rows:accounts.data}, { title: 'Opportunities', rows: opportunities.data }]
+        } else if (section === 'disputes') {
+          const result = await adminApi(client, 'disputes.list')
+          next = [{ title: 'Contract dispute reports', rows: result.reports }, { title: 'Disputed contracts', rows: result.contracts }]
         } else if (section === 'payments') {
           const [payments, payouts] = await Promise.all([adminApi(client, 'payments.list'), adminApi(client, 'payouts.list')])
           next = [{ title: 'Payments', rows: payments.data }, { title: 'Payout requests', rows: payouts.data }]
@@ -62,6 +65,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
   }
 
   return <section className="panel">
+    {section === 'disputes' && <p>Disputed contracts remain on hold. Reviewing a report does not release escrow, pay out funds, or issue a refund. Settlement requires provider reconciliation.</p>}
     <p>Live operational records. Results are limited to the latest records returned by the server.</p>
     <button onClick={() => setRevision(value => value + 1)} disabled={busy || saving}>Refresh records</button>
     {success && <p role="status">{success}</p>}
