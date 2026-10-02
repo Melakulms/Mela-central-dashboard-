@@ -37,8 +37,17 @@ export default function OperationalModule({ client, section, permissions }: { cl
           const [payments, payouts] = await Promise.all([adminApi(client, 'payments.list'), adminApi(client, 'payouts.list')])
           next = [{ title: 'Payments', rows: payments.data }, { title: 'Payout requests', rows: payouts.data }]
         } else if (section === 'moderation') {
-          const result = await adminApi(client, 'moderation.list')
-          next = [{ title: 'Reports', rows: result.reports }, { title: 'Arena integrity events', rows: result.integrity_events }, { title: 'Flagged opportunities', rows: result.flagged_opportunities }]
+          const [result, proctor] = await Promise.all([
+            adminApi(client, 'moderation.list'),
+            client.rpc('get_proctor_review_queue', { p_limit: 50 }),
+          ])
+          if (proctor.error) throw proctor.error
+          next = [
+            { title: 'Proctor reviews', rows: Array.isArray(proctor.data) ? proctor.data : [] },
+            { title: 'Reports', rows: result.reports },
+            { title: 'Arena integrity events', rows: result.integrity_events },
+            { title: 'Flagged opportunities', rows: result.flagged_opportunities },
+          ]
         } else if (section === 'settings') {
           const result = await adminApi(client, 'settings.flags')
           next = [{ title: 'Platform feature flags', rows: result.data }]
@@ -62,7 +71,16 @@ export default function OperationalModule({ client, section, permissions }: { cl
     saveLock.current = true
     setSaving(true); setError(''); setSuccess('')
     try {
-      await adminApi(client, spec.action, { [spec.idField]:editing.row.id, [spec.statusField]:decision, [spec.notesField]:notes.trim(), expected_updated_at:editing.row.updated_at })
+      if (editing.group === 'Proctor reviews') {
+        const { error: reviewError } = await client.rpc('review_proctored_attempt', {
+          p_attempt_id: editing.row.id,
+          p_decision: decision,
+          p_notes: notes.trim(),
+        })
+        if (reviewError) throw reviewError
+      } else {
+        await adminApi(client, spec.action, { [spec.idField]:editing.row.id, [spec.statusField]:decision, [spec.notesField]:notes.trim(), expected_updated_at:editing.row.updated_at })
+      }
       setEditing(null); setSuccess('Decision saved and audited.'); setRevision(value => value + 1)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Decision could not be saved.') }
     finally { saveLock.current = false; setSaving(false) }
@@ -70,14 +88,17 @@ export default function OperationalModule({ client, section, permissions }: { cl
 
   return <section className="panel">
     {section === 'disputes' && <p>Disputed contracts remain on hold. Reviewing a report does not release escrow, pay out funds, or issue a refund. Settlement requires provider reconciliation.</p>}
+    {section === 'moderation' && <p>Proctored assessment decisions are MFA-protected and audited. Clear only when the integrity evidence supports verification; void prevents credential issuance.</p>}
     <p>Live operational records. Results are limited to the latest records returned by the server.</p>
     <button onClick={() => setRevision(value => value + 1)} disabled={busy || saving}>Refresh records</button>
     {success && <p role="status">{success}</p>}
     {busy && <p role="status">Loading records…</p>}
     {error && <div className="error" role="alert">{error}</div>}
     {editing && <form onSubmit={submitDecision} className="panel" aria-label="Review decision">
-      <h2>Review {text(editing.row.title ?? editing.row.company_name ?? editing.row.id)}</h2>
-      <p>Registration approval creates an employer account. Company verification is a separate step. Opportunity visibility also requires a verified source and a valid deadline.</p>
+      <h2>Review {text(editing.row.assessment_title ?? editing.row.title ?? editing.row.company_name ?? editing.row.id)}</h2>
+      {editing.group === 'Proctor reviews'
+        ? <p>Review the attempt score and integrity event counts. “Clear” can issue verified skill evidence for a passing attempt; “Void” permanently rejects this attempt.</p>
+        : <p>Registration approval creates an employer account. Company verification is a separate step. Opportunity visibility also requires a verified source and a valid deadline.</p>}
       <label>Decision<select value={decision} onChange={event => setDecision(event.target.value)} disabled={saving} required>
         <option value="">Choose a decision</option>
         {decisionFor(editing.group,editing.row,permissions)?.choices.map(choice => <option key={choice} value={choice}>{choice.replaceAll('_',' ')}</option>)}
@@ -89,7 +110,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
     {groups.map(group => <section key={group.title}><h2>{group.title}</h2>
       <div className="table-wrap"><table><thead><tr><th>Record</th><th>Status</th><th>Details</th><th>Actions</th></tr></thead>
         <tbody>{group.rows.map((row, index) => <tr key={text(row.id ?? row.feature_key ?? index)}>
-          <td><strong>{text(row.title ?? row.company_name ?? row.feature_key ?? row.tx_ref ?? row.payout_ref ?? row.id)}</strong></td>
+          <td><strong>{text(row.assessment_title ?? row.title ?? row.company_name ?? row.feature_key ?? row.tx_ref ?? row.payout_ref ?? row.id)}</strong></td>
           <td>{text(row.verification_status ?? row.moderation_status ?? row.status ?? row.enabled)}</td>
           <td><details><summary>Inspect record</summary><dl>{Object.entries(row).map(([key, value]) => <div key={key}><dt>{key.replaceAll('_', ' ')}</dt><dd style={{ overflowWrap: 'anywhere' }}>{text(value)}</dd></div>)}</dl></details></td>
           <td>{decisionFor(group.title,row,permissions) && <button disabled={saving || busy} onClick={() => {setEditing({group:group.title,row});setDecision('');setNotes('');setError('');setSuccess('')}}>Review</button>}</td>
