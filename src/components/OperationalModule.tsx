@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { adminApi } from '../lib/admin-api'
 import { decisionFor } from '../lib/operational-decisions'
@@ -8,6 +8,7 @@ type Group = { title: string; rows: Row[] }
 const text = (value: unknown) => value == null ? '—' : typeof value === 'object' ? JSON.stringify(value) : String(value)
 
 export default function OperationalModule({ client, section, permissions }: { client: SupabaseClient; section: string; permissions: string[] }) {
+  const saveLock = useRef(false)
   const [groups, setGroups] = useState<Group[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -17,6 +18,8 @@ export default function OperationalModule({ client, section, permissions }: { cl
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
+
+  useEffect(() => { setEditing(null); setDecision(''); setNotes(''); setSuccess('') }, [section])
 
   useEffect(() => {
     let active = true
@@ -40,7 +43,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
           const result = await adminApi(client, 'settings.flags')
           next = [{ title: 'Platform feature flags', rows: result.data }]
         } else {
-          throw new Error('Dispute operations require a dedicated, audited workflow before this module can be enabled.')
+          throw new Error('This section is not available in the operations module.')
         }
         if (active) setGroups(next.map(group => ({ ...group, rows: Array.isArray(group.rows) ? group.rows : [] })))
       } catch (error) {
@@ -53,15 +56,16 @@ export default function OperationalModule({ client, section, permissions }: { cl
 
   const submitDecision = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!editing || saving) return
+    if (!editing || saveLock.current) return
     const spec = decisionFor(editing.group, editing.row, permissions)
     if (!spec || !spec.choices.includes(decision) || !notes.trim()) return
+    saveLock.current = true
     setSaving(true); setError(''); setSuccess('')
     try {
       await adminApi(client, spec.action, { [spec.idField]:editing.row.id, [spec.statusField]:decision, [spec.notesField]:notes.trim(), expected_updated_at:editing.row.updated_at })
       setEditing(null); setSuccess('Decision saved and audited.'); setRevision(value => value + 1)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Decision could not be saved.') }
-    finally { setSaving(false) }
+    finally { saveLock.current = false; setSaving(false) }
   }
 
   return <section className="panel">

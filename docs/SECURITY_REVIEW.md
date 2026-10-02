@@ -130,3 +130,7 @@ Auth logs in the inspected available window contain a successful settings read, 
 | `submit_work_review` | `submit_work_review` | Requires individual negative-case testing |
 | `track_global_source_v16` | `track_global_source_v16` | Requires individual negative-case testing |
 | `withdraw_freelance_proposal` | `withdraw_freelance_proposal` | Requires individual negative-case testing |
+
+## Classroom response boundary repair
+
+`get_my_classroom_detail` previously applied access checks only to the classroom object, leaving its learner aggregation unguarded. The full response now checks authenticated classroom access first. Teacher/member/outsider rollback regressions pass. This targeted fix does not certify the remaining functions.

@@ -11,7 +11,7 @@ Both frontends are deployed to GitHub Pages. The database repairs below are appl
 - Deployed `mela-admin-api` version 22 with JWT enforcement. It checks MFA against the validated bearer token, restricts operational queues by module permission, bounds pagination, validates request shapes, prevents caching, and applies privileged changes together with their audit records in one database transaction.
 - Imported existing deployed API corrections into the repository, including moderation statuses, feature-flag counts, commission summaries, and access-request role names.
 
-The sixteen new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
+The seventeen new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
 
 - Added a service-only, action/column-whitelisted audited update RPC, permission checks, target-row locks, and stale-record conflict rejection. Corrected user/employer/report status lists against live constraints and rejected string booleans.
 - Live transactional regression confirms update plus audit, stale-write rejection, unsupported-column rejection, non-admin rejection, and denied browser execution. Test records were rolled back. API regression simulates database RPC failures; an actual audit-insert outage was not induced.
@@ -82,3 +82,11 @@ Merged consumer PR #5 and admin PR #1. Runtime correction commits: consumer `9b5
 - Reports under review remain visible in both queues. Moderation query failures now return an error instead of a misleading empty result.
 - Closed reports cannot be reopened through the general review action, and closure requires a bounded written reason.
 - Seven new regression cases pass; current admin/API/finance total is 38. The existing 22 consumer tests were not rerun because this release changes only the admin application.
+
+## Section-by-section frontend follow-up
+
+The consumer repository's `docs/SECTION_REVIEW.md` records all main sections/subsections and remaining limits. This release adds a lesson reader with saved completion, assessment recovery, challenge/proposal error handling, teacher classrooms, learner classroom joining, mentor decision recovery, official external application links, and connection/language error feedback. Consumer tests now total 27; admin tests remain 38. Both builds pass.
+
+Applied `20261002175728_protect_classroom_detail_access`: authorize the complete classroom response before returning learner details. Live rollback tests cover teacher creation, learner joining, authorized details and outsider denial. No test users or classrooms remain. The security review remains targeted, not exhaustive.
+
+Course-level certification/progress aggregation, parent learner detail, educator observations, challenge team workflows, mentorship scheduling, financial settlement, and authenticated end-to-end verification still require work. Do not describe all sections as production-ready.
