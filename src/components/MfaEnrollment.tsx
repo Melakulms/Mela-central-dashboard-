@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Props = {
@@ -9,6 +9,8 @@ type Props = {
 }
 
 export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
+  const onEnrolledRef=useRef(onEnrolled)
+  useEffect(()=>{onEnrolledRef.current=onEnrolled},[onEnrolled])
   const [factorId, setFactorId] = useState('')
   const [qr, setQr] = useState('')
   const [secret, setSecret] = useState('')
@@ -31,6 +33,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       try {
         const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
         if (factorsError) throw factorsError
+        if (!active) return
 
         // A verified factor already exists. Do not call enroll() again: the existing
         // factor is the factor that must be challenged during administrator login.
@@ -38,7 +41,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
         if (verifiedTotp) {
           if (!active) return
           setError('Administrator MFA is already configured. Continuing to MFA verification…')
-          onEnrolled()
+          onEnrolledRef.current()
           return
         }
 
@@ -46,10 +49,12 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
         // Only unverified factors are removed; a verified factor is never deleted here.
         const unverifiedTotp = factors?.totp?.filter((factor) => factor.status !== 'verified') ?? []
         for (const factor of unverifiedTotp) {
+          if (!active) return
           const { error: unenrollError } = await client.auth.mfa.unenroll({ factorId: factor.id })
           if (unenrollError) throw unenrollError
         }
 
+        if (!active) return
         const { data, error: enrollError } = await client.auth.mfa.enroll({
           factorType: 'totp',
           friendlyName: email ? `MELA Central Admin - ${email}` : 'MELA Central Admin',
@@ -72,7 +77,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
     return () => {
       active = false
     }
-  }, [client, email, onEnrolled])
+  }, [client, email])
 
   const verify = async () => {
     if (!factorId || !/^\d{6}$/.test(code)) return

@@ -42,6 +42,7 @@ Deno.serve(async (req) => {
   const isSuper = role.key === 'super_admin'
   const allowed = (permission: string) => isSuper || permissions.includes(permission)
   const auditedUpdate = async (target: string, expected: any, patch: any, metadata: any = {}) => {
+    if (body.expected_updated_at !== undefined && body.expected_updated_at !== expected.updated_at) return json({error:'Record changed; refresh before retrying',code:'STALE_RECORD'},409)
     const { data, error } = await adminDb.schema('admin').rpc('apply_audited_update', {
       p_actor: user.id, p_action: action, p_target: target, p_expected: expected,
       p_patch: patch, p_request_id: requestId, p_metadata: metadata,
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
     if (!allowed('users.manage')) return json({error:'Permission denied'},403)
     const userId=String(body.user_id??''); const nextStatus=body.account_status===undefined?undefined:String(body.account_status); const statuses=['active','suspended','pending_verification','banned','deleted']
     if(!userId)return json({error:'User ID is required'},400); if(nextStatus!==undefined&&!statuses.includes(nextStatus))return json({error:'Invalid account status'},400); if(userId===user.id&&nextStatus&&nextStatus!=='active')return json({error:'You cannot deactivate or suspend your current admin account here'},409)
-    const {data:existing,error:readError}=await adminDb.from('profiles').select('id,account_status,email_verified,phone_verified').eq('id',userId).maybeSingle(); if(readError)return json({error:'Unable to read user'},500); if(!existing)return json({error:'User not found'},404)
+    const {data:existing,error:readError}=await adminDb.from('profiles').select('id,account_status,email_verified,phone_verified,updated_at').eq('id',userId).maybeSingle(); if(readError)return json({error:'Unable to read user'},500); if(!existing)return json({error:'User not found'},404)
     const patch:Record<string,unknown>={}; if(nextStatus!==undefined)patch.account_status=nextStatus; for(const field of ['email_verified','phone_verified']) { if(body[field]!==undefined) { if(typeof body[field]!=='boolean')return json({error:'Verification fields require true or false'},400); patch[field]=body[field] } } if(!Object.keys(patch).length)return json({error:'No supported changes supplied'},400)
 
     return auditedUpdate(userId,existing,patch,{changed_fields:Object.keys(patch)})
@@ -111,9 +112,24 @@ Deno.serve(async (req) => {
     if (!allowed('employers.manage')) return json({error:'Permission denied'},403)
     const status=body.status; let q=adminDb.from('employer_registration_requests').select('*').order('created_at',{ascending:false}).limit(limitOf(body.limit,100)); if(status)q=q.eq('status',status); const {data,error}=await q; if(error)return json({error:'Unable to load employer registrations'},500); return json({data:data??[]})
   }
+  if (action === 'employers.accounts') {
+    if (!allowed('employers.manage')) return json({error:'Permission denied'},403)
+    const {data,error}=await adminDb.from('employers').select('id,owner_id,company_name,legal_name,registration_number,sector_category,verified,verification_status,verification_notes,verified_by,verified_at,updated_at,created_at').order('created_at',{ascending:false}).limit(limitOf(body.limit,100))
+    if(error)return json({error:'Unable to load employer accounts'},500)
+    return json({data:data??[]})
+  }
+  if (action === 'employer.verify') {
+    if (!allowed('employers.manage')) return json({error:'Permission denied'},403)
+    const id=String(body.employer_id??''); const status=String(body.verification_status??''); const notes=String(body.verification_notes??'').trim()
+    if(!id||!['verified','under_review','rejected','suspended'].includes(status)||!notes||notes.length>2000)return json({error:'Employer, verification decision and reason are required'},400)
+    const {data:existing,error}=await adminDb.from('employers').select('*').eq('id',id).maybeSingle()
+    if(error)return json({error:'Unable to read employer'},500)
+    if(!existing)return json({error:'Employer not found'},404)
+    return auditedUpdate(id,existing,{verified:status==='verified',verification_status:status,verification_notes:notes,verified_by:user.id,verified_at:status==='verified'?new Date().toISOString():null,updated_at:new Date().toISOString()},{status})
+  }
   if (action === 'employer.review') {
     if (!allowed('employers.manage')) return json({error:'Permission denied'},403)
-    const id=String(body.request_id??''); const next=String(body.status??''); const notes=String(body.review_notes??'').trim(); if(!id||!['approved','rejected','pending','under_review'].includes(next))return json({error:'Request ID and valid status are required'},400)
+    const id=String(body.request_id??''); const next=String(body.status??''); const notes=String(body.review_notes??'').trim(); if(notes.length>2000)return json({error:'Review reason is too long'},400); if(['approved','rejected'].includes(next)&&!notes)return json({error:'Review reason is required'},400); if(!id||!['approved','rejected','pending','under_review'].includes(next))return json({error:'Request ID and valid status are required'},400)
     const {data:existing,error:r}=await adminDb.from('employer_registration_requests').select('*').eq('id',id).maybeSingle(); if(r)return json({error:'Unable to read employer request'},500); if(!existing)return json({error:'Employer request not found'},404)
     return auditedUpdate(id,existing,{status:next,review_notes:notes||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()},{status:next})
   }
@@ -124,7 +140,7 @@ Deno.serve(async (req) => {
   }
   if (action === 'opportunity.review') {
     if (!allowed('employers.manage')) return json({error:'Permission denied'},403)
-    const id=String(body.opportunity_id??''); const status=String(body.moderation_status??''); const notes=String(body.moderation_notes??'').trim(); if(!id||!['approved','rejected','pending_review','flagged'].includes(status))return json({error:'Opportunity ID and valid moderation status are required'},400)
+    const id=String(body.opportunity_id??''); const status=String(body.moderation_status??''); const notes=String(body.moderation_notes??'').trim(); if(notes.length>2000)return json({error:'Moderation reason is too long'},400); if(['approved','rejected'].includes(status)&&!notes)return json({error:'Moderation reason is required'},400); if(!id||!['approved','rejected','pending_review','flagged'].includes(status))return json({error:'Opportunity ID and valid moderation status are required'},400)
     const {data:existing,error:r}=await adminDb.from('opportunities').select('*').eq('id',id).maybeSingle(); if(r)return json({error:'Unable to read opportunity'},500); if(!existing)return json({error:'Opportunity not found'},404)
     const patch:any={moderation_status:status,moderation_notes:notes||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}; patch.verified_active=status==='approved'
     return auditedUpdate(id,existing,patch,{status})

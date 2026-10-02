@@ -8,7 +8,7 @@ The production Supabase project currently exposes the core operational tables us
 
 Implemented in `mela-admin-api`: me, dashboard, permission-filtered queues, user list/inspect/update, employer list/review, opportunity list/review, payment/payout lists, moderation list/report resolution, feature-flag list/update, commission list/inspect/cancel/summary, authorization matrix, access list, and audit list/append.
 
-The UI now reads live operational modules, but approval controls and a dedicated dispute workflow are incomplete. Mutation and audit writes are not yet atomic. See LAUNCH_READINESS.md for verification evidence and remaining release gates.
+The UI reads live operational modules and provides audited registration, company-verification, opportunity-review, and report-resolution controls. Mutations and audit writes are transactional. A dedicated dispute workflow remains incomplete. See LAUNCH_READINESS.md for verification evidence and remaining release gates.
 
 The remaining operational UI modules require explicit API handlers before they can be considered functionally complete. Do not treat navigation or UI rendering as backend authorization.
 
@@ -31,4 +31,4 @@ Repository changes are not production verification. Live browser and end-to-end 
 
 ## Transactional mutations — 2 October 2026
 
-All six existing admin mutation actions now call `admin.apply_audited_update`, a service-only RPC that locks and compares the target record, checks actor permissions and supported fields, and commits the update and audit together. Stale records return HTTP 409. Database constraints remain authoritative. Frontend operational decision controls and disputes still require implementation.
+All existing admin mutation actions now call `admin.apply_audited_update`, a service-only RPC that locks and compares the target record, checks actor permissions and supported fields, and commits the update and audit together. Stale records return HTTP 409. Database constraints remain authoritative. Registration, verification, opportunity and report decision controls are implemented; disputes and provider payout workflows still require implementation.

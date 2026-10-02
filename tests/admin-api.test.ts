@@ -97,6 +97,15 @@ describe('Admin API security boundary', () => {
     expect(api.rpc).toHaveBeenCalledWith('apply_audited_update', expect.objectContaining({p_action:'commission.cancel',p_expected:{id:'commission-id',status:'pending'}}))
     expect(api.queried).not.toContain('audit_log')
   })
+  it('rejects a decision made from a stale frontend record',async()=>{
+    const api=server(['users.manage'],{fixtures:{profiles:{data:{id:'user-id',updated_at:'new-version'}}}})
+    expect((await api.request({action:'user.update',user_id:'user-id',account_status:'suspended',expected_updated_at:'old-version'})).status).toBe(409)
+    expect(api.rpc).not.toHaveBeenCalled()
+  })
+  it('requires a verification reason and management permission',async()=>{
+    expect((await server(['users.read']).request({action:'employer.verify',employer_id:'company-id',verification_status:'verified',verification_notes:'Reviewed'})).status).toBe(403)
+    expect((await server(['employers.manage']).request({action:'employer.verify',employer_id:'company-id',verification_status:'verified'})).status).toBe(400)
+  })
   it('returns conflict when the locked record changed', async () => {
     const api = server(['users.manage'], {rpcError:{code:'40001'},fixtures:{profiles:{data:{id:'user-id',account_status:'active'}}}})
     expect((await api.request({action:'user.update',user_id:'user-id',account_status:'suspended'})).status).toBe(409)
