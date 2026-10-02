@@ -9,4 +9,9 @@ describe('admin browser session hardening', () => {
     expect(source).toMatch(/detectSessionInUrl:\s*false/)
     expect(source).not.toContain("storageKey: 'mela-central-admin-auth'")
   })
+
+  it('removes credentials persisted by older admin builds', () => {
+    expect(source).toContain("const LEGACY_ADMIN_STORAGE_KEY = 'mela-central-admin-auth'")
+    expect(source).toContain('window.localStorage.removeItem(LEGACY_ADMIN_STORAGE_KEY)')
+  })
 })
