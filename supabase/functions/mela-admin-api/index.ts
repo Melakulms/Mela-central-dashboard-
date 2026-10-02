@@ -1,13 +1,17 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2.116.0'
 
 const cors = { 'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://central-dashboard-gamma.vercel.app', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
 const safeCount = async (db: any, table: string, column = 'id') => { const { count, error } = await db.from(table).select(column, { count: 'exact', head: true }); return error ? null : count }
-const cleanSearch = (value: unknown) => String(value ?? '').trim().replace(/[%_,]/g, '')
-const limitOf = (value: unknown, max = 100) => Math.min(Math.max(Number(value ?? 50), 1), max)
+const cleanSearch = (value: unknown) => String(value ?? '').trim().slice(0, 200).replace(/[^\p{L}\p{N}@+ .-]/gu, '')
+const limitOf = (value: unknown, max = 100) => { const number = Number(value ?? 50); return Number.isFinite(number) ? Math.min(Math.max(Math.trunc(number), 1), max) : 50 }
+
+class AuditWriteError extends Error {}
 
 Deno.serve(async (req) => {
+  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
+  try {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   const authHeader = req.headers.get('Authorization')
@@ -15,54 +19,58 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  const caller = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } })
-  const adminDb = createClient(supabaseUrl, serviceKey)
+  const caller = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false, autoRefreshToken: false } })
+  const adminDb = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
   const { data: { user }, error: userError } = await caller.auth.getUser()
   if (userError || !user) return json({ error: 'Invalid session' }, 401)
   const { data: adminUser, error: adminError } = await adminDb.schema('admin').from('admin_users').select('user_id, role_id, active, mfa_required').eq('user_id', user.id).eq('active', true).maybeSingle()
   if (adminError || !adminUser) return json({ error: 'Admin access denied' }, 403)
   const { data: role, error: roleError } = await adminDb.schema('admin').from('roles').select('key,name').eq('id', adminUser.role_id).single()
   if (roleError || !role) return json({ error: 'Admin role is invalid' }, 403)
-  const { data: assurance } = await caller.auth.mfa.getAuthenticatorAssuranceLevel()
+  const { data: assurance, error: assuranceError } = await caller.auth.mfa.getAuthenticatorAssuranceLevel(authHeader.slice(7))
+  if (assuranceError) return json({ error: 'Unable to verify session assurance' }, 401)
   if (adminUser.mfa_required && assurance?.currentLevel !== 'aal2') return json({ error: 'MFA required', code: 'MFA_REQUIRED' }, 403)
   const { data: rolePermissions, error: permissionError } = await adminDb.schema('admin').from('role_permissions').select('permission_id').eq('role_id', adminUser.role_id)
   if (permissionError) return json({ error: 'Permission resolution failed' }, 500)
   const ids = (rolePermissions ?? []).map((row: any) => row.permission_id)
-  const { data: permissionRows } = ids.length ? await adminDb.schema('admin').from('permissions').select('key').in('id', ids) : { data: [] as any[] }
+  const { data: permissionRows, error: permissionRowsError } = ids.length ? await adminDb.schema('admin').from('permissions').select('key').in('id', ids) : { data: [] as any[], error: null }
+  if (permissionRowsError) return json({ error: 'Permission resolution failed' }, 500)
   const permissions = (permissionRows ?? []).map((row: any) => row.key).filter(Boolean)
-  const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
-  const body = await req.json().catch(() => ({}))
-  const action = body.action ?? 'me'
+  const body = await req.json().catch(() => null)
+  if (!body || typeof body !== 'object' || Array.isArray(body) || typeof body.action !== 'string') return json({ error: 'A JSON object with an action is required' }, 400)
+  const action = body.action
   const isSuper = role.key === 'super_admin'
   const allowed = (permission: string) => isSuper || permissions.includes(permission)
-  const appendAudit = async (audit: any) => { await adminDb.schema('admin').from('audit_log').insert({ actor_user_id:user.id, actor_role:role.key, action:audit.action, target_schema:audit.target_schema ?? 'public', target_table:audit.target_table ?? null, target_id:audit.target_id ?? null, before_data:audit.before_data ?? null, after_data:audit.after_data ?? null, metadata:{ ...(audit.metadata ?? {}), source:'mela-central-dashboard' }, request_id:requestId }) }
+  const appendAudit = async (audit: any) => { const { error } = await adminDb.schema('admin').from('audit_log').insert({ actor_user_id:user.id, actor_role:role.key, action:audit.action, target_schema:audit.target_schema ?? 'public', target_table:audit.target_table ?? null, target_id:audit.target_id ?? null, before_data:audit.before_data ?? null, after_data:audit.after_data ?? null, metadata:{ ...(audit.metadata ?? {}), source:'mela-central-dashboard' }, request_id:requestId }); if (error) throw new AuditWriteError('Audit persistence failed') }
   if (action === 'me') return json({ user:{id:user.id,email:user.email}, role, permissions, mfa:assurance })
 
   if (action === 'dashboard') {
     if (!allowed('dashboard.read') && !allowed('platform.read')) return json({ error:'Permission denied' },403)
-    const specs = [['users','profiles'],['payments','payments'],['payouts','payout_requests'],['employer_registrations','employer_registration_requests'],['opportunities','opportunities'],['reports','reports'],['integrity_events','arena_integrity_events'],['feature_flags','platform_feature_flags']] as const
-    const counts = await Promise.all(specs.map(async ([key,table]) => [key, await safeCount(adminDb,table)]))
-    const userRoles = ['student','parent','teacher','employer','mentor','admin','administrator']
-    const usersByRole = await Promise.all(userRoles.map(async (roleName) => ({ role: roleName, count: await safeCount(adminDb, 'profiles', 'id').then(async (total) => { const { count, error } = await adminDb.from('profiles').select('id', { count:'exact', head:true }).eq('role', roleName); return error ? 0 : (count ?? 0) }) })))
+    const specs = [['users','profiles','id'],['payments','payments','id'],['payouts','payout_requests','id'],['employer_registrations','employer_registration_requests','id'],['opportunities','opportunities','id'],['reports','reports','id'],['integrity_events','arena_integrity_events','id'],['feature_flags','platform_feature_flags','feature_key']] as const
+    const counts = await Promise.all(specs.map(async ([key,table,col]) => [key, await safeCount(adminDb,table,col)]))
+    const userRoles = ['student','parent','teacher','employer','company','mentor','admin']
+    const usersByRole = await Promise.all(userRoles.map(async (roleName) => ({ role: roleName, count: await (async () => { const { count, error } = await adminDb.from('profiles').select('id', { count:'exact', head:true }).eq('role', roleName); return error ? null : (count ?? 0) })() })))
     return json({ metrics:{table_counts:Object.fromEntries(counts),users_by_role:usersByRole}, generated_at:new Date().toISOString() })
   }
 
   if (action === 'queues') {
     if (!allowed('dashboard.read') && !allowed('platform.read')) return json({ error:'Permission denied' },403)
     const queues: Record<string,unknown[]> = {}
-    const load = async (key:string, table:string, statuses:string[]) => { const {data,error}=await adminDb.from(table).select('*').in('status',statuses).order('created_at',{ascending:false}).limit(50); queues[key]=error?[]:(data??[]) }
-    await load('employer_registrations','employer_registration_requests',['pending','review','review_required'])
-    await load('opportunities','opportunities',['pending','review','flagged'])
-    await load('reports','reports',['pending','open','review','escalated'])
-    await load('payouts','payout_requests',['pending','queued','failed','review'])
-    const {data:attempts}=await adminDb.from('assessment_attempts').select('*').in('proctor_status',['pending','review','flagged']).order('started_at',{ascending:false}).limit(50); queues.proctor_reviews=attempts??[]
+    const load = async (key:string, table:string, statuses:string[], permission:string) => { if (!allowed(permission)) return; const {data,error}=await adminDb.from(table).select('*').in('status',statuses).order('created_at',{ascending:false}).limit(50); queues[key]=error?[]:(data??[]) }
+    await load('employer_registrations','employer_registration_requests',['pending','under_review','review','review_required'],'employers.manage')
+    await load('opportunities','opportunities',['pending_review','review','flagged'],'employers.manage')
+    await load('reports','reports',['pending','open','review','escalated'],'moderation.manage')
+    await load('payouts','payout_requests',['pending','queued','failed','review'],'finance.manage')
+    if (allowed('moderation.manage')) {
+    const {data:attempts}=await adminDb.from('assessment_attempts').select('*').in('proctor_status',['pending_review','review','flagged'],'employers.manage').order('started_at',{ascending:false}).limit(50); queues.proctor_reviews=attempts??[]
     const {data:integrity}=await adminDb.from('arena_integrity_events').select('*').gte('severity',2).order('created_at',{ascending:false}).limit(50); queues.arena_integrity=integrity??[]
+    }
     return json(queues)
   }
 
   if (action === 'users.list') {
     if (!allowed('users.read')) return json({error:'Permission denied'},403)
-    const limit=limitOf(body.limit,100), offset=Math.max(Number(body.offset??0),0)
+    const limit=limitOf(body.limit,100), offset=Number.isFinite(Number(body.offset??0))?Math.max(Math.trunc(Number(body.offset??0)),0):0
     let query=adminDb.from('profiles').select('id,full_name,email,phone_number,role,region,city,account_status,email_verified,phone_verified,profile_completion,created_at,updated_at,deleted_at,availability_status',{count:'exact'}).order('created_at',{ascending:false}).range(offset,offset+limit-1)
     if(body.role) query=query.eq('role',body.role)
     if(body.status) query=query.eq('account_status',body.status)
@@ -106,9 +114,9 @@ Deno.serve(async (req) => {
   }
   if (action === 'opportunity.review') {
     if (!allowed('employers.manage')) return json({error:'Permission denied'},403)
-    const id=String(body.opportunity_id??''); const status=String(body.moderation_status??''); const notes=String(body.moderation_notes??'').trim(); if(!id||!['approved','rejected','pending','flagged'].includes(status))return json({error:'Opportunity ID and valid moderation status are required'},400)
+    const id=String(body.opportunity_id??''); const status=String(body.moderation_status??''); const notes=String(body.moderation_notes??'').trim(); if(!id||!['approved','rejected','pending_review','flagged'].includes(status))return json({error:'Opportunity ID and valid moderation status are required'},400)
     const {data:existing,error:r}=await adminDb.from('opportunities').select('*').eq('id',id).maybeSingle(); if(r)return json({error:'Unable to read opportunity'},500); if(!existing)return json({error:'Opportunity not found'},404)
-    const patch:any={moderation_status:status,moderation_notes:notes||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}; if(status==='approved')patch.verified_active=true; if(status==='rejected')patch.verified_active=false
+    const patch:any={moderation_status:status,moderation_notes:notes||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}; patch.verified_active=status==='approved'
     const {data:updated,error:u}=await adminDb.from('opportunities').update(patch).eq('id',id).select('id,title,status,moderation_status,verified_active,moderation_notes,reviewed_by,reviewed_at,updated_at').maybeSingle(); if(u)return json({error:'Unable to review opportunity'},500); await appendAudit({action:'opportunity.review',target_table:'opportunities',target_id:id,before_data:existing,after_data:updated,metadata:{status}}); return json({data:updated})
   }
 
@@ -123,7 +131,7 @@ Deno.serve(async (req) => {
 
   if (action === 'moderation.list') {
     if (!allowed('moderation.manage')) return json({error:'Permission denied'},403)
-    const [{data:reports},{data:integrity},{data:flaggedOpportunities}]=await Promise.all([adminDb.from('reports').select('*').in('status',['pending','open','review','escalated']).order('created_at',{ascending:false}).limit(50),adminDb.from('arena_integrity_events').select('*').gte('severity',2).order('created_at',{ascending:false}).limit(50),adminDb.from('opportunities').select('id,title,organization_name,status,moderation_status,moderation_notes,created_at').in('moderation_status',['flagged','pending','rejected']).order('created_at',{ascending:false}).limit(50)])
+    const [{data:reports},{data:integrity},{data:flaggedOpportunities}]=await Promise.all([adminDb.from('reports').select('*').in('status',['pending','open','review','escalated']).order('created_at',{ascending:false}).limit(50),adminDb.from('arena_integrity_events').select('*').gte('severity',2).order('created_at',{ascending:false}).limit(50),adminDb.from('opportunities').select('id,title,organization_name,status,moderation_status,moderation_notes,created_at').in('moderation_status',['flagged','pending_review','rejected']).order('created_at',{ascending:false}).limit(50)])
     return json({reports:reports??[],integrity_events:integrity??[],flagged_opportunities:flaggedOpportunities??[]})
   }
   if (action === 'report.resolve') {
@@ -153,11 +161,34 @@ Deno.serve(async (req) => {
     if (!allowed('finance.manage')) return json({error:'Permission denied'},403); const id=String(body.commission_id??''); const reason=String(body.reason??'').trim(); if(!id||!reason)return json({error:'Commission ID and cancellation reason are required'},400); if(reason.length>500)return json({error:'Cancellation reason must be 500 characters or fewer'},400); const {data:existing,error:r}=await adminDb.from('invitation_commissions').select('*').eq('id',id).maybeSingle(); if(r)return json({error:r.message},500); if(!existing)return json({error:'Commission not found'},404); if(existing.status==='cancelled')return json({data:existing,already_cancelled:true}); if(existing.status==='paid')return json({error:'Paid commissions require a separate reversal workflow'},409); const {data:updated,error:u}=await adminDb.from('invitation_commissions').update({status:'cancelled',cancelled_at:new Date().toISOString(),cancellation_reason:reason}).eq('id',id).eq('status','pending').select('*').maybeSingle(); if(u)return json({error:u.message},500); if(!updated)return json({error:'Commission changed concurrently; no cancellation performed'},409); await appendAudit({action:'commission.cancel',target_table:'invitation_commissions',target_id:id,before_data:existing,after_data:updated,metadata:{reason}}); return json({data:updated})
   }
 
+  if (action === 'commission.summary') {
+    if (!allowed('finance.manage')) return json({error:'Permission denied'},403)
+    const {data,error}=await adminDb.from('invitation_commissions').select('status,amount')
+    if(error)return json({error:error.message},500)
+    const rows=data??[]
+    const summary=rows.reduce((acc:any,row:any)=>{acc.total++;const amt=Number(row.amount||0);acc.total_amount+=amt;if(row.status==='pending')acc.pending++;if(row.status==='paid')acc.paid++;if(row.status==='cancelled')acc.cancelled++;return acc},{total:0,pending:0,paid:0,cancelled:0,total_amount:0})
+    return json(summary)
+  }
+
   if (action === 'authorization.matrix') {
     if (!allowed('authorization.manage')) return json({error:'Permission denied'},403); const [{data:roles,error:re},{data:allPermissions,error:pe},{data:mappings,error:me}]=await Promise.all([adminDb.schema('admin').from('roles').select('id,key,name,description,is_privileged').order('name'),adminDb.schema('admin').from('permissions').select('id,key,name,description').order('key'),adminDb.schema('admin').from('role_permissions').select('role_id,permission_id')]); if(re||pe||me)return json({error:'Authorization matrix unavailable'},500); return json({roles,permissions:allPermissions,mappings})
   }
   if (action === 'audit.list') { if(!allowed('audit.read'))return json({error:'Permission denied'},403); const {data,error}=await adminDb.schema('admin').from('audit_log').select('*').order('created_at',{ascending:false}).limit(limitOf(body.limit,200)); if(error)return json({error:error.message},500); return json({data:data??[]}) }
-  if (action === 'access.list') { if(!allowed('authorization.manage'))return json({error:'Permission denied'},403); const {data,error}=await adminDb.schema('admin').from('access_requests').select('*').order('created_at',{ascending:false}).limit(100); if(error)return json({error:error.message},500); return json({data:data??[]}) }
+  if (action === 'access.list') {
+    if(!allowed('authorization.manage'))return json({error:'Permission denied'},403)
+    const {data,error}=await adminDb.schema('admin').from('access_requests').select('*').order('created_at',{ascending:false}).limit(100)
+    if(error)return json({error:error.message},500)
+    const rows=data??[]
+    const roleIds=[...new Set(rows.map((r:any)=>r.requested_role_id).filter(Boolean))]
+    let roleMap:Record<string,string>={}
+    if(roleIds.length){const {data:roles}=await adminDb.schema('admin').from('roles').select('id,name').in('id',roleIds); roleMap=Object.fromEntries((roles??[]).map((r:any)=>[r.id,r.name]))}
+    const enriched=rows.map((r:any)=>({...r,requester_user_id:r.requester_id,requested_role:roleMap[r.requested_role_id]??r.requested_role_id}))
+    return json({data:enriched})
+  }
   if (action === 'audit.append') { if(!allowed('authorization.manage'))return json({error:'Permission denied'},403); const audit=body.audit??{}; const {error}=await adminDb.schema('admin').from('audit_log').insert({actor_user_id:user.id,actor_role:role.key,action:audit.action??'admin.action',target_schema:audit.target_schema??null,target_table:audit.target_table??null,target_id:audit.target_id??null,before_data:audit.before_data??null,after_data:audit.after_data??null,metadata:{...(audit.metadata??{}),source:'mela-central-dashboard'},request_id:requestId}); if(error)return json({error:error.message},500); return json({ok:true}) }
   return json({error:'Unknown admin action'},400)
+  } catch (error) {
+    if (error instanceof AuditWriteError) return json({ error: 'The operation completed but its audit record failed. Do not repeat the action; check the record and contact support.', code: 'AUDIT_WRITE_FAILED', request_id: requestId }, 500)
+    return json({ error: 'The request could not be completed. Refresh the record before retrying.', code: 'ADMIN_REQUEST_FAILED', request_id: requestId }, 500)
+  }
 })

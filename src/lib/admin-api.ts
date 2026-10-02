@@ -60,7 +60,7 @@ export async function adminApi(
 
   const requestId = crypto.randomUUID()
   const { data, error } = await client.functions.invoke('mela-admin-api', {
-    body: { action, ...body },
+    body: { ...body, action },
     headers: {
       'x-request-id': requestId,
       Authorization: `Bearer ${session.access_token}`,
@@ -68,8 +68,9 @@ export async function adminApi(
   })
 
   if (error) {
-    throw Object.assign(new Error(error.message || 'Administrative request failed'), {
-      code: 'ADMIN_API_ERROR',
+    const detail = error.context instanceof Response ? await error.context.clone().json().catch(() => null) : null
+    throw Object.assign(new Error(detail?.error || error.message || 'Administrative request failed'), {
+      code: detail?.code ?? 'ADMIN_API_ERROR',
       cause: error,
     })
   }

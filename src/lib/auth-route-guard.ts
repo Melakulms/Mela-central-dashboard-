@@ -30,7 +30,7 @@ export type RouteDecision =
   | { allowed: false; reason: 'AUTH_REQUIRED' | 'ADMIN_REQUIRED' | 'PERMISSION_DENIED' | 'INVALID_SECTION' }
 
 export function isProtectedSection(value: string): value is ProtectedSection {
-  return value === 'overview' || value in SECTION_PERMISSIONS
+  return value === 'overview' || Object.hasOwn(SECTION_PERMISSIONS, value)
 }
 
 export function sectionPermission(section: ProtectedSection): string | null {

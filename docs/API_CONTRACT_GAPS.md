@@ -6,7 +6,9 @@ The production Supabase project currently exposes the core operational tables us
 
 ## Current API coverage
 
-Implemented in `mela-admin-api`: dashboard, queues, commission.list, commission.inspect, commission.cancel, authorization.matrix, audit.list, access.list, audit.append, and me.
+Implemented in `mela-admin-api`: me, dashboard, permission-filtered queues, user list/inspect/update, employer list/review, opportunity list/review, payment/payout lists, moderation list/report resolution, feature-flag list/update, commission list/inspect/cancel/summary, authorization matrix, access list, and audit list/append.
+
+The UI now reads live operational modules, but approval controls and a dedicated dispute workflow are incomplete. Mutation and audit writes are not yet atomic. See LAUNCH_READINESS.md for verification evidence and remaining release gates.
 
 The remaining operational UI modules require explicit API handlers before they can be considered functionally complete. Do not treat navigation or UI rendering as backend authorization.
 
