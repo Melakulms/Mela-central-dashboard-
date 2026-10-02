@@ -4,7 +4,8 @@ const cors={
   'Access-Control-Allow-Origin':'*',
   'Access-Control-Allow-Headers':'authorization, apikey, content-type',
   'Access-Control-Allow-Methods':'POST, OPTIONS',
-  'Content-Type':'application/json'
+  'Content-Type':'application/json',
+  'Cache-Control':'no-store'
 };
 function json(d:unknown,s=200){return new Response(JSON.stringify(d),{status:s,headers:cors})}
 async function authenticatedUser(req:Request){
@@ -23,8 +24,7 @@ async function featureAvailable(key:string){return (await rest('rpc/platform_fea
 async function notify(user_id:string,title:string,body:string,ref_table?:string,ref_id?:string){try{await rest('notifications',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({user_id,title,body,ref_table:ref_table||null,ref_id:ref_id||null})})}catch(e){console.error('notify',e)}}
 function paymentMode(){return Deno.env.get('MELA_PAYMENT_MODE')==='live'?'live':'test'}
 function chapaKey(){const key=Deno.env.get('CHAPA_SECRET_KEY');if(!key)throw Object.assign(new Error('Chapa secret key is not configured.'),{status:503,code:'CHAPA_NOT_CONFIGURED'});const mode=paymentMode();if(mode==='test'&&!/TEST/i.test(key))throw Object.assign(new Error('Test mode requires a Chapa TEST secret key.'),{status:503,code:'CHAPA_TEST_KEY_REQUIRED'});if(mode==='live'&&/TEST/i.test(key))throw Object.assign(new Error('Live mode requires a Chapa live secret key.'),{status:503,code:'CHAPA_LIVE_KEY_REQUIRED'});return key}
-async function isAdmin(uid:string){const r=await rest(`profiles?id=eq.${uid}&select=role,account_status,deleted_at&limit=1`);return r?.[0]?.role==='admin'&&r[0].account_status==='active'&&!r[0].deleted_at}
-async function hasEmployerAccess(uid:string,employerId:string){if(await isAdmin(uid))return true;const e=await rest(`employers?id=eq.${employerId}&select=owner_id&limit=1`);if(e?.[0]?.owner_id===uid)return true;const m=await rest(`employer_members?employer_id=eq.${employerId}&user_id=eq.${uid}&status=eq.active&member_role=in.(admin,hiring_manager,recruiter)&select=id&limit=1`);return !!m?.length}
+async function hasEmployerAccess(uid:string,employerId:string){const e=await rest(`employers?id=eq.${employerId}&select=owner_id&limit=1`);if(e?.[0]?.owner_id===uid)return true;const m=await rest(`employer_members?employer_id=eq.${employerId}&user_id=eq.${uid}&status=eq.active&member_role=in.(admin,hiring_manager,recruiter)&select=id&limit=1`);return !!m?.length}
 async function getEscrowContext(escrowId:string){
   const es=(await rest(`escrow_transactions?id=eq.${escrowId}&select=id,status,amount_minor,currency,contract_id,task_id,user_id,funded_at,transaction_type&limit=1`))?.[0];
   if(!es)throw Object.assign(new Error('Escrow not found'),{status:404});
