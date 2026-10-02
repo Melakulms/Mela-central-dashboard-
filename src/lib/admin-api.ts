@@ -12,10 +12,19 @@ export type AdminMe = {
   mfa: { currentLevel?: string; nextLevel?: string }
 }
 
+const LEGACY_ADMIN_STORAGE_KEY = 'mela-central-admin-auth'
+
 export function createAdminClient() {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
   if (!url || !key) throw new Error('Missing Supabase public configuration')
+
+  // Older builds persisted the privileged session under this origin-wide key.
+  // Remove it before creating the non-persistent client so an old refresh/access
+  // token is not left readable by another application on the shared origin.
+  if (typeof window !== 'undefined') {
+    try { window.localStorage.removeItem(LEGACY_ADMIN_STORAGE_KEY) } catch { /* storage may be unavailable */ }
+  }
 
   return createClient(url, key, {
     auth: {
