@@ -11,7 +11,7 @@ Both frontends are deployed to GitHub Pages. The database repairs below are appl
 - Deployed `mela-admin-api` version 20 with JWT enforcement. It checks MFA against the validated bearer token, restricts operational queues by module permission, bounds pagination, validates request shapes, prevents caching, and applies privileged changes together with their audit records in one database transaction.
 - Imported existing deployed API corrections into the repository, including moderation statuses, feature-flag counts, commission summaries, and access-request role names.
 
-The twelve new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
+The thirteen new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
 
 - Added a service-only, action/column-whitelisted audited update RPC, permission checks, target-row locks, and stale-record conflict rejection. Corrected user/employer/report status lists against live constraints and rejected string booleans.
 - Live transactional regression confirms update plus audit, stale-write rejection, unsupported-column rejection, non-admin rejection, and denied browser execution. Test records were rolled back. API regression simulates database RPC failures; an actual audit-insert outage was not induced.
@@ -64,3 +64,5 @@ Merged consumer PR #5 and admin PR #1. Runtime correction commits: consumer `9b5
 - Study Materials now opens content through the existing entitlement-checking material RPC and respects a locked response even if library access has changed. Content is rendered as text, without executing embedded HTML. Live RPC verification confirms free access and paid-content locking without an entitlement.
 - Practice now accepts written answers for questions without choices, blocks additional submissions while saving, and shows pending grading without labeling it incorrect.
 - Current local regression totals: 20 consumer tests plus 29 admin/API/finance tests, all passing. Both production builds pass. Security-advisor counts remain 109 authenticated SECURITY DEFINER notices, nine no-policy informational notices, and the existing leaked-password-protection warning.
+
+- A four-player batch regression initially reproduced duplicate matchmaking: a cursor row already paired as another player was reused. The matcher now skips queue rows already marked matched. The same rollback-only regression passes with exactly two matches and one match per player.
