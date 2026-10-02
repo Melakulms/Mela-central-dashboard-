@@ -2,7 +2,6 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2.116.0'
 
 const cors = { 'Access-Control-Allow-Origin': Deno.env.get('ADMIN_APP_ORIGIN') ?? 'https://central-dashboard-gamma.vercel.app', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-request-id', 'Access-Control-Allow-Methods': 'POST, OPTIONS' }
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
 const safeCount = async (db: any, table: string, column = 'id') => { const { count, error } = await db.from(table).select(column, { count: 'exact', head: true }); return error ? null : count }
 const cleanSearch = (value: unknown) => String(value ?? '').trim().slice(0, 200).replace(/[^\p{L}\p{N}@+ .-]/gu, '')
 const limitOf = (value: unknown, max = 100) => { const number = Number(value ?? 50); return Number.isFinite(number) ? Math.min(Math.max(Math.trunc(number), 1), max) : 50 }
@@ -10,9 +9,14 @@ const limitOf = (value: unknown, max = 100) => { const number = Number(value ?? 
 
 
 Deno.serve(async (req) => {
+  const origin=req.headers.get('Origin')
+  const allowedOrigins=new Set(['https://melakulms.github.io','https://central-dashboard-gamma.vercel.app',Deno.env.get('ADMIN_APP_ORIGIN')].filter(Boolean))
+  const responseCors={...cors,'Access-Control-Allow-Origin':origin && allowedOrigins.has(origin)?origin:'https://melakulms.github.io','Vary':'Origin'}
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {status,headers:{...responseCors,'Content-Type':'application/json','Cache-Control':'no-store'}})
+  if(origin&&!allowedOrigins.has(origin))return json({error:'Origin is not allowed'},403)
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
   try {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: responseCors })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) return json({ error: 'Authentication required' }, 401)

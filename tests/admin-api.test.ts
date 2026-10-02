@@ -43,13 +43,19 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
     { env: { get: () => 'test-config' }, serve: (callback: typeof handler) => { handler = callback } },
     () => calls++ % 2 === 0 ? caller : database,
   )
-  const request = (body: unknown, authenticated = true) => handler!(new Request('https://example.invalid/admin', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) }, body: JSON.stringify(body),
+  const request = (body: unknown, authenticated = true, origin?:string) => handler!(new Request('https://example.invalid/admin', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...(origin?{Origin:origin}:{}), ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) }, body: JSON.stringify(body),
   }))
   return { request, queried, ranges, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
 }
 
 describe('Admin API security boundary', () => {
+  it('allows GitHub Pages and rejects untrusted browser origins',async()=>{
+    const response=await server([]).request({action:'me'},true,'https://melakulms.github.io')
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://melakulms.github.io')
+    expect((await server([]).request({action:'me'},true,'https://untrusted.invalid')).status).toBe(403)
+  })
   it('rejects requests without an authenticated session', async () => {
     expect((await server([]).request({ action: 'me' }, false)).status).toBe(401)
     expect((await server([], { user: false }).request({ action: 'me' })).status).toBe(401)
