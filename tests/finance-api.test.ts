@@ -3,7 +3,8 @@ import ts from 'typescript'
 import {describe,it,expect,vi} from 'vitest'
 const source=readFileSync(new URL('../supabase/functions/mela-finance/index.ts',import.meta.url),'utf8').replace(/^import .*\n/gm,'')
 const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText
-function api(status='pending',enabled=true,provider:any={status:'success',data:{status:'pending'}},valid=true){
+const defaultProvider={status:'success',data:{status:'pending'}}
+function api(status='pending',enabled=true,provider:any=defaultProvider,valid=true,employerOwner='actor-id',employerMember=false){
  let handler:any
  const payout={id:'payout-id',milestone_id:'milestone-id',escrow_id:'escrow-id',payout_ref:'payout-reference',amount_minor:1000,currency:'ETB',status}
  const requests:{url:string;method:string}[]=[]
@@ -14,6 +15,8 @@ function api(status='pending',enabled=true,provider:any={status:'success',data:{
   else if(url.includes('rpc/platform_feature_available'))body=enabled
   else if(url.includes('task_milestones?'))body=[{id:'milestone-id',contract_id:'contract-id',status:'approved'}]
   else if(url.includes('freelance_contracts?'))body=[{id:'contract-id',employer_id:'employer-id',freelancer_id:'student-id'}]
+  else if(url.includes('employers?'))body=employerOwner?[{owner_id:employerOwner}]:[]
+  else if(url.includes('employer_members?'))body=employerMember?[{id:'membership-id'}]:[]
   else if(url.includes('profiles?'))body=[{role:'admin',account_status:'active'}]
   else if(url.includes('payout_requests?')&&init.method!=='PATCH')body=[payout]
   else if(url.includes('payout_accounts?'))body=[{account_name:'Test account',account_number:'123',bank_code:1}]
@@ -38,4 +41,11 @@ describe('Finance transfer boundary',()=>{
  it('does not mistake an API success envelope for a paid transfer',async()=>{const server=api('queued',true,{status:'success'});await server.request('verify_payout');expect(server.requests.some(r=>r.url.includes('rpc/record_milestone_payout'))).toBe(false)})
  it('rejects mismatched successful verification',async()=>{const server=api('queued',true,{data:{status:'success',reference:'wrong',amount:10,currency:'ETB'}});await server.request('verify_payout');expect(server.requests.some(r=>r.url.includes('rpc/record_milestone_payout'))).toBe(false)})
  it('rejects an invalid session before reading financial records',async()=>{const server=api('pending',true,{},false);expect((await server.request('payout')).status).toBe(401);expect(server.requests).toHaveLength(1)})
+ it('does not let an admin profile impersonate an unrelated employer',async()=>{
+  const server=api('pending',true,defaultProvider,true,'different-user',false)
+  expect((await server.request('payout')).status).toBe(403)
+  expect(server.requests.some(r=>r.url.includes('profiles?'))).toBe(false)
+  expect(server.requests.some(r=>r.url.includes('rpc/claim_mela_payout'))).toBe(false)
+  expect(server.requests.some(r=>r.url.endsWith('/v1/transfers'))).toBe(false)
+ })
 })
