@@ -25,8 +25,11 @@ check_auth() {
 }
 
 check_data() {
-  echo "Checking Supabase Data API availability"
-  curl "${curl_common[@]}" --output /dev/null -H "apikey: $SUPABASE_PUBLISHABLE_KEY" "$SUPABASE_URL/rest/v1/"
+  echo "Checking application Data API access through platform_languages"
+  curl "${curl_common[@]}" --output /dev/null \
+    -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+    -H "Accept: application/json" \
+    "$SUPABASE_URL/rest/v1/platform_languages?select=language_code&enabled=eq.true&limit=1"
 }
 
 check_admin_api() {
