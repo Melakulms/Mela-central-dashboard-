@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 const source = readFileSync(new URL('../supabase/functions/mela-admin-api/index.ts', import.meta.url), 'utf8').replace(/^import .*\n/gm, '')
 const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
 
-function server(permissions: string[], options: { user?: boolean; admin?: boolean; aal?: string; fixtures?: Record<string, object> } = {}) {
+function server(permissions: string[], options: { user?: boolean; admin?: boolean; aal?: string; fixtures?: Record<string, object>; rpcError?: object } = {}) {
   let handler: (request: Request) => Promise<Response>
   const queried: string[] = []
   const ranges: unknown[][] = []
@@ -23,7 +23,9 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
     getUser: vi.fn().mockResolvedValue({ data: { user: options.user === false ? null : { id: 'admin-id' } }, error: null }),
     mfa: { getAuthenticatorAssuranceLevel: vi.fn().mockResolvedValue({ data: { currentLevel: options.aal ?? 'aal2' } }) },
   } }
+  const rpc = vi.fn().mockResolvedValue({data: {id: "updated-id"}, error: options.rpcError ?? null})
   const database: any = {
+    rpc,
     schema: () => database,
     from: (table: string) => {
       queried.push(table)
@@ -39,12 +41,12 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
   let calls = 0
   new Function('Deno', 'createClient', code)(
     { env: { get: () => 'test-config' }, serve: (callback: typeof handler) => { handler = callback } },
-    () => calls++ === 0 ? caller : database,
+    () => calls++ % 2 === 0 ? caller : database,
   )
   const request = (body: unknown, authenticated = true) => handler!(new Request('https://example.invalid/admin', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) }, body: JSON.stringify(body),
   }))
-  return { request, queried, ranges, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
+  return { request, queried, ranges, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
 }
 
 describe('Admin API security boundary', () => {
@@ -85,15 +87,24 @@ describe('Admin API security boundary', () => {
     expect(api.ranges).toEqual([[0, 49]])
     expect(response.headers.get('Cache-Control')).toBe('no-store')
   })
-  it('reports audit persistence failures instead of returning success after a mutation', async () => {
-    const api = server(['finance.manage'], { fixtures: {
+  it('uses one transactional RPC and reports rollback failures', async () => {
+    const api = server(['finance.manage'], { rpcError: {code:'23514'}, fixtures: {
       invitation_commissions: { data: { id: 'commission-id', status: 'pending' }, error: null },
-      audit_log: { error: new Error('Audit database unavailable') },
     } })
     const response = await api.request({ action: 'commission.cancel', commission_id: 'commission-id', reason: 'Regression test' })
     expect(response.status).toBe(500)
-    const body = await response.json()
-    expect(body.code).toBe('AUDIT_WRITE_FAILED')
-    expect(body.error).toContain('Do not repeat')
+    expect((await response.json()).code).toBe('ADMIN_UPDATE_FAILED')
+    expect(api.rpc).toHaveBeenCalledWith('apply_audited_update', expect.objectContaining({p_action:'commission.cancel',p_expected:{id:'commission-id',status:'pending'}}))
+    expect(api.queried).not.toContain('audit_log')
+  })
+  it('returns conflict when the locked record changed', async () => {
+    const api = server(['users.manage'], {rpcError:{code:'40001'},fixtures:{profiles:{data:{id:'user-id',account_status:'active'}}}})
+    expect((await api.request({action:'user.update',user_id:'user-id',account_status:'suspended'})).status).toBe(409)
+  })
+  it('rejects string booleans and statuses outside the live schema', async () => {
+    const api = server(['users.manage'], {fixtures:{profiles:{data:{id:'user-id'}}}})
+    expect((await api.request({action:'user.update',user_id:'user-id',email_verified:'false'})).status).toBe(400)
+    expect((await api.request({action:'user.update',user_id:'user-id',account_status:'restricted'})).status).toBe(400)
+    expect(api.rpc).not.toHaveBeenCalled()
   })
 })

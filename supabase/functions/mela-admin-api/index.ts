@@ -7,7 +7,7 @@ const safeCount = async (db: any, table: string, column = 'id') => { const { cou
 const cleanSearch = (value: unknown) => String(value ?? '').trim().slice(0, 200).replace(/[^\p{L}\p{N}@+ .-]/gu, '')
 const limitOf = (value: unknown, max = 100) => { const number = Number(value ?? 50); return Number.isFinite(number) ? Math.min(Math.max(Math.trunc(number), 1), max) : 50 }
 
-class AuditWriteError extends Error {}
+
 
 Deno.serve(async (req) => {
   const requestId = req.headers.get('x-request-id') ?? crypto.randomUUID()
@@ -41,7 +41,17 @@ Deno.serve(async (req) => {
   const action = body.action
   const isSuper = role.key === 'super_admin'
   const allowed = (permission: string) => isSuper || permissions.includes(permission)
-  const appendAudit = async (audit: any) => { const { error } = await adminDb.schema('admin').from('audit_log').insert({ actor_user_id:user.id, actor_role:role.key, action:audit.action, target_schema:audit.target_schema ?? 'public', target_table:audit.target_table ?? null, target_id:audit.target_id ?? null, before_data:audit.before_data ?? null, after_data:audit.after_data ?? null, metadata:{ ...(audit.metadata ?? {}), source:'mela-central-dashboard' }, request_id:requestId }); if (error) throw new AuditWriteError('Audit persistence failed') }
+  const auditedUpdate = async (target: string, expected: any, patch: any, metadata: any = {}) => {
+    const { data, error } = await adminDb.schema('admin').rpc('apply_audited_update', {
+      p_actor: user.id, p_action: action, p_target: target, p_expected: expected,
+      p_patch: patch, p_request_id: requestId, p_metadata: metadata,
+    })
+    if (error) {
+      const status = error.code === '40001' ? 409 : error.code === 'P0002' ? 404 : error.code === '42501' ? 403 : error.code === '22023' ? 400 : 500
+      return json({ error: status === 409 ? 'Record changed; refresh before retrying' : 'The update was not applied. Refresh the record before retrying.', code: 'ADMIN_UPDATE_FAILED', request_id: requestId }, status)
+    }
+    return json({ data })
+  }
   if (action === 'me') return json({ user:{id:user.id,email:user.email}, role, permissions, mfa:assurance })
 
   if (action === 'dashboard') {
@@ -62,7 +72,7 @@ Deno.serve(async (req) => {
     await load('reports','reports',['pending','open','review','escalated'],'moderation.manage')
     await load('payouts','payout_requests',['pending','queued','failed','review'],'finance.manage')
     if (allowed('moderation.manage')) {
-    const {data:attempts}=await adminDb.from('assessment_attempts').select('*').in('proctor_status',['pending_review','review','flagged'],'employers.manage').order('started_at',{ascending:false}).limit(50); queues.proctor_reviews=attempts??[]
+    const {data:attempts}=await adminDb.from('assessment_attempts').select('*').in('proctor_status',['pending_review','review','flagged']).order('started_at',{ascending:false}).limit(50); queues.proctor_reviews=attempts??[]
     const {data:integrity}=await adminDb.from('arena_integrity_events').select('*').gte('severity',2).order('created_at',{ascending:false}).limit(50); queues.arena_integrity=integrity??[]
     }
     return json(queues)
@@ -89,12 +99,12 @@ Deno.serve(async (req) => {
 
   if (action === 'user.update') {
     if (!allowed('users.manage')) return json({error:'Permission denied'},403)
-    const userId=String(body.user_id??''); const nextStatus=body.account_status===undefined?undefined:String(body.account_status); const statuses=['active','suspended','pending','restricted','deactivated']
+    const userId=String(body.user_id??''); const nextStatus=body.account_status===undefined?undefined:String(body.account_status); const statuses=['active','suspended','pending_verification','banned','deleted']
     if(!userId)return json({error:'User ID is required'},400); if(nextStatus!==undefined&&!statuses.includes(nextStatus))return json({error:'Invalid account status'},400); if(userId===user.id&&nextStatus&&nextStatus!=='active')return json({error:'You cannot deactivate or suspend your current admin account here'},409)
     const {data:existing,error:readError}=await adminDb.from('profiles').select('id,account_status,email_verified,phone_verified').eq('id',userId).maybeSingle(); if(readError)return json({error:'Unable to read user'},500); if(!existing)return json({error:'User not found'},404)
-    const patch:Record<string,unknown>={}; if(nextStatus!==undefined)patch.account_status=nextStatus; if(body.email_verified!==undefined)patch.email_verified=Boolean(body.email_verified); if(body.phone_verified!==undefined)patch.phone_verified=Boolean(body.phone_verified); if(!Object.keys(patch).length)return json({error:'No supported changes supplied'},400)
-    const {data:updated,error:updateError}=await adminDb.from('profiles').update(patch).eq('id',userId).select('id,account_status,email_verified,phone_verified,updated_at').maybeSingle(); if(updateError)return json({error:'Unable to update user'},500); if(!updated)return json({error:'User changed concurrently; no update performed'},409)
-    await appendAudit({action:'user.update',target_table:'profiles',target_id:userId,before_data:existing,after_data:updated,metadata:{changed_fields:Object.keys(patch)}}); return json({data:updated})
+    const patch:Record<string,unknown>={}; if(nextStatus!==undefined)patch.account_status=nextStatus; for(const field of ['email_verified','phone_verified']) { if(body[field]!==undefined) { if(typeof body[field]!=='boolean')return json({error:'Verification fields require true or false'},400); patch[field]=body[field] } } if(!Object.keys(patch).length)return json({error:'No supported changes supplied'},400)
+
+    return auditedUpdate(userId,existing,patch,{changed_fields:Object.keys(patch)})
   }
 
   if (action === 'employers.list') {
@@ -103,9 +113,9 @@ Deno.serve(async (req) => {
   }
   if (action === 'employer.review') {
     if (!allowed('employers.manage')) return json({error:'Permission denied'},403)
-    const id=String(body.request_id??''); const next=String(body.status??''); const notes=String(body.review_notes??'').trim(); if(!id||!['approved','rejected','pending','review'].includes(next))return json({error:'Request ID and valid status are required'},400)
+    const id=String(body.request_id??''); const next=String(body.status??''); const notes=String(body.review_notes??'').trim(); if(!id||!['approved','rejected','pending','under_review'].includes(next))return json({error:'Request ID and valid status are required'},400)
     const {data:existing,error:r}=await adminDb.from('employer_registration_requests').select('*').eq('id',id).maybeSingle(); if(r)return json({error:'Unable to read employer request'},500); if(!existing)return json({error:'Employer request not found'},404)
-    const {data:updated,error:u}=await adminDb.from('employer_registration_requests').update({status:next,review_notes:notes||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('id',id).select('*').maybeSingle(); if(u)return json({error:'Unable to update employer request'},500); await appendAudit({action:'employer.review',target_table:'employer_registration_requests',target_id:id,before_data:existing,after_data:updated,metadata:{status:next}}); return json({data:updated})
+    return auditedUpdate(id,existing,{status:next,review_notes:notes||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()},{status:next})
   }
 
   if (action === 'opportunities.list') {
@@ -117,7 +127,7 @@ Deno.serve(async (req) => {
     const id=String(body.opportunity_id??''); const status=String(body.moderation_status??''); const notes=String(body.moderation_notes??'').trim(); if(!id||!['approved','rejected','pending_review','flagged'].includes(status))return json({error:'Opportunity ID and valid moderation status are required'},400)
     const {data:existing,error:r}=await adminDb.from('opportunities').select('*').eq('id',id).maybeSingle(); if(r)return json({error:'Unable to read opportunity'},500); if(!existing)return json({error:'Opportunity not found'},404)
     const patch:any={moderation_status:status,moderation_notes:notes||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}; patch.verified_active=status==='approved'
-    const {data:updated,error:u}=await adminDb.from('opportunities').update(patch).eq('id',id).select('id,title,status,moderation_status,verified_active,moderation_notes,reviewed_by,reviewed_at,updated_at').maybeSingle(); if(u)return json({error:'Unable to review opportunity'},500); await appendAudit({action:'opportunity.review',target_table:'opportunities',target_id:id,before_data:existing,after_data:updated,metadata:{status}}); return json({data:updated})
+    return auditedUpdate(id,existing,patch,{status})
   }
 
   if (action === 'payments.list') {
@@ -136,9 +146,9 @@ Deno.serve(async (req) => {
   }
   if (action === 'report.resolve') {
     if (!allowed('moderation.manage')) return json({error:'Permission denied'},403)
-    const id=String(body.report_id??''); const status=String(body.status??'resolved'); const notes=String(body.resolution_notes??'').trim(); if(!id||!['resolved','dismissed','escalated'].includes(status))return json({error:'Report ID and valid status are required'},400)
+    const id=String(body.report_id??''); const status=String(body.status??'resolved'); const notes=String(body.resolution_notes??'').trim(); if(!id||!['resolved','dismissed','reviewing'].includes(status))return json({error:'Report ID and valid status are required'},400)
     const {data:existing,error:r}=await adminDb.from('reports').select('*').eq('id',id).maybeSingle(); if(r)return json({error:'Unable to read report'},500); if(!existing)return json({error:'Report not found'},404)
-    const {data:updated,error:u}=await adminDb.from('reports').update({status,resolution_notes:notes||null,assigned_to:user.id,resolved_at:status==='resolved'||status==='dismissed'?new Date().toISOString():null}).eq('id',id).select('*').maybeSingle(); if(u)return json({error:'Unable to update report'},500); await appendAudit({action:'report.resolve',target_table:'reports',target_id:id,before_data:existing,after_data:updated,metadata:{status}}); return json({data:updated})
+    return auditedUpdate(id,existing,{status,resolution_notes:notes||null,assigned_to:user.id,resolved_at:status==='resolved'||status==='dismissed'?new Date().toISOString():null},{status})
   }
 
   if (action === 'settings.flags') {
@@ -148,7 +158,7 @@ Deno.serve(async (req) => {
   if (action === 'settings.flag.update') {
     if (!allowed('system.manage')) return json({error:'Permission denied'},403)
     const featureKey=String(body.feature_key??''); if(!featureKey)return json({error:'Feature key is required'},400); const {data:existing,error:r}=await adminDb.from('platform_feature_flags').select('*').eq('feature_key',featureKey).maybeSingle(); if(r)return json({error:'Unable to read feature flag'},500); if(!existing)return json({error:'Feature flag not found'},404)
-    const patch:any={}; if(body.enabled!==undefined)patch.enabled=Boolean(body.enabled); if(body.maintenance_message!==undefined)patch.maintenance_message=String(body.maintenance_message); if(body.config!==undefined)patch.config=body.config; patch.updated_by=user.id; patch.updated_at=new Date().toISOString(); const {data:updated,error:u}=await adminDb.from('platform_feature_flags').update(patch).eq('feature_key',featureKey).select('*').maybeSingle(); if(u)return json({error:'Unable to update feature flag'},500); await appendAudit({action:'settings.flag.update',target_table:'platform_feature_flags',target_id:featureKey,before_data:existing,after_data:updated,metadata:{changed_fields:Object.keys(patch)}}); return json({data:updated})
+    const patch:any={}; if(body.enabled!==undefined){if(typeof body.enabled!=='boolean')return json({error:'Enabled must be true or false'},400);patch.enabled=body.enabled;} if(body.maintenance_message!==undefined)patch.maintenance_message=String(body.maintenance_message); if(body.config!==undefined)patch.config=body.config; patch.updated_by=user.id; patch.updated_at=new Date().toISOString(); return auditedUpdate(featureKey,existing,patch,{changed_fields:Object.keys(patch)})
   }
 
   if (action === 'commission.list') {
@@ -158,7 +168,7 @@ Deno.serve(async (req) => {
     if (!allowed('finance.manage')) return json({error:'Permission denied'},403); const id=String(body.commission_id??''); if(!id)return json({error:'Commission ID is required'},400); const {data,error}=await adminDb.from('invitation_commissions').select('*').eq('id',id).maybeSingle(); if(error)return json({error:error.message},500); if(!data)return json({error:'Commission not found'},404); return json({data})
   }
   if (action === 'commission.cancel') {
-    if (!allowed('finance.manage')) return json({error:'Permission denied'},403); const id=String(body.commission_id??''); const reason=String(body.reason??'').trim(); if(!id||!reason)return json({error:'Commission ID and cancellation reason are required'},400); if(reason.length>500)return json({error:'Cancellation reason must be 500 characters or fewer'},400); const {data:existing,error:r}=await adminDb.from('invitation_commissions').select('*').eq('id',id).maybeSingle(); if(r)return json({error:r.message},500); if(!existing)return json({error:'Commission not found'},404); if(existing.status==='cancelled')return json({data:existing,already_cancelled:true}); if(existing.status==='paid')return json({error:'Paid commissions require a separate reversal workflow'},409); const {data:updated,error:u}=await adminDb.from('invitation_commissions').update({status:'cancelled',cancelled_at:new Date().toISOString(),cancellation_reason:reason}).eq('id',id).eq('status','pending').select('*').maybeSingle(); if(u)return json({error:u.message},500); if(!updated)return json({error:'Commission changed concurrently; no cancellation performed'},409); await appendAudit({action:'commission.cancel',target_table:'invitation_commissions',target_id:id,before_data:existing,after_data:updated,metadata:{reason}}); return json({data:updated})
+    if (!allowed('finance.manage')) return json({error:'Permission denied'},403); const id=String(body.commission_id??''); const reason=String(body.reason??'').trim(); if(!id||!reason)return json({error:'Commission ID and cancellation reason are required'},400); if(reason.length>500)return json({error:'Cancellation reason must be 500 characters or fewer'},400); const {data:existing,error:r}=await adminDb.from('invitation_commissions').select('*').eq('id',id).maybeSingle(); if(r)return json({error:r.message},500); if(!existing)return json({error:'Commission not found'},404); if(existing.status==='cancelled')return json({data:existing,already_cancelled:true}); if(existing.status==='paid')return json({error:'Paid commissions require a separate reversal workflow'},409); return auditedUpdate(id,existing,{status:'cancelled',cancelled_at:new Date().toISOString(),cancellation_reason:reason},{reason})
   }
 
   if (action === 'commission.summary') {
@@ -188,7 +198,6 @@ Deno.serve(async (req) => {
   if (action === 'audit.append') { if(!allowed('authorization.manage'))return json({error:'Permission denied'},403); const audit=body.audit??{}; const {error}=await adminDb.schema('admin').from('audit_log').insert({actor_user_id:user.id,actor_role:role.key,action:audit.action??'admin.action',target_schema:audit.target_schema??null,target_table:audit.target_table??null,target_id:audit.target_id??null,before_data:audit.before_data??null,after_data:audit.after_data??null,metadata:{...(audit.metadata??{}),source:'mela-central-dashboard'},request_id:requestId}); if(error)return json({error:error.message},500); return json({ok:true}) }
   return json({error:'Unknown admin action'},400)
   } catch (error) {
-    if (error instanceof AuditWriteError) return json({ error: 'The operation completed but its audit record failed. Do not repeat the action; check the record and contact support.', code: 'AUDIT_WRITE_FAILED', request_id: requestId }, 500)
     return json({ error: 'The request could not be completed. Refresh the record before retrying.', code: 'ADMIN_REQUEST_FAILED', request_id: requestId }, 500)
   }
 })

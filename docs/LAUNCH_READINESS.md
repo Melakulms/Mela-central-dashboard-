@@ -8,10 +8,13 @@ Public launch is not yet verified. The database repairs below are applied; the f
 - Removed equivalent owner-role shortcuts from profile security triggers.
 - Repaired signup and profile-completion language values to match the actual profile constraint.
 - Allowed the trusted signup trigger to create referral codes without an end-user session. Removed anonymous and authenticated execution of the automatic commission-processing function.
-- Deployed `mela-admin-api` version 17 with JWT enforcement. It checks MFA against the validated bearer token, restricts operational queues by module permission, bounds pagination, validates request shapes, prevents caching, and reports failed audit writes explicitly.
+- Deployed `mela-admin-api` version 18 with JWT enforcement. It checks MFA against the validated bearer token, restricts operational queues by module permission, bounds pagination, validates request shapes, prevents caching, and applies privileged changes together with their audit records in one database transaction.
 - Imported existing deployed API corrections into the repository, including moderation statuses, feature-flag counts, commission summaries, and access-request role names.
 
-The four new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
+The six new migration filenames match the versions recorded in the live database. Do not apply them again to that project.
+
+- Added a service-only, action/column-whitelisted audited update RPC, permission checks, target-row locks, and stale-record conflict rejection. Corrected user/employer/report status lists against live constraints and rejected string booleans.
+- Live transactional regression confirms update plus audit, stale-write rejection, unsupported-column rejection, non-admin rejection, and denied browser execution. Test records were rolled back. API regression simulates database RPC failures; an actual audit-insert outage was not induced.
 
 ## Frontend changes awaiting deployment
 
@@ -22,7 +25,7 @@ The four new migration filenames match the versions recorded in the live databas
 ## Verification evidence
 
 - Consumer app: 7 regression tests; production build passes.
-- Admin app/API: 11 regression tests; production build passes.
+- Admin app/API: 13 regression tests; production build passes.
 - Live database: transactional tests pass for creation and confirmation triggers for student, parent, teacher, and company accounts; parent/teacher/company profile completion; practice start/submit/complete; parent invitation redemption; and rejection of self-promotion. All test records were rolled back. These tests do not replace an HTTP signup and email-delivery test.
 - Live admin endpoint: requests without authentication return HTTP 401.
 - 263 public/admin tables inspected; all have RLS enabled.
@@ -32,7 +35,6 @@ The four new migration filenames match the versions recorded in the live databas
 
 1. Identify the actual frontend hosting projects. The connected Vercel team currently returns no projects. Deploy these branches and verify production environment configuration and SPA routing.
 2. Verify signup email delivery, configured redirect allowlists, password reset, and administrator MFA in an authenticated browser. Local browser execution was unavailable and the browser download failed.
-3. Move privileged mutations and their audit inserts into a single database transaction. Current API mutations and audit logging are separate operations; failures now return an explicit error, but the state change can still persist without an audit record.
 4. Implement and test the dedicated dispute workflow and administrative decision controls. The new operational screens are read-only; they do not constitute complete approval, payout, or dispute workflows.
 5. Complete real employer approval/posting/application tests, payment-provider sandbox verification, and a two-player Arena test.
 6. Review the remaining callable SECURITY DEFINER functions individually. The Supabase advisor reports 109 notices; many are intentional wrappers, so blanket revocation would break features. Leaked-password protection is also reported as disabled and needs configuration.

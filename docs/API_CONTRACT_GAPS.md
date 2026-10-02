@@ -28,3 +28,7 @@ New handlers must:
 ## Deployment gate
 
 Repository changes are not production verification. Live browser and end-to-end tests remain blocked until a reachable production deployment exists.
+
+## Transactional mutations — 2 October 2026
+
+All six existing admin mutation actions now call `admin.apply_audited_update`, a service-only RPC that locks and compares the target record, checks actor permissions and supported fields, and commits the update and audit together. Stale records return HTTP 409. Database constraints remain authoritative. Frontend operational decision controls and disputes still require implementation.
