@@ -57,8 +57,9 @@ export async function signOutAdmin(client: SupabaseClient) {
   if (error) throw error
 }
 
-export async function adminApi(
+async function invokeAdminFunction(
   client: SupabaseClient,
+  functionName: string,
   action: string,
   body: Record<string, unknown> = {},
 ) {
@@ -70,7 +71,7 @@ export async function adminApi(
   }
 
   const requestId = crypto.randomUUID()
-  const { data, error } = await client.functions.invoke('mela-admin-api', {
+  const { data, error } = await client.functions.invoke(functionName, {
     body: { ...body, action },
     headers: {
       'x-request-id': requestId,
@@ -93,6 +94,22 @@ export async function adminApi(
   }
 
   return data
+}
+
+export async function adminApi(
+  client: SupabaseClient,
+  action: string,
+  body: Record<string, unknown> = {},
+) {
+  return invokeAdminFunction(client, 'mela-admin-api', action, body)
+}
+
+export async function betaAdminApi(
+  client: SupabaseClient,
+  action: string,
+  body: Record<string, unknown> = {},
+) {
+  return invokeAdminFunction(client, 'mela-beta-admin', action, body)
 }
 
 export async function getAdminMe(client: SupabaseClient): Promise<AdminMe> {
