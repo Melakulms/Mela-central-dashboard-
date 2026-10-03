@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { adminApi } from '../lib/admin-api'
 import { decisionFor } from '../lib/operational-decisions'
+import BetaInvitesPanel from './BetaInvitesPanel'
 
 type Row = Record<string, unknown>
 type Group = { title: string; rows: Row[] }
@@ -89,6 +90,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
   return <section className="panel">
     {section === 'disputes' && <p>Disputed contracts remain on hold. Reviewing a report does not release escrow, pay out funds, or issue a refund. Settlement requires provider reconciliation.</p>}
     {section === 'moderation' && <p>Proctored assessment decisions are MFA-protected and audited. Clear only when the integrity evidence supports verification; void prevents credential issuance.</p>}
+    {section === 'settings' && <BetaInvitesPanel client={client}/>} 
     <p>Live operational records. Results are limited to the latest records returned by the server.</p>
     <button onClick={() => setRevision(value => value + 1)} disabled={busy || saving}>Refresh records</button>
     {success && <p role="status">{success}</p>}
