@@ -58,6 +58,32 @@ function randomCode(bytes = 24) {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 }
 
+function clientAddress(req: Request) {
+  const forwarded = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  return forwarded || req.headers.get('cf-connecting-ip')?.trim() || req.headers.get('x-real-ip')?.trim() || 'unknown'
+}
+
+async function consumeRateLimit(admin: any, keyHash: string, limit: number, windowSeconds: number) {
+  const { data, error } = await admin.rpc('consume_beta_auth_rate_limit', {
+    p_key_hash: keyHash,
+    p_limit: limit,
+    p_window_seconds: windowSeconds,
+  })
+  if (error) throw error
+  return data === true
+}
+
+async function enforceRateLimits(admin: any, req: Request, action: string, username: string) {
+  const address = clientAddress(req)
+  const ipKey = await sha256Hex(`beta-auth|${action}|ip|${address}`)
+  const subjectKey = await sha256Hex(`beta-auth|${action}|subject|${address}|${username}`)
+  const [ipAllowed, subjectAllowed] = await Promise.all([
+    consumeRateLimit(admin, ipKey, action === 'signup' ? 30 : 20, 600),
+    consumeRateLimit(admin, subjectKey, action === 'signup' ? 8 : 6, 600),
+  ])
+  return ipAllowed && subjectAllowed
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get('Origin')
   if (origin && !allowedOrigins.has(origin)) return json(req, { error: 'Origin is not allowed.' }, 403)
@@ -98,6 +124,9 @@ Deno.serve(async (req) => {
       if (fullName.length < 2 || fullName.length > 100) return json(req, { error: 'Please enter your full name.' }, 400)
       if (!validPassword(password)) return json(req, { error: 'Password must be at least 12 characters and include uppercase, lowercase, and a number.' }, 400)
       if (accessCode.length < 16 || accessCode.length > 200) return json(req, { error: 'The beta access code is invalid or expired.' }, 400)
+      if (!(await enforceRateLimits(admin, req, action, username))) {
+        return json(req, { error: 'Too many beta signup attempts. Please wait 10 minutes and try again.' }, 429)
+      }
 
       const existing = await admin.from('profiles').select('id').eq('username', username).maybeSingle()
       if (existing.data) return json(req, { error: 'That username is already in use.' }, 409)
@@ -165,6 +194,9 @@ Deno.serve(async (req) => {
       const newPassword = String((body as any).new_password ?? '')
       if (!validUsername(username) || recoveryCode.length < 20 || !validPassword(newPassword)) {
         return json(req, { error: 'The recovery details are invalid.' }, 400)
+      }
+      if (!(await enforceRateLimits(admin, req, action, username))) {
+        return json(req, { error: 'Too many recovery attempts. Please wait 10 minutes and try again.' }, 429)
       }
 
       const { data: profile } = await admin.from('profiles').select('id').eq('username', username).maybeSingle()
