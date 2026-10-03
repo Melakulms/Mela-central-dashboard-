@@ -10,7 +10,7 @@ These are conservative engineering assessments, not measured percentages of all 
 
 | Layer | Four gate scores, in order | Readiness | Blocking evidence |
 |---|---|---:|---|
-| Database | schema 1; role isolation 2; reproducible migrations 0; financial invariants 1 | 50% | Historical migration gap remains; coin/private-RLS/badge repairs applied and regression-tested |
+| Database | schema 1; role isolation 2; reproducible migrations 0; financial invariants 1 | 50% | 599 live migration records include recoverable SQL; fresh reconstruction unproven; coin/private-RLS/badge repairs tested |
 | Auth | login/onboarding 1; MFA/RBAC 1; email/recovery 0; session boundaries 1 | 38% | Real successful account/MFA and Brevo delivery not verified |
 | Admin | operational UI 1; permissions 1; audited mutations 1; certification 1 | 50% | Targeted tests exist; full 23-gate certification absent |
 | Frontend | routes 1; data contracts 1; recovery 2; complete user journeys 0 | 50% | 54 tests pass, but no full role-by-role production E2E |
@@ -24,10 +24,10 @@ See [full audit](docs/audit/FULL_AUDIT_2026-10-04.md) for module status, evidenc
 
 ## Work ledger
 
-- Consumer fixes published as 76fb503; main checks and Pages deployment run 37158029971 succeeded. Admin follow-up publication is tracked below.
+- Consumer fixes published as 76fb503; main checks and Pages deployment run 37158029971 succeeded. Admin audit/security release published as 8097a25; CI and Pages deployment run 37158517683 both passed.
 - Live security and performance advisors inspected. Public/admin RLS coverage confirmed; financial/video/challenge flags remain disabled where previously disabled.
 - Coin insert failure reproduced inside a rolled-back transaction: the trigger has an empty search path but references unqualified `profiles`.
-- Phase 2: private-table RLS, four foreign-key indexes, coin invariants and badge counters repaired. Nine rollback-only SQL regressions pass. Remaining privileged-function review, schema reconstruction and external configuration gates prevent certification. See docs/audit/PHASE_2_SECURITY_2026-10-04.md.
+- Phase 2: private-table RLS, four foreign-key indexes, coin invariants and badge counters repaired. Nine rollback-only SQL regressions pass. Both production dependency audits report zero known vulnerabilities; admin 49 tests/build rerun passed. Remaining privileged-function review, schema reconstruction and external configuration gates prevent certification. See docs/audit/PHASE_2_SECURITY_2026-10-04.md.
 
 ## Owner actions and stop conditions
 
