@@ -1,0 +1,2774 @@
+{
+  "scope": "Metadata and targeted verification, not certification",
+  "migration_inventory_before": [
+    {
+      "version": "20260809152750",
+      "name": "mela_staging_security_core"
+    },
+    {
+      "version": "20260809152923",
+      "name": "seed_mela_course_catalog"
+    },
+    {
+      "version": "20260809153037",
+      "name": "seed_free_course_lessons"
+    },
+    {
+      "version": "20260809154920",
+      "name": "add_tigrinya_somali_languages"
+    },
+    {
+      "version": "20260809155026",
+      "name": "save_signup_language_preference"
+    },
+    {
+      "version": "20260809155049",
+      "name": "expand_mela_language_preferences"
+    },
+    {
+      "version": "20260809173201",
+      "name": "mela_chapa_payment_staging"
+    },
+    {
+      "version": "20260809173247",
+      "name": "mela_payment_retry_safety"
+    },
+    {
+      "version": "20260809173755",
+      "name": "mela_chapa_webhook_event_logging"
+    },
+    {
+      "version": "20260809180848",
+      "name": "mela_ai_tutor_security_and_usage"
+    },
+    {
+      "version": "20260809180909",
+      "name": "mela_ai_tutor_session_indexes"
+    },
+    {
+      "version": "20260812200832",
+      "name": "align_mela_talent_opportunity_schema"
+    },
+    {
+      "version": "20260812200957",
+      "name": "harden_mela_roles_and_rls"
+    },
+    {
+      "version": "20260812202550",
+      "name": "complete_mela_core_database"
+    },
+    {
+      "version": "20260812202716",
+      "name": "secure_mela_complete_database"
+    },
+    {
+      "version": "20260812202750",
+      "name": "harden_mela_verification_and_assessments"
+    },
+    {
+      "version": "20260812202821",
+      "name": "explicitly_lock_private_and_legacy_tables"
+    },
+    {
+      "version": "20260812202852",
+      "name": "optimize_new_mela_relations"
+    },
+    {
+      "version": "20260812202934",
+      "name": "seed_mela_career_catalog"
+    },
+    {
+      "version": "20260812204108",
+      "name": "build_mela_career_learning_layer"
+    },
+    {
+      "version": "20260812204817",
+      "name": "complete_mela_assessment_engine"
+    },
+    {
+      "version": "20260812205016",
+      "name": "seed_mela_v1_assessment_questions"
+    },
+    {
+      "version": "20260812205053",
+      "name": "seed_mela_v1_assessment_answer_keys"
+    },
+    {
+      "version": "20260812205732",
+      "name": "complete_employer_opportunity_system_v1"
+    },
+    {
+      "version": "20260812205821",
+      "name": "harden_employer_editability_boundaries"
+    },
+    {
+      "version": "20260812211652",
+      "name": "harden_profile_role_column_privilege"
+    },
+    {
+      "version": "20260812213334",
+      "name": "complete_backend_foundation_storage_learning_matching"
+    },
+    {
+      "version": "20260812213420",
+      "name": "complete_backend_foundations"
+    },
+    {
+      "version": "20260812213435",
+      "name": "complete_backend_mentorship_workflow"
+    },
+    {
+      "version": "20260812213637",
+      "name": "complete_mentorship_backend_v2"
+    },
+    {
+      "version": "20260812213831",
+      "name": "complete_backend_freelance_escrow_workflow"
+    },
+    {
+      "version": "20260812213932",
+      "name": "complete_freelance_escrow_backend_v2"
+    },
+    {
+      "version": "20260812214131",
+      "name": "harden_proctoring_and_add_review_workflow"
+    },
+    {
+      "version": "20260812214306",
+      "name": "complete_admin_verification_moderation"
+    },
+    {
+      "version": "20260812214332",
+      "name": "complete_career_coach_backend"
+    },
+    {
+      "version": "20260812214344",
+      "name": "complete_backend_career_coach"
+    },
+    {
+      "version": "20260812214422",
+      "name": "repair_ai_tutor_backend_compatibility"
+    },
+    {
+      "version": "20260812214423",
+      "name": "repair_legacy_ai_tutor_sessions"
+    },
+    {
+      "version": "20260812214537",
+      "name": "hide_privileged_rpc_implementations"
+    },
+    {
+      "version": "20260812214554",
+      "name": "complete_backend_admin_analytics_maintenance"
+    },
+    {
+      "version": "20260812214629",
+      "name": "add_admin_metrics_and_api_support"
+    },
+    {
+      "version": "20260812214648",
+      "name": "performance_hardening_pass"
+    },
+    {
+      "version": "20260812214703",
+      "name": "remove_last_duplicate_index"
+    },
+    {
+      "version": "20260812214721",
+      "name": "make_admin_reviews_server_authoritative"
+    },
+    {
+      "version": "20260812214818",
+      "name": "remove_unsafe_browser_table_privileges"
+    },
+    {
+      "version": "20260812214836",
+      "name": "index_employer_verifier"
+    },
+    {
+      "version": "20260812215107",
+      "name": "harden_learning_progress_and_badge_grants"
+    },
+    {
+      "version": "20260812215251",
+      "name": "repair_mentorship_column_grants"
+    },
+    {
+      "version": "20260812215341",
+      "name": "restore_mentorship_rls_policies"
+    },
+    {
+      "version": "20260812215437",
+      "name": "repair_freelance_column_grants"
+    },
+    {
+      "version": "20260812215526",
+      "name": "restore_freelance_rls_policies"
+    },
+    {
+      "version": "20260812215723",
+      "name": "standardize_escrow_funding_status"
+    },
+    {
+      "version": "20260812215743",
+      "name": "make_escrow_status_backward_compatible"
+    },
+    {
+      "version": "20260812215939",
+      "name": "align_proctor_event_constraint"
+    },
+    {
+      "version": "20260812220106",
+      "name": "allow_trusted_profile_system_updates"
+    },
+    {
+      "version": "20260812220622",
+      "name": "complete_passport_academy_scholarship_backend"
+    },
+    {
+      "version": "20260812220841",
+      "name": "complete_sponsored_challenges_and_arena_backend"
+    },
+    {
+      "version": "20260812221149",
+      "name": "complete_video_call_backend"
+    },
+    {
+      "version": "20260812221219",
+      "name": "complete_earn_work_and_coach_plan_backend"
+    },
+    {
+      "version": "20260812221421",
+      "name": "final_backend_policy_and_index_hardening"
+    },
+    {
+      "version": "20260812221634",
+      "name": "complete_last_mile_section_workflows"
+    },
+    {
+      "version": "20260812221739",
+      "name": "merge_candidate_match_read_policy"
+    },
+    {
+      "version": "20260812221936",
+      "name": "fix_career_path_enrollment_rpc_permissions"
+    },
+    {
+      "version": "20260812222104",
+      "name": "allow_server_academy_progress_refresh"
+    },
+    {
+      "version": "20260812222206",
+      "name": "separate_candidate_opportunity_matching_engine"
+    },
+    {
+      "version": "20260812222258",
+      "name": "allow_server_challenge_lifecycle_updates"
+    },
+    {
+      "version": "20260812222322",
+      "name": "fix_sponsored_challenge_finalization_ranking"
+    },
+    {
+      "version": "20260812222350",
+      "name": "remove_team_rls_recursion"
+    },
+    {
+      "version": "20260812222433",
+      "name": "remove_arena_match_participant_rls_recursion"
+    },
+    {
+      "version": "20260812224357",
+      "name": "support_google_email_phone_auth_profiles"
+    },
+    {
+      "version": "20260812224510",
+      "name": "protect_auth_identity_fields"
+    },
+    {
+      "version": "20260812224743",
+      "name": "keep_auth_verification_flags_consistent"
+    },
+    {
+      "version": "20260812232048",
+      "name": "complete_secure_practice_center_v1"
+    },
+    {
+      "version": "20260812232140",
+      "name": "allow_subjective_practice_attempts"
+    },
+    {
+      "version": "20260812232238",
+      "name": "add_practice_mock_and_recommendations"
+    },
+    {
+      "version": "20260812232306",
+      "name": "index_practice_center_foreign_keys"
+    },
+    {
+      "version": "20260812232350",
+      "name": "add_service_only_practice_ai_review_rpcs"
+    },
+    {
+      "version": "20260812233320",
+      "name": "arena_v2_competitive_core"
+    },
+    {
+      "version": "20260812233509",
+      "name": "arena_v2_ratings_matchmaking_integrity"
+    },
+    {
+      "version": "20260812233648",
+      "name": "arena_v2_tournaments_rewards"
+    },
+    {
+      "version": "20260812233731",
+      "name": "arena_v2_leaderboards_spectator_analytics_cron"
+    },
+    {
+      "version": "20260812233817",
+      "name": "fix_arena_tournament_rls_recursion"
+    },
+    {
+      "version": "20260812233924",
+      "name": "harden_arena_v2_system_helpers"
+    },
+    {
+      "version": "20260812234104",
+      "name": "arena_v2_fk_index_hardening"
+    },
+    {
+      "version": "20260813052642",
+      "name": "fix_arena_leaderboard_column_ambiguity"
+    },
+    {
+      "version": "20260813052854",
+      "name": "isolate_arena_public_read_api"
+    },
+    {
+      "version": "20260813053018",
+      "name": "split_arena_anon_authenticated_read_policies"
+    },
+    {
+      "version": "20260813072456",
+      "name": "admin_command_center_snapshot"
+    },
+    {
+      "version": "20260813072552",
+      "name": "admin_command_center_system_status"
+    },
+    {
+      "version": "20260813081717",
+      "name": "founder_command_center_controls_v1"
+    },
+    {
+      "version": "20260813081805",
+      "name": "admin_secure_answer_key_controls"
+    },
+    {
+      "version": "20260813082403",
+      "name": "founder_snapshot_exclude_synthetic_fix"
+    },
+    {
+      "version": "20260813082412",
+      "name": "route_founder_snapshot_to_v2"
+    },
+    {
+      "version": "20260813082935",
+      "name": "index_founder_control_foreign_keys"
+    },
+    {
+      "version": "20260813085841",
+      "name": "enforce_authoritative_platform_control"
+    },
+    {
+      "version": "20260813090132",
+      "name": "gate_feature_specific_storage_access"
+    },
+    {
+      "version": "20260813090556",
+      "name": "make_platform_live_a_master_data_kill_switch"
+    },
+    {
+      "version": "20260813092206",
+      "name": "unified_product_dashboards_and_wallet"
+    },
+    {
+      "version": "20260813093109",
+      "name": "harden_arena_wallet_team_settlement"
+    },
+    {
+      "version": "20260813095001",
+      "name": "fix_marketplace_task_delete_contract_guard"
+    },
+    {
+      "version": "20260813100800",
+      "name": "align_frontend_data_api_grants"
+    },
+    {
+      "version": "20260813100902",
+      "name": "fix_application_match_refresh_trigger"
+    },
+    {
+      "version": "20260813101059",
+      "name": "harden_mentorship_response_state_transition"
+    },
+    {
+      "version": "20260813101138",
+      "name": "make_mentorship_response_rls_invoker"
+    },
+    {
+      "version": "20260813101233",
+      "name": "allow_valid_mentorship_video_room_linkage"
+    },
+    {
+      "version": "20260813102440",
+      "name": "fix_freelance_award_state_and_traceability"
+    },
+    {
+      "version": "20260813102557",
+      "name": "align_freelance_task_awarded_state"
+    },
+    {
+      "version": "20260813102611",
+      "name": "unify_freelance_proposal_acceptance_flow"
+    },
+    {
+      "version": "20260813102709",
+      "name": "normalize_freelance_escrow_release_lifecycle"
+    },
+    {
+      "version": "20260813102908",
+      "name": "stabilize_freelance_award_rpc"
+    },
+    {
+      "version": "20260813103008",
+      "name": "single_execution_state_change_rpc_wrappers"
+    },
+    {
+      "version": "20260813103224",
+      "name": "add_freelance_milestone_delivery_submission"
+    },
+    {
+      "version": "20260813103510",
+      "name": "unify_milestone_escrow_and_payout_state_machine"
+    },
+    {
+      "version": "20260813103549",
+      "name": "harden_freelance_milestone_submission_and_approval"
+    },
+    {
+      "version": "20260813103745",
+      "name": "align_finance_read_visibility_and_milestone_evidence"
+    },
+    {
+      "version": "20260813103805",
+      "name": "stabilize_milestone_delivery_submission_rpc"
+    },
+    {
+      "version": "20260813103914",
+      "name": "remove_duplicate_milestone_delivery_rpc"
+    },
+    {
+      "version": "20260813104010",
+      "name": "separate_escrow_funding_from_payout_gate_v2"
+    },
+    {
+      "version": "20260813104516",
+      "name": "finalize_milestone_escrow_payout_link"
+    },
+    {
+      "version": "20260813104557",
+      "name": "normalize_milestone_funding_state_and_exact_resolution"
+    },
+    {
+      "version": "20260813104651",
+      "name": "order_payout_settlement_before_reputation_refresh"
+    },
+    {
+      "version": "20260814124716",
+      "name": "add_mela_five_language_platform_contract"
+    },
+    {
+      "version": "20260814130123",
+      "name": "fix_platform_managed_opportunity_ownership"
+    },
+    {
+      "version": "20260814130325",
+      "name": "require_judging_before_challenge_finalization"
+    },
+    {
+      "version": "20260814131007",
+      "name": "add_privacy_consent_and_data_rights_controls"
+    },
+    {
+      "version": "20260814132254",
+      "name": "harden_new_privacy_localization_tables"
+    },
+    {
+      "version": "20260814132523",
+      "name": "add_verified_assessment_language_certification_gate"
+    },
+    {
+      "version": "20260814162545",
+      "name": "harden_multilingual_assessment_certification_workflow"
+    },
+    {
+      "version": "20260814163049",
+      "name": "complete_assessment_language_human_review_operations"
+    },
+    {
+      "version": "20260814163122",
+      "name": "invalidate_assessment_translation_certification_on_source_change"
+    },
+    {
+      "version": "20260814163554",
+      "name": "add_explicit_language_review_rls_policies"
+    },
+    {
+      "version": "20260814163714",
+      "name": "index_assessment_language_review_foreign_keys"
+    },
+    {
+      "version": "20260814163842",
+      "name": "make_predeployment_launch_gate_authoritative"
+    },
+    {
+      "version": "20260814164135",
+      "name": "invalidate_language_approvals_on_translation_content_change"
+    },
+    {
+      "version": "20260814164311",
+      "name": "add_verified_external_opportunity_provenance"
+    },
+    {
+      "version": "20260814164446",
+      "name": "deduplicate_external_opportunity_sources"
+    },
+    {
+      "version": "20260814165434",
+      "name": "build_data_protection_compliance_register"
+    },
+    {
+      "version": "20260814170055",
+      "name": "build_internal_operational_monitoring"
+    },
+    {
+      "version": "20260814170248",
+      "name": "index_latest_compliance_foreign_keys"
+    },
+    {
+      "version": "20260814175952",
+      "name": "add_sector_partner_user_role"
+    },
+    {
+      "version": "20260814180315",
+      "name": "education_audience_taxonomy_and_navigation"
+    },
+    {
+      "version": "20260814180348",
+      "name": "guardian_and_sector_partner_onboarding"
+    },
+    {
+      "version": "20260814180456",
+      "name": "enforce_education_stage_safety_on_sensitive_flows"
+    },
+    {
+      "version": "20260814180718",
+      "name": "complete_audience_context_and_school_safety_refresh"
+    },
+    {
+      "version": "20260814181616",
+      "name": "expose_my_assessment_language_review_assignments"
+    },
+    {
+      "version": "20260814182612",
+      "name": "fix_guardian_request_upsert_permissions"
+    },
+    {
+      "version": "20260814182657",
+      "name": "fix_sector_partner_review_wrapper_permission"
+    },
+    {
+      "version": "20260814182720",
+      "name": "fix_sector_partner_membership_rls_recursion"
+    },
+    {
+      "version": "20260814182757",
+      "name": "index_new_audience_foreign_keys_and_consolidate_guardian_rls"
+    },
+    {
+      "version": "20260814183246",
+      "name": "add_school_learning_track_catalog"
+    },
+    {
+      "version": "20260814203813",
+      "name": "build_mela_learning_to_opportunity_core"
+    },
+    {
+      "version": "20260814203949",
+      "name": "wire_educator_mastery_core"
+    },
+    {
+      "version": "20260814204013",
+      "name": "wire_passport_mastery_next_and_graph"
+    },
+    {
+      "version": "20260814204022",
+      "name": "gate_learning_to_opportunity_tables"
+    },
+    {
+      "version": "20260814204047",
+      "name": "grant_rls_helper_execution"
+    },
+    {
+      "version": "20260814204111",
+      "name": "fix_passport_verified_skill_ordering"
+    },
+    {
+      "version": "20260814204151",
+      "name": "add_teacher_copilot_control_and_audit"
+    },
+    {
+      "version": "20260814204404",
+      "name": "twenty_system_benchmark_catalog"
+    },
+    {
+      "version": "20260814204455",
+      "name": "diagnostic_teacher_and_catchup_foundations_v2"
+    },
+    {
+      "version": "20260814204503",
+      "name": "grant_learning_rpc_private_helpers"
+    },
+    {
+      "version": "20260814204539",
+      "name": "fix_mela_next_adult_policy_check"
+    },
+    {
+      "version": "20260814204716",
+      "name": "harden_v6_educator_rls_and_indexes"
+    },
+    {
+      "version": "20260814204738",
+      "name": "cover_existing_learning_support_foreign_keys"
+    },
+    {
+      "version": "20260814204850",
+      "name": "activate_mastery_diagnostics_and_catchup"
+    },
+    {
+      "version": "20260814205935",
+      "name": "mela_20_country_benchmark_operating_layer"
+    },
+    {
+      "version": "20260814210119",
+      "name": "optimize_mela_benchmark_layer"
+    },
+    {
+      "version": "20260814210131",
+      "name": "operationalize_20_country_education_benchmark_v2"
+    },
+    {
+      "version": "20260814210210",
+      "name": "benchmark_layer_performance_hardening"
+    },
+    {
+      "version": "20260814210235",
+      "name": "consolidate_mela_benchmark_operating_model"
+    },
+    {
+      "version": "20260814210448",
+      "name": "connect_benchmarks_to_measurable_mela_outcomes"
+    },
+    {
+      "version": "20260815045611",
+      "name": "mela_curriculum_traceability_and_impact_core"
+    },
+    {
+      "version": "20260815045656",
+      "name": "mela_education_value_os_v7"
+    },
+    {
+      "version": "20260815045903",
+      "name": "mela_official_subject_structure_and_trace_links"
+    },
+    {
+      "version": "20260815045904",
+      "name": "mela_education_impact_review_v7"
+    },
+    {
+      "version": "20260815050024",
+      "name": "mela_education_pilot_evaluation_and_intervention_wiring"
+    },
+    {
+      "version": "20260815050312",
+      "name": "mela_education_os_curriculum_trace_v7"
+    },
+    {
+      "version": "20260815050327",
+      "name": "mela_education_value_fk_index_hardening"
+    },
+    {
+      "version": "20260815050504",
+      "name": "education_value_os_v7_operational_api_and_indexes"
+    },
+    {
+      "version": "20260815050520",
+      "name": "education_value_os_v7_remove_duplicate_indexes"
+    },
+    {
+      "version": "20260815050626",
+      "name": "mela_unify_local_projects_and_validated_impact"
+    },
+    {
+      "version": "20260815050749",
+      "name": "mela_pilot_evidence_reconciliation_v7"
+    },
+    {
+      "version": "20260815050933",
+      "name": "mela_impact_claim_guardrails_v7"
+    },
+    {
+      "version": "20260815050941",
+      "name": "mela_value_audit_semantic_fix"
+    },
+    {
+      "version": "20260815053410",
+      "name": "mela_learning_library_v8_schema"
+    },
+    {
+      "version": "20260815053503",
+      "name": "mela_learning_library_v8_products_and_programs"
+    },
+    {
+      "version": "20260815053641",
+      "name": "mela_learning_library_v8_units_materials"
+    },
+    {
+      "version": "20260815053705",
+      "name": "mela_learning_library_v8_api"
+    },
+    {
+      "version": "20260815053943",
+      "name": "mela_learning_library_v8_support_materials"
+    },
+    {
+      "version": "20260815054008",
+      "name": "mela_learning_library_v8_source_review_queue"
+    },
+    {
+      "version": "20260815054123",
+      "name": "mela_learning_library_v8_policy_and_index_cleanup"
+    },
+    {
+      "version": "20260815061428",
+      "name": "learning_library_v9_chapter_architecture"
+    },
+    {
+      "version": "20260815062631",
+      "name": "learning_library_v9_frontend_rpc_hardening"
+    },
+    {
+      "version": "20260815062748",
+      "name": "learning_library_v9_public_rpc_anon_fix"
+    },
+    {
+      "version": "20260815071539",
+      "name": "phase1_editorial_chapter_review_queue"
+    },
+    {
+      "version": "20260815071738",
+      "name": "phase1_learning_payment_ledger"
+    },
+    {
+      "version": "20260815072227",
+      "name": "phase1_review_payment_lint_cleanup"
+    },
+    {
+      "version": "20260815093026",
+      "name": "mela_v11_question_bank_secure_scale_core"
+    },
+    {
+      "version": "20260815093313",
+      "name": "mela_v11_question_bank_scale_retention"
+    },
+    {
+      "version": "20260815093441",
+      "name": "mela_v11_question_bank_revoke_client_writes"
+    },
+    {
+      "version": "20260815093544",
+      "name": "mela_v11_explicit_question_bank_deny_policies"
+    },
+    {
+      "version": "20260815093842",
+      "name": "mela_v11_question_bank_tier_index"
+    },
+    {
+      "version": "20260815093904",
+      "name": "mela_v11_read_only_overview_stable"
+    },
+    {
+      "version": "20260815102522",
+      "name": "v12_question_accessibility_global_network_schema"
+    },
+    {
+      "version": "20260815102557",
+      "name": "v12_question_grading_backfill_and_accessibility"
+    },
+    {
+      "version": "20260815102737",
+      "name": "v12_add_20160_diverse_questions"
+    },
+    {
+      "version": "20260815102815",
+      "name": "v12_diverse_question_grading_and_true_false_balance"
+    },
+    {
+      "version": "20260815102936",
+      "name": "v12_secure_multi_format_question_rpcs"
+    },
+    {
+      "version": "20260815103317",
+      "name": "v12_accessibility_global_tracking_rpcs_and_quality"
+    },
+    {
+      "version": "20260815103628",
+      "name": "v12_eliminate_exact_duplicate_question_prompts"
+    },
+    {
+      "version": "20260815103819",
+      "name": "v12_guarantee_unique_question_prompt_text"
+    },
+    {
+      "version": "20260815104710",
+      "name": "v12_fix_question_overview_counts"
+    },
+    {
+      "version": "20260815104926",
+      "name": "v12_verified_alternate_application_domains"
+    },
+    {
+      "version": "20260815105039",
+      "name": "v12_global_source_freshness_guard"
+    },
+    {
+      "version": "20260815105338",
+      "name": "v12_accessibility_global_network_lint_cleanup"
+    },
+    {
+      "version": "20260815160916",
+      "name": "v17_question_practice_hotpath_indexes"
+    },
+    {
+      "version": "20260815161133",
+      "name": "v17_release_evidence_registry"
+    },
+    {
+      "version": "20260815161223",
+      "name": "v17_operational_health_rpc"
+    },
+    {
+      "version": "20260815161621",
+      "name": "v17_fast_operational_health"
+    },
+    {
+      "version": "20260815161953",
+      "name": "v17_frontend_build_publisher"
+    },
+    {
+      "version": "20260815164259",
+      "name": "v18_question_quality_schema"
+    },
+    {
+      "version": "20260815164404",
+      "name": "v18_question_quality_classification"
+    },
+    {
+      "version": "20260815164505",
+      "name": "v18_question_quality_status_update"
+    },
+    {
+      "version": "20260815164648",
+      "name": "v18_question_regeneration_queue"
+    },
+    {
+      "version": "20260815164811",
+      "name": "v18_question_review_slices"
+    },
+    {
+      "version": "20260815165022",
+      "name": "v18_question_review_batch_reconciliation_v2"
+    },
+    {
+      "version": "20260815165223",
+      "name": "v18_quality_aware_question_runtime"
+    },
+    {
+      "version": "20260815165526",
+      "name": "v18_legacy_practice_quality_redirect"
+    },
+    {
+      "version": "20260815165606",
+      "name": "v18_question_quality_runtime_indexes"
+    },
+    {
+      "version": "20260815165654",
+      "name": "v18_operational_health_quality_visibility"
+    },
+    {
+      "version": "20260815165912",
+      "name": "v18_question_replacement_pipeline_schema"
+    },
+    {
+      "version": "20260815165926",
+      "name": "v18_question_replacement_targets"
+    },
+    {
+      "version": "20260815170150",
+      "name": "v18_replacement_question_type_diversity"
+    },
+    {
+      "version": "20260815170237",
+      "name": "v18_question_generation_contract"
+    },
+    {
+      "version": "20260815170313",
+      "name": "v18_question_generation_release_rpc"
+    },
+    {
+      "version": "20260815170532",
+      "name": "v18_educator_question_review_workflow"
+    },
+    {
+      "version": "20260815170702",
+      "name": "v18_question_replacement_reconciliation_and_promotion"
+    },
+    {
+      "version": "20260815170741",
+      "name": "v18_review_slice_target_reconciliation"
+    },
+    {
+      "version": "20260815170945",
+      "name": "v18_question_reviewer_capability_rpc"
+    },
+    {
+      "version": "20260815171142",
+      "name": "v18_reviewer_queue_pagination_fix"
+    },
+    {
+      "version": "20260815171254",
+      "name": "v18_reviewer_security_wrapper_probe"
+    },
+    {
+      "version": "20260815171318",
+      "name": "v18_reviewer_security_private_implementations"
+    },
+    {
+      "version": "20260815171758",
+      "name": "v18_quality_pipeline_index_hardening"
+    },
+    {
+      "version": "20260815191452",
+      "name": "quality_aware_question_catalog_v18"
+    },
+    {
+      "version": "20260815191524",
+      "name": "secure_quality_catalog_helpers_v18"
+    },
+    {
+      "version": "20260815191703",
+      "name": "quality_catalog_compat_fields_v18"
+    },
+    {
+      "version": "20260815194342",
+      "name": "dynamic_operational_integrity_v20"
+    },
+    {
+      "version": "20260815194352",
+      "name": "fix_operational_integrity_v20"
+    },
+    {
+      "version": "20260815201316",
+      "name": "question_quality_progress_v21"
+    },
+    {
+      "version": "20260815204345",
+      "name": "language_specific_question_delivery_v29"
+    },
+    {
+      "version": "20260815205303",
+      "name": "operational_health_language_aware_v30"
+    },
+    {
+      "version": "20260816062452",
+      "name": "mela_account_roles_v35"
+    },
+    {
+      "version": "20260816062614",
+      "name": "mela_account_security_and_profiles_v35"
+    },
+    {
+      "version": "20260816062707",
+      "name": "mela_verified_subscription_activation_v35"
+    },
+    {
+      "version": "20260816062802",
+      "name": "mela_verified_account_rls_gate_v35"
+    },
+    {
+      "version": "20260816062902",
+      "name": "mela_company_vacancy_moderation_v35"
+    },
+    {
+      "version": "20260816062914",
+      "name": "mela_access_context_v35_1"
+    },
+    {
+      "version": "20260816062946",
+      "name": "mela_frontend_account_flow_v35"
+    },
+    {
+      "version": "20260816231907",
+      "name": "mela_v36_fk_indexes"
+    },
+    {
+      "version": "20260816232332",
+      "name": "mela_v36_build_validation_rpc"
+    },
+    {
+      "version": "20260816232543",
+      "name": "secure_dashboard_rpc_v36"
+    },
+    {
+      "version": "20260816232631",
+      "name": "privileged_role_dashboard_gate_v36"
+    },
+    {
+      "version": "20260816233113",
+      "name": "fix_candidate_match_maintenance_context_v36"
+    },
+    {
+      "version": "20260816233410",
+      "name": "student_education_stage_onboarding_v36"
+    },
+    {
+      "version": "20260816233730",
+      "name": "repair_rpc_wrapper_permissions_v36"
+    },
+    {
+      "version": "20260816233748",
+      "name": "one_shot_integration_qa_gate_v36"
+    },
+    {
+      "version": "20260816233843",
+      "name": "repair_guardian_rls_helper_permission_v36"
+    },
+    {
+      "version": "20260816233946",
+      "name": "remove_integration_qa_gate_v36"
+    },
+    {
+      "version": "20260817055856",
+      "name": "harden_authenticated_workflow_rpc_execute"
+    },
+    {
+      "version": "20260818171333",
+      "name": "service_mela_question_answer_lookup"
+    },
+    {
+      "version": "20260818175830",
+      "name": "complete_user_onboarding_v37"
+    },
+    {
+      "version": "20260818181306",
+      "name": "lock_down_complete_profile_v37"
+    },
+    {
+      "version": "20260818195652",
+      "name": "prevent_duplicate_active_marketplace_proposals"
+    },
+    {
+      "version": "20260819053132",
+      "name": "harden_profile_completion_rpc_v38"
+    },
+    {
+      "version": "20260821182316",
+      "name": "enable_afar_platform_language"
+    },
+    {
+      "version": "20260821183239",
+      "name": "set_premium_subscription_to_50_etb"
+    },
+    {
+      "version": "20260821183245",
+      "name": "add_normal_subscription_plan_20_etb"
+    },
+    {
+      "version": "20260821190713",
+      "name": "remove_free_plan_set_paid_tiers"
+    },
+    {
+      "version": "20260821215827",
+      "name": "normalize_registration_language_codes"
+    },
+    {
+      "version": "20260821220044",
+      "name": "lock_employer_registration_approval_fields"
+    },
+    {
+      "version": "20260821220207",
+      "name": "harden_guardian_relationship_insert"
+    },
+    {
+      "version": "20260821220237",
+      "name": "harden_application_status_updates"
+    },
+    {
+      "version": "20260821220332",
+      "name": "harden_payout_account_activation"
+    },
+    {
+      "version": "20260821220632",
+      "name": "optimize_payout_account_owner_insert_rls"
+    },
+    {
+      "version": "20260821220813",
+      "name": "consolidate_progress_read_rls_policies"
+    },
+    {
+      "version": "20260821232552",
+      "name": "harden_sector_partner_registration_execute_privilege"
+    },
+    {
+      "version": "20260821232907",
+      "name": "harden_authenticated_user_data_rls"
+    },
+    {
+      "version": "20260821232915",
+      "name": "remove_broad_academy_rls_gates"
+    },
+    {
+      "version": "20260821233004",
+      "name": "harden_sensitive_rls_remove_broad_feature_gates"
+    },
+    {
+      "version": "20260821233136",
+      "name": "harden_sensitive_rls_feature_gate_bypass"
+    },
+    {
+      "version": "20260821233624",
+      "name": "harden_profile_sensitive_updates"
+    },
+    {
+      "version": "20260821234022",
+      "name": "harden_role_profile_rls_gates_20260822"
+    },
+    {
+      "version": "20260821234139",
+      "name": "harden_role_verification_fields_20260822"
+    },
+    {
+      "version": "20260821234310",
+      "name": "remove_employer_opportunity_broad_gates_20260822"
+    },
+    {
+      "version": "20260821234431",
+      "name": "harden_remaining_private_rls_gates_20260822"
+    },
+    {
+      "version": "20260821234559",
+      "name": "remove_remaining_private_feature_gates_20260822"
+    },
+    {
+      "version": "20260821234718",
+      "name": "revoke_anon_sensitive_table_access_20260822"
+    },
+    {
+      "version": "20260821234940",
+      "name": "remove_arena_broad_feature_gates_20260822"
+    },
+    {
+      "version": "20260821235050",
+      "name": "harden_arena_metrics_and_rewards_rls_20260822"
+    },
+    {
+      "version": "20260821235206",
+      "name": "remove_learning_content_broad_feature_gates_20260822"
+    },
+    {
+      "version": "20260821235304",
+      "name": "harden_employment_marketplace_partner_gates_20260822"
+    },
+    {
+      "version": "20260821235406",
+      "name": "revoke_remaining_anon_write_privileges_20260822"
+    },
+    {
+      "version": "20260821235506",
+      "name": "restrict_private_anon_select_20260822"
+    },
+    {
+      "version": "20260821235711",
+      "name": "harden_admin_and_guardian_rpc_privileges_20260822"
+    },
+    {
+      "version": "20260822000137",
+      "name": "harden_learning_payment_attempts_20260822"
+    },
+    {
+      "version": "20260822000145",
+      "name": "harden_learning_payment_finalization_20260822"
+    },
+    {
+      "version": "20260822000441",
+      "name": "restrict_arena_reward_rule_rpc_20260822"
+    },
+    {
+      "version": "20260822000616",
+      "name": "lock_client_coin_transaction_mutations_20260822"
+    },
+    {
+      "version": "20260822034435",
+      "name": "lock_down_trigger_function_execute_privileges"
+    },
+    {
+      "version": "20260822042110",
+      "name": "remove_broad_saved_candidates_platform_policy"
+    },
+    {
+      "version": "20260822042423",
+      "name": "remove_broad_platform_live_all_policies"
+    },
+    {
+      "version": "20260822042434",
+      "name": "remove_badges_broad_career_gate"
+    },
+    {
+      "version": "20260822042521",
+      "name": "remove_broad_feature_gate_policies_sensitive_tables_v2"
+    },
+    {
+      "version": "20260822042615",
+      "name": "remove_remaining_broad_feature_gate_policies"
+    },
+    {
+      "version": "20260822043034",
+      "name": "harden_public_feature_flag_columns"
+    },
+    {
+      "version": "20260822043116",
+      "name": "restrict_public_employer_and_work_reputation_columns"
+    },
+    {
+      "version": "20260822043150",
+      "name": "protect_public_learning_answer_keys"
+    },
+    {
+      "version": "20260822044512",
+      "name": "protect_employer_owner_identity"
+    },
+    {
+      "version": "20260822044546",
+      "name": "protect_application_identity_fields"
+    },
+    {
+      "version": "20260822044629",
+      "name": "protect_employer_member_identity_fields"
+    },
+    {
+      "version": "20260822044659",
+      "name": "protect_opportunity_security_fields"
+    },
+    {
+      "version": "20260822044736",
+      "name": "protect_learner_project_verification"
+    },
+    {
+      "version": "20260822044806",
+      "name": "protect_profile_verification_fields"
+    },
+    {
+      "version": "20260822045020",
+      "name": "protect_notification_and_message_identity"
+    },
+    {
+      "version": "20260822045126",
+      "name": "lock_down_privileged_private_rpcs"
+    },
+    {
+      "version": "20260822045154",
+      "name": "revoke_legacy_public_admin_rpcs"
+    },
+    {
+      "version": "20260822045353",
+      "name": "add_learning_score_and_stats_constraints"
+    },
+    {
+      "version": "20260822045433",
+      "name": "protect_assessment_attempt_integrity"
+    },
+    {
+      "version": "20260822045503",
+      "name": "protect_payment_attempt_fields"
+    },
+    {
+      "version": "20260822045535",
+      "name": "protect_subscription_state"
+    },
+    {
+      "version": "20260822045613",
+      "name": "harden_learning_progress_values"
+    },
+    {
+      "version": "20260822045653",
+      "name": "protect_profile_role_and_trust_fields"
+    },
+    {
+      "version": "20260822045732",
+      "name": "protect_role_specific_profile_fields"
+    },
+    {
+      "version": "20260822045912",
+      "name": "protect_guardian_relationship_state"
+    },
+    {
+      "version": "20260822045955",
+      "name": "enforce_teacher_classroom_role"
+    },
+    {
+      "version": "20260822055231",
+      "name": "require_verified_identity_for_high_impact_actions"
+    },
+    {
+      "version": "20260822060956",
+      "name": "harden_profile_onboarding_rpc"
+    },
+    {
+      "version": "20260822061244",
+      "name": "protect_learner_project_verification"
+    },
+    {
+      "version": "20260822061404",
+      "name": "enforce_rls_on_public_views"
+    },
+    {
+      "version": "20260822061453",
+      "name": "remove_anon_material_and_private_rpc_access"
+    },
+    {
+      "version": "20260822061459",
+      "name": "remove_public_execute_from_private_rpcs"
+    },
+    {
+      "version": "20260822061625",
+      "name": "restrict_public_anon_helper_functions"
+    },
+    {
+      "version": "20260822061705",
+      "name": "restrict_anonymous_arena_state_and_feature_rpcs"
+    },
+    {
+      "version": "20260822061831",
+      "name": "restrict_legacy_study_materials_public_read"
+    },
+    {
+      "version": "20260822062005",
+      "name": "lock_payment_finalization_to_trusted_backend"
+    },
+    {
+      "version": "20260822062039",
+      "name": "revoke_direct_subscription_mutation_grants"
+    },
+    {
+      "version": "20260822063019",
+      "name": "align_translation_access_with_material_entitlements"
+    },
+    {
+      "version": "20260822063220",
+      "name": "protect_profile_role_and_identity_fields"
+    },
+    {
+      "version": "20260822063400",
+      "name": "enforce_premium_gate_on_scholarship_matching"
+    },
+    {
+      "version": "20260822063604",
+      "name": "remove_stale_public_read_policies"
+    },
+    {
+      "version": "20260822081542",
+      "name": "lock_user_verification_status_fields"
+    },
+    {
+      "version": "20260822082411",
+      "name": "lock_guardian_relationship_tables_to_server_workflows"
+    },
+    {
+      "version": "20260822082502",
+      "name": "protect_notification_recipient_identity"
+    },
+    {
+      "version": "20260822082841",
+      "name": "close_internal_rpc_idor_and_maintenance_exposure"
+    },
+    {
+      "version": "20260822083126",
+      "name": "close_remaining_client_callable_definer_maintenance_rpcs"
+    },
+    {
+      "version": "20260822083302",
+      "name": "restrict_admin_challenge_management_rpcs"
+    },
+    {
+      "version": "20260822085315",
+      "name": "restrict_paid_material_select_policies"
+    },
+    {
+      "version": "20260822090343",
+      "name": "restrict_student_progress_mutation_to_server_workflow"
+    },
+    {
+      "version": "20260822090422",
+      "name": "restrict_employer_profile_language_visibility"
+    },
+    {
+      "version": "20260822091849",
+      "name": "restrict_candidate_match_client_mutation"
+    },
+    {
+      "version": "20260822092151",
+      "name": "restrict_direct_application_insert_update"
+    },
+    {
+      "version": "20260822092409",
+      "name": "remove_broad_candidate_document_storage_policy"
+    },
+    {
+      "version": "20260822092522",
+      "name": "harden_scholarship_details_direct_mutations"
+    },
+    {
+      "version": "20260822092613",
+      "name": "remove_direct_learning_payment_attempt_update"
+    },
+    {
+      "version": "20260822092738",
+      "name": "verify_learning_product_client_privileges"
+    },
+    {
+      "version": "20260822094350",
+      "name": "remove_direct_task_milestone_delete_privilege"
+    },
+    {
+      "version": "20260822104326",
+      "name": "restrict_arena_reward_rule_creation"
+    },
+    {
+      "version": "20260822104430",
+      "name": "restrict_direct_external_application_status_mutation"
+    },
+    {
+      "version": "20260822104526",
+      "name": "harden_candidate_match_refresh_rpc"
+    },
+    {
+      "version": "20260822104620",
+      "name": "remove_public_generated_question_admin_rpcs"
+    },
+    {
+      "version": "20260822104809",
+      "name": "remove_exposed_guardian_consent_security_definer_rpc"
+    },
+    {
+      "version": "20260822104915",
+      "name": "lock_down_unpolicied_proctored_and_study_tables"
+    },
+    {
+      "version": "20260822104959",
+      "name": "remove_direct_proctored_exam_read_privilege"
+    },
+    {
+      "version": "20260822105042",
+      "name": "add_explicit_deny_policies_to_backend_exam_tables"
+    },
+    {
+      "version": "20260822105139",
+      "name": "remove_duplicate_milestone_index"
+    },
+    {
+      "version": "20260822105226",
+      "name": "optimize_learning_material_rls_auth_uid"
+    },
+    {
+      "version": "20260822105311",
+      "name": "remove_authenticated_assessment_admin_rpc_surface"
+    },
+    {
+      "version": "20260822105401",
+      "name": "remove_exposed_profile_review_admin_rpcs"
+    },
+    {
+      "version": "20260822105647",
+      "name": "make_avatar_storage_private"
+    },
+    {
+      "version": "20260822105856",
+      "name": "enforce_learning_material_entitlement_access"
+    },
+    {
+      "version": "20260822110228",
+      "name": "restrict_education_pilot_and_scholarship_premium_reads"
+    },
+    {
+      "version": "20260822110347",
+      "name": "remove_exposed_admin_review_rpc_wrappers"
+    },
+    {
+      "version": "20260822110451",
+      "name": "close_remaining_admin_review_rpcs"
+    },
+    {
+      "version": "20260822110713",
+      "name": "restrict_answer_key_and_review_admin_rpcs"
+    },
+    {
+      "version": "20260822110913",
+      "name": "restrict_remaining_privileged_public_rpcs"
+    },
+    {
+      "version": "20260822214422",
+      "name": "admin_control_plane"
+    },
+    {
+      "version": "20260823060947",
+      "name": "invitationcommission"
+    },
+    {
+      "version": "20260823061116",
+      "name": "automatic_invitation_registration_commissions"
+    },
+    {
+      "version": "20260823061129",
+      "name": "referral_codes_and_wallet_credit"
+    },
+    {
+      "version": "20260823061137",
+      "name": "admin_cancel_invitation_commission_with_reversal"
+    },
+    {
+      "version": "20260823061851",
+      "name": "harden_invitation_commission_access"
+    },
+    {
+      "version": "20260823062103",
+      "name": "allow_admin_cancel_invitation_commission_and_reverse_ledger"
+    },
+    {
+      "version": "20260823062437",
+      "name": "configure_tiered_invitation_commissions"
+    },
+    {
+      "version": "20260823062450",
+      "name": "apply_tiered_invitation_commission_amounts"
+    },
+    {
+      "version": "20260823062552",
+      "name": "configure_tiered_invitation_commissions"
+    },
+    {
+      "version": "20260823063024",
+      "name": "finalize_invitation_commission_controls"
+    },
+    {
+      "version": "20260823063831",
+      "name": "employer_opportunity_admin_indexes"
+    },
+    {
+      "version": "20260823064308",
+      "name": "payment_payout_admin_queue_indexes"
+    },
+    {
+      "version": "20260823065511",
+      "name": "moderation_proctoring_admin_indexes"
+    },
+    {
+      "version": "20260823070443",
+      "name": "data_protection_admin_indexes"
+    },
+    {
+      "version": "20260823073225",
+      "name": "lock_down_admin_schema"
+    },
+    {
+      "version": "20260823075335",
+      "name": "secure_first_admin_bootstrap"
+    },
+    {
+      "version": "20260823075404",
+      "name": "final_admin_performance_hardening"
+    },
+    {
+      "version": "20260823075448",
+      "name": "activate_designated_first_admin"
+    },
+    {
+      "version": "20260823075555",
+      "name": "make_bootstrap_denials_auditable"
+    },
+    {
+      "version": "20260823111215",
+      "name": "lock_down_commission_table_access"
+    },
+    {
+      "version": "20260825153743",
+      "name": "harden_employer_opportunity_reviews_20260825"
+    },
+    {
+      "version": "20260825154031",
+      "name": "enforce_employer_opportunity_review_transitions_20260825"
+    },
+    {
+      "version": "20260825154142",
+      "name": "add_payment_idempotency_keys_20260825"
+    },
+    {
+      "version": "20260825154645",
+      "name": "harden_invitation_commission_lifecycle_20260825"
+    },
+    {
+      "version": "20260825154845",
+      "name": "lock_down_financial_and_public_views_20260825"
+    },
+    {
+      "version": "20260825155050",
+      "name": "harden_payout_account_client_updates_20260825"
+    },
+    {
+      "version": "20260825155608",
+      "name": "enable_rls_payment_idempotency_keys_20260825"
+    },
+    {
+      "version": "20260825155907",
+      "name": "lock_down_registration_referrals_client_writes_20260825"
+    },
+    {
+      "version": "20260825160329",
+      "name": "lock_down_referral_codes_client_writes_20260825"
+    },
+    {
+      "version": "20260825163852",
+      "name": "restrict_profile_server_controlled_updates_20260825"
+    },
+    {
+      "version": "20260825163904",
+      "name": "restore_safe_profile_updates_20260825"
+    },
+    {
+      "version": "20260825164021",
+      "name": "lock_down_server_controlled_verification_fields_20260825"
+    },
+    {
+      "version": "20260825164032",
+      "name": "enforce_column_least_privilege_profile_verification_20260825"
+    },
+    {
+      "version": "20260825164325",
+      "name": "harden_review_transition_function_search_paths_20260825"
+    },
+    {
+      "version": "20260825170830",
+      "name": "atomic_escrow_payment_finalization_20260825"
+    },
+    {
+      "version": "20260825170841",
+      "name": "tighten_escrow_callback_state_transition_20260825"
+    },
+    {
+      "version": "20260825170850",
+      "name": "verify_escrow_payment_function_privileges_20260825"
+    },
+    {
+      "version": "20260825171723",
+      "name": "tighten_private_payout_function_execute_privileges_20260825"
+    },
+    {
+      "version": "20260825171734",
+      "name": "remove_public_execute_from_private_payout_helpers_20260825"
+    },
+    {
+      "version": "20260825171855",
+      "name": "lock_down_escrow_finance_trigger_functions"
+    },
+    {
+      "version": "20260825175313",
+      "name": "harden_escrow_trigger_execution"
+    },
+    {
+      "version": "20260825180342",
+      "name": "harden_earnings_ledger_trigger_functions"
+    },
+    {
+      "version": "20260825180539",
+      "name": "harden_internal_admin_trigger_functions"
+    },
+    {
+      "version": "20260825184149",
+      "name": "harden_anon_security_definer_mutators"
+    },
+    {
+      "version": "20260825184201",
+      "name": "remove_public_execute_on_internal_mutators"
+    },
+    {
+      "version": "20260825184404",
+      "name": "tighten_authenticated_practice_and_video_rpc_execution"
+    },
+    {
+      "version": "20260825184419",
+      "name": "remove_public_execute_from_private_practice_rpc"
+    },
+    {
+      "version": "20260825184905",
+      "name": "lock_subscription_guard_trigger_execution"
+    },
+    {
+      "version": "20260825185224",
+      "name": "harden_payment_trigger_function_execution"
+    },
+    {
+      "version": "20260825185912",
+      "name": "harden_profile_trigger_function_execute_privileges"
+    },
+    {
+      "version": "20260825193524",
+      "name": "revoke_client_execute_on_review_triggers"
+    },
+    {
+      "version": "20260825193617",
+      "name": "revoke_client_execute_from_trigger_guards"
+    },
+    {
+      "version": "20260825193627",
+      "name": "revoke_client_execute_from_generic_updated_at_trigger"
+    },
+    {
+      "version": "20260825194216",
+      "name": "revoke_anon_challenge_manage_access"
+    },
+    {
+      "version": "20260825194424",
+      "name": "restrict_arena_management_and_state_rpcs"
+    },
+    {
+      "version": "20260825194434",
+      "name": "revoke_anonymous_challenge_access_helper"
+    },
+    {
+      "version": "20260825194444",
+      "name": "remove_public_execute_on_challenge_helper"
+    },
+    {
+      "version": "20260825201612",
+      "name": "add_invitation_commission_participant_read_policy"
+    },
+    {
+      "version": "20260825201628",
+      "name": "grant_authenticated_invitation_commission_read"
+    },
+    {
+      "version": "20260825202027",
+      "name": "add_referral_commission_ledger_registration_guard"
+    },
+    {
+      "version": "20260825202256",
+      "name": "harden_invitation_commission_admin_actor"
+    },
+    {
+      "version": "20260825202409",
+      "name": "harden_invitation_commission_paid_admin_actor"
+    },
+    {
+      "version": "20260825204729",
+      "name": "fix_registration_role_assignment"
+    },
+    {
+      "version": "20260826053716",
+      "name": "harden_invitation_commission_function_search_path"
+    },
+    {
+      "version": "20260826120154",
+      "name": "optimize_invitation_commission_select_rls"
+    },
+    {
+      "version": "20260826132841",
+      "name": "harden_private_milestone_execute_privileges"
+    },
+    {
+      "version": "20260826133016",
+      "name": "lock_private_function_execution"
+    },
+    {
+      "version": "20260826133704",
+      "name": "lock_submitted_milestone_evidence"
+    },
+    {
+      "version": "20260826133842",
+      "name": "harden_milestone_payout_idempotency"
+    },
+    {
+      "version": "20260826134156",
+      "name": "harden_contract_dispute_cancellation_finance_states"
+    },
+    {
+      "version": "20260826134633",
+      "name": "harden_admin_security_definer_authorization"
+    },
+    {
+      "version": "20260826134819",
+      "name": "harden_invitation_commission_amount_validation"
+    },
+    {
+      "version": "20260826134942",
+      "name": "harden_admin_opportunity_review_authorization"
+    },
+    {
+      "version": "20260826135156",
+      "name": "prevent_failed_payout_requests_from_being_marked_success"
+    },
+    {
+      "version": "20260826135610",
+      "name": "harden_referral_earning_immutability"
+    },
+    {
+      "version": "20260826141922",
+      "name": "lock_referral_commission_search_path"
+    },
+    {
+      "version": "20260826142256",
+      "name": "harden_referral_code_owner_check"
+    },
+    {
+      "version": "20260826143038",
+      "name": "lock_work_submission_files_after_submission"
+    },
+    {
+      "version": "20260826144811",
+      "name": "restrict_admin_education_pilot_status_rpc"
+    },
+    {
+      "version": "20260826145010",
+      "name": "restrict_privileged_lifecycle_rpcs"
+    },
+    {
+      "version": "20260826153910",
+      "name": "dedupe_career_badge_notifications"
+    },
+    {
+      "version": "20260826160336",
+      "name": "tighten_video_call_participant_read_access"
+    },
+    {
+      "version": "20260826160809",
+      "name": "protect_mentor_verification_fields"
+    },
+    {
+      "version": "20260826161238",
+      "name": "protect_application_identity_fields"
+    },
+    {
+      "version": "20260826170247",
+      "name": "protect_interview_application_identity"
+    },
+    {
+      "version": "20260826170554",
+      "name": "harden_freelance_contract_milestone_financial_identity"
+    },
+    {
+      "version": "20260826171643",
+      "name": "harden_earnings_ledger_row_security"
+    },
+    {
+      "version": "20260826171747",
+      "name": "harden_earnings_ledger_invariants"
+    },
+    {
+      "version": "20260826172412",
+      "name": "normalize_subscription_status_and_harden_entitlements"
+    },
+    {
+      "version": "20260826173331",
+      "name": "harden_notification_and_message_mutations"
+    },
+    {
+      "version": "20260826174031",
+      "name": "tighten_security_definer_grants_and_rls_performance"
+    },
+    {
+      "version": "20260826174112",
+      "name": "remove_public_execute_on_guard_triggers"
+    },
+    {
+      "version": "20260826175634",
+      "name": "harden_assessment_attempt_identity"
+    },
+    {
+      "version": "20260826175852",
+      "name": "harden_credentials_immutability"
+    },
+    {
+      "version": "20260826180050",
+      "name": "harden_course_learning_integrity"
+    },
+    {
+      "version": "20260826180235",
+      "name": "harden_course_enrollment_and_progress_integrity"
+    },
+    {
+      "version": "20260826180324",
+      "name": "harden_course_progress_and_content_invariants"
+    },
+    {
+      "version": "20260826182007",
+      "name": "harden_course_learning_invariants"
+    },
+    {
+      "version": "20260826182038",
+      "name": "harden_learning_progress_integrity"
+    },
+    {
+      "version": "20260826182059",
+      "name": "harden_learning_progress_and_enrollment_integrity"
+    },
+    {
+      "version": "20260826182105",
+      "name": "harden_course_learning_integrity"
+    },
+    {
+      "version": "20260826182119",
+      "name": "protect_published_course_content_and_enrollment_progress"
+    },
+    {
+      "version": "20260826182403",
+      "name": "harden_learning_progress_integrity"
+    },
+    {
+      "version": "20260826182419",
+      "name": "remove_duplicate_learning_progress_trigger"
+    },
+    {
+      "version": "20260826182422",
+      "name": "fix_learning_progress_fk_integrity"
+    },
+    {
+      "version": "20260827140050",
+      "name": "harden_guardian_relationship_identity"
+    },
+    {
+      "version": "20260827142130",
+      "name": "harden_registration_invitation_trigger_search_path"
+    },
+    {
+      "version": "20260827144806",
+      "name": "harden_earnings_ledger_guard_search_path"
+    },
+    {
+      "version": "20260827144924",
+      "name": "lock_verified_payout_account_details"
+    },
+    {
+      "version": "20260827145135",
+      "name": "protect_active_payout_account_deletion"
+    },
+    {
+      "version": "20260827145235",
+      "name": "harden_role_profile_verification_guard"
+    },
+    {
+      "version": "20260827194455",
+      "name": "mela_ai_workforce_core_v1"
+    },
+    {
+      "version": "20260827194532",
+      "name": "mela_ai_core_tools_v1"
+    },
+    {
+      "version": "20260827194843",
+      "name": "expand_mela_ai_core_tool_catalog"
+    },
+    {
+      "version": "20260828040632",
+      "name": "add_ai_workforce_dispatch_indexes"
+    },
+    {
+      "version": "20260828040716",
+      "name": "activate_ai_workforce_orchestration_v1"
+    },
+    {
+      "version": "20260828041231",
+      "name": "ai_workforce_execution_reliability_v1"
+    },
+    {
+      "version": "20260828042347",
+      "name": "ai_workforce_execution_queue_v1"
+    },
+    {
+      "version": "20260828042450",
+      "name": "ai_workforce_retry_verification_v1"
+    },
+    {
+      "version": "20260828042721",
+      "name": "ai_workforce_monitoring_v1"
+    },
+    {
+      "version": "20260828044017",
+      "name": "mela_ai_execution_reliability_v2"
+    },
+    {
+      "version": "20260902102748",
+      "name": "add_ai_workforce_fk_indexes"
+    },
+    {
+      "version": "20260903151922",
+      "name": "add_student_progress_ai_tool_assignments"
+    },
+    {
+      "version": "20260903151932",
+      "name": "ai_execution_audit_helper"
+    },
+    {
+      "version": "20260903151935",
+      "name": "grant_ai_audit_execute"
+    },
+    {
+      "version": "20260903155749",
+      "name": "lock_down_mela_ai_audit_execute"
+    },
+    {
+      "version": "20260903185403",
+      "name": "launch_installment_lifecycle_core"
+    },
+    {
+      "version": "20260904203147",
+      "name": "perf_hardening_pass_2"
+    },
+    {
+      "version": "20260904203832",
+      "name": "fix_rpc_wrapper_schema_access"
+    },
+    {
+      "version": "20260905043602",
+      "name": "fix_all_rpc_wrapper_schema_access"
+    },
+    {
+      "version": "20260905203219",
+      "name": "protect_ai_task_execution_state"
+    },
+    {
+      "version": "20260907083627",
+      "name": "harden_student_question_submission_feedback"
+    },
+    {
+      "version": "20260909101744",
+      "name": "fix_is_admin_user_service_role_recognition"
+    },
+    {
+      "version": "20260909101913",
+      "name": "grant_service_role_admin_schema_access"
+    },
+    {
+      "version": "20260909102131",
+      "name": "fix_remaining_service_role_guards"
+    },
+    {
+      "version": "20260909192123",
+      "name": "fix_opportunity_moderation_status_values"
+    },
+    {
+      "version": "20260913211704",
+      "name": "harden_role_escalation_controls"
+    },
+    {
+      "version": "20260913212237",
+      "name": "harden_rls_anon_write_and_sensitive_tables_v3"
+    },
+    {
+      "version": "20260920041655",
+      "name": "account_deletion_fk_hardening_v1"
+    },
+    {
+      "version": "20260920041704",
+      "name": "account_deletion_profile_fk_cleanup_v1"
+    },
+    {
+      "version": "20260920104721",
+      "name": "20260920150000_harden_arena_season_authorization"
+    },
+    {
+      "version": "20260920110648",
+      "name": "harden_arena_concurrency_and_school_work_gate"
+    },
+    {
+      "version": "20260920110835",
+      "name": "harden_payment_history_view_isolation"
+    },
+    {
+      "version": "20260920112332",
+      "name": "harden_ai_task_execution_state"
+    },
+    {
+      "version": "20260920141953",
+      "name": "harden_arena_submission_and_finish_integrity"
+    },
+    {
+      "version": "20260920142250",
+      "name": "harden_arena_reward_settlement_reference"
+    },
+    {
+      "version": "20260921024503",
+      "name": "drop_duplicate_applications_applicant_opportunity_index"
+    },
+    {
+      "version": "20260921204443",
+      "name": "schedule_expired_opportunity_closure"
+    },
+    {
+      "version": "20260922080124",
+      "name": "grant_has_employer_access_to_authenticated"
+    },
+    {
+      "version": "20260922150608",
+      "name": "allow_student_profile_onboarding_insert"
+    },
+    {
+      "version": "20260922150742",
+      "name": "arena_eight_question_quiz_battle"
+    },
+    {
+      "version": "20260922155524",
+      "name": "scholarship_center_tracking"
+    },
+    {
+      "version": "20260922163732",
+      "name": "source_link_health_monitoring"
+    },
+    {
+      "version": "20260923101010",
+      "name": "grant_rls_helper_functions_to_authenticated"
+    },
+    {
+      "version": "20260923101031",
+      "name": "grant_is_admin_user_to_authenticated"
+    },
+    {
+      "version": "20260923192439",
+      "name": "grant_private_schema_usage_to_authenticated"
+    },
+    {
+      "version": "20260924024310",
+      "name": "grant_applications_insert_to_authenticated"
+    },
+    {
+      "version": "20261002044330",
+      "name": "fix_admin_caller_authorization"
+    },
+    {
+      "version": "20261002045010",
+      "name": "preserve_auth_service_profile_sync"
+    },
+    {
+      "version": "20261002045239",
+      "name": "fix_registration_language_contract"
+    },
+    {
+      "version": "20261002045441",
+      "name": "repair_registration_and_profile_contracts"
+    },
+    {
+      "version": "20261002052629",
+      "name": "atomic_admin_updates"
+    },
+    {
+      "version": "20261002052839",
+      "name": "fix_audited_update_membership_read"
+    },
+    {
+      "version": "20261002053531",
+      "name": "repair_employer_opportunity_reviews"
+    },
+    {
+      "version": "20261002053711",
+      "name": "publish_approved_opportunity"
+    },
+    {
+      "version": "20261002054306",
+      "name": "audited_company_verification"
+    },
+    {
+      "version": "20261002054515",
+      "name": "enforce_current_employer_verification"
+    },
+    {
+      "version": "20261002060446",
+      "name": "harden_finance_service_boundaries"
+    },
+    {
+      "version": "20261002081043",
+      "name": "repair_arena_start_and_question_choices"
+    },
+    {
+      "version": "20261002082317",
+      "name": "prevent_duplicate_arena_batch_matches"
+    },
+    {
+      "version": "20261002085113",
+      "name": "enforce_arena_full_round_completion"
+    },
+    {
+      "version": "20261002085541",
+      "name": "make_contract_disputes_idempotent"
+    },
+    {
+      "version": "20261002085954",
+      "name": "preserve_caller_authority_in_marketplace_triggers"
+    },
+    {
+      "version": "20261002143925",
+      "name": "index_scholarship_tracking_foreign_keys"
+    },
+    {
+      "version": "20261002175728",
+      "name": "protect_classroom_detail_access"
+    },
+    {
+      "version": "20261002185939",
+      "name": "repair_mentorship_acceptance_and_notifications"
+    },
+    {
+      "version": "20261002190236",
+      "name": "enforce_mentorship_completion_time"
+    },
+    {
+      "version": "20261002190817",
+      "name": "add_guardian_learner_progress_summary"
+    },
+    {
+      "version": "20261002192024",
+      "name": "authoritative_course_completion_and_certificates"
+    },
+    {
+      "version": "20261002192119",
+      "name": "repair_course_progress_guard_authorization"
+    },
+    {
+      "version": "20261002192608",
+      "name": "revoke_anonymous_guardian_progress"
+    },
+    {
+      "version": "20261002204153",
+      "name": "harden_assessment_submission_and_timing"
+    },
+    {
+      "version": "20261002204934",
+      "name": "finalize_expired_assessment_attempts"
+    },
+    {
+      "version": "20261002205824",
+      "name": "enforce_feature_kill_switches_on_marketplace_and_challenges"
+    },
+    {
+      "version": "20261002210133",
+      "name": "assessment_submission_rpc_only"
+    },
+    {
+      "version": "20261002210520",
+      "name": "harden_financial_replay_and_payment_attempt_writes"
+    },
+    {
+      "version": "20261002210929",
+      "name": "correct_launch_readiness_privileged_api_metric"
+    },
+    {
+      "version": "20261002211218",
+      "name": "align_database_admin_authority_with_admin_registry"
+    },
+    {
+      "version": "20261002211441",
+      "name": "add_mfa_protected_proctor_review_queue"
+    },
+    {
+      "version": "20261002212549",
+      "name": "index_course_certificates_course_id"
+    },
+    {
+      "version": "20261002212703",
+      "name": "refresh_launch_readiness_evidence_20261002"
+    },
+    {
+      "version": "20261003041441",
+      "name": "align_registry_admin_authorization_helpers"
+    },
+    {
+      "version": "20261003042219",
+      "name": "refresh_verified_launch_opportunity_supply"
+    },
+    {
+      "version": "20261003042408",
+      "name": "add_verified_opportunity_supply_buffer"
+    },
+    {
+      "version": "20261003042601",
+      "name": "extend_verified_opportunity_supply_through_launch_window"
+    },
+    {
+      "version": "20261003042710",
+      "name": "opt_in_to_explicit_public_data_api_grants"
+    },
+    {
+      "version": "20261003042756",
+      "name": "require_explicit_public_function_execute_grants"
+    },
+    {
+      "version": "20261003043712",
+      "name": "allow_nonreview_opportunity_maintenance_updates"
+    },
+    {
+      "version": "20261003043834",
+      "name": "restore_launch_supply_after_freshness_cleanup"
+    },
+    {
+      "version": "20261003044111",
+      "name": "align_operational_health_privileged_rpc_metric"
+    },
+    {
+      "version": "20261003063643",
+      "name": "refresh_stale_scholarship_source_verification"
+    },
+    {
+      "version": "20261003063958",
+      "name": "refresh_launch_evidence_after_october3_hardening"
+    },
+    {
+      "version": "20261003073146",
+      "name": "add_zero_budget_beta_auth"
+    },
+    {
+      "version": "20261003075507",
+      "name": "add_beta_auth_rate_limiting"
+    },
+    {
+      "version": "20261003075807",
+      "name": "document_zero_budget_closed_beta_path"
+    },
+    {
+      "version": "20261003082220",
+      "name": "restore_verified_educator_question_review_submission"
+    },
+    {
+      "version": "20261003082930",
+      "name": "enable_qualified_educator_content_review_workflows"
+    },
+    {
+      "version": "20261003083918",
+      "name": "bind_educator_reviews_to_verified_teacher_subjects"
+    },
+    {
+      "version": "20261003083950",
+      "name": "align_content_reviewer_capability_with_verified_teacher"
+    },
+    {
+      "version": "20261003084041",
+      "name": "correct_teacher_approval_status_in_reviewer_trust"
+    },
+    {
+      "version": "20261003084314",
+      "name": "add_zero_budget_educator_reviewer_authorization"
+    },
+    {
+      "version": "20261003085029",
+      "name": "restore_language_review_operations_for_authenticated_reviewers"
+    }
+  ],
+  "edge_function_inventory": [
+    {
+      "name": "chapa-initialize",
+      "version": 4,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "chapa-verify",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "chapa-callback",
+      "version": 5,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-payment-staging",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "ai-tutor",
+      "version": 6,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-web",
+      "version": 24,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-assessment",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-finance",
+      "version": 5,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-finance-callback",
+      "version": 4,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-proctor",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "career-coach",
+      "version": 6,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-admin",
+      "version": 4,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-auth",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "practice-coach",
+      "version": 5,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-admin-console",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-admin-login",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-command",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-owner",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-localize",
+      "version": 5,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "teacher-copilot",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-learning-checkout",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-learning-payment-verify",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-learning-payment-callback",
+      "version": 6,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-source-ingest-v14",
+      "version": 5,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-action-page-verify-v14",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-question-regenerator-v18",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-question-batch-v19",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-source-recheck-v30",
+      "version": 2,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-build-validator",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-integration-qa-v36",
+      "version": 5,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-public-status",
+      "version": 2,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-auth-status",
+      "version": 3,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-practice-live",
+      "version": 2,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-netlify-deploy-relay-v37",
+      "version": 4,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-admin-api",
+      "version": 22,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-core",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-dispatcher",
+      "version": 4,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-core-v3",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-execution-v1",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-coordinator-v1",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-coordinator-v2",
+      "version": 8,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-openai-proxy",
+      "version": 3,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-execution-v2",
+      "version": 12,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-ai-admin",
+      "version": 2,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "gemini-proxy",
+      "version": 4,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-account-deletion",
+      "version": 1,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-privacy",
+      "version": 1,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-account-deletion-web",
+      "version": 1,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-beta-auth",
+      "version": 2,
+      "verify_jwt": false,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "mela-beta-admin",
+      "version": 1,
+      "verify_jwt": true,
+      "status": "ACTIVE"
+    }
+  ],
+  "advisors_before": [
+    [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 11,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+      },
+      {
+        "name": "anon_security_definer_function_executable",
+        "level": "WARN",
+        "count": 1,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable"
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 112,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1,
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ],
+    [
+      {
+        "name": "unindexed_foreign_keys",
+        "level": "INFO",
+        "count": 4,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0001_unindexed_foreign_keys"
+      },
+      {
+        "name": "unused_index",
+        "level": "INFO",
+        "count": 241,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      }
+    ]
+  ],
+  "advisors_after": [
+    [
+      {
+        "name": "rls_enabled_no_policy",
+        "level": "INFO",
+        "count": 11,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+      },
+      {
+        "name": "anon_security_definer_function_executable",
+        "level": "WARN",
+        "count": 1,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable"
+      },
+      {
+        "name": "authenticated_security_definer_function_executable",
+        "level": "WARN",
+        "count": 112,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+      },
+      {
+        "name": "auth_leaked_password_protection",
+        "level": "WARN",
+        "count": 1,
+        "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+      }
+    ],
+    [
+      {
+        "name": "unused_index",
+        "level": "INFO",
+        "count": 245,
+        "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index"
+      }
+    ]
+  ],
+  "recorded_at": "2026-10-03T22:26:41.612999+00:00"
+}

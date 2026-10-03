@@ -36,7 +36,9 @@ begin
   insert into public.assessment_attempts(assessment_id,user_id) values(v_assessment,v_user) returning id into v_attempt;
 
   execute 'reset role';
-  perform set_config('request.jwt.claims',jsonb_build_object('sub',v_admin,'role','authenticated')::text,true);
+  -- Fixture time travel uses the database maintenance context, not a profile role.
+  -- An admin profile alone no longer grants administrator authority.
+  perform set_config('request.jwt.claims','{}',true);
   update public.assessment_attempts set started_at=now()-interval '31 minutes' where id=v_attempt;
 
   perform set_config('request.jwt.claims',jsonb_build_object('sub',v_user,'role','authenticated')::text,true);

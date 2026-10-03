@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type TeacherReview = {
@@ -26,6 +26,7 @@ type Decision = 'approved' | 'rejected' | 'suspended'
 const list = (value?: string[] | null) => value?.length ? value.join(', ') : '—'
 
 export default function TeacherVerificationPanel({ client }: { client: SupabaseClient }) {
+  const saving = useRef(false)
   const [status, setStatus] = useState('pending')
   const [rows, setRows] = useState<TeacherReview[]>([])
   const [selected, setSelected] = useState<TeacherReview | null>(null)
@@ -40,6 +41,7 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
     let active = true
     const load = async () => {
       setBusy(true); setError('')
+      setRows([]); setSelected(null); setDecision(''); setNote('')
       try {
         const { data, error } = await client.rpc('get_teacher_verification_queue', {
           p_status: status || null,
@@ -61,7 +63,8 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!selected || !decision || note.trim().length < 5) return
+    if (saving.current || busy || !selected || !decision || note.trim().length < 5) return
+    saving.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
       const { error } = await client.rpc('review_teacher_profile', {
@@ -75,7 +78,7 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
         : `Teacher verification changed to ${decision}. Content-review access is disabled.`)
       setSelected(null); setDecision(''); setNote(''); setRevision(value => value + 1)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Teacher verification decision could not be saved.') }
-    finally { setBusy(false) }
+    finally { saving.current = false; setBusy(false) }
   }
 
   return <section className="panel" aria-label="Teacher reviewer verification">

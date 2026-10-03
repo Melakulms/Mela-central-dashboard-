@@ -24,3 +24,12 @@ The live readiness register also includes supply and provider requirements. Its 
 
 Password-protection remediation: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 Privileged-function review: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
+
+## Section recovery follow-up
+
+- Mela Next now offers the exact goal types supported by the learner's education stage. Unknown stages cannot submit a goal; server eligibility rules remain authoritative.
+- Career-coach requests now release their busy state after thrown network errors, preserve the question for a manual retry, reject empty replies, and avoid duplicate submissions.
+- Educator review distinguishes unavailable access checks from denied access, supports retry, clears old queue results on reload, and blocks changing review modes during requests.
+- Teacher verification clears stale rows and the selected decision form on filter changes or refresh, and guards duplicate decision submission.
+- Local verification: consumer 54 automated tests and production build passed; admin 49 automated tests and production build passed. These checks include mocked network failure recovery, not real-account acceptance testing.
+- No database permissions, content approvals, payment flags, or launch-readiness declarations were changed by this follow-up. The incomplete release gates above still apply.
