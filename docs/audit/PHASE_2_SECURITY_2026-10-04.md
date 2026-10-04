@@ -11,6 +11,7 @@ Status: **in progress; not certified**. Changes below are live and stored as mig
 - `20261003082930_enable_qualified_educator_content_review_workflows.sql` provides chapter-review queue/item/claim/submit workflows with private append-only decision history. The public API uses SECURITY INVOKER wrappers; private implementations validate the current caller and subject eligibility.
 - `20261003085029_restore_language_review_operations_for_authenticated_reviewers.sql` restores assessment-language review operations through explicit reviewer/admin execution boundaries rather than direct table writes.
 - `20261004040739_harden_question_review_read_wrappers.sql`: converted `get_question_review_queue_v18` and `get_question_review_slice_v18` public wrappers from SECURITY DEFINER to SECURITY INVOKER, explicitly granted only authenticated/service-role execution on the necessary private implementations, and kept anonymous execution revoked.
+- `20261004041220_harden_question_reviewer_capability_wrapper.sql`: converted `can_review_questions_v18()` to an invoker public wrapper while preserving the private approved-teacher/reviewer-authorization check and explicit authenticated/service-role execution boundary.
 
 The coin API accepts the same business-event UUID on retries. Callers must reuse that ID; generating a new random ID on every retry defeats business-event idempotency. Existing deployed reward-handler integration and concurrent multi-connection testing remain to audit. This API creates no paid referral eligibility and initiates no payment.
 
@@ -29,11 +30,11 @@ Append-only history deliberately rejects deletion, including an attempted cascad
 | mentorship_lifecycle.sql | Pass | Request acceptance, scheduling, reading, cancellation authorization |
 | assessment_integrity.sql | Pass after fixture correction | Server grading, credential and outsider checks; expiry finalization |
 | assessment_expiry_finalization.sql | Pass after fixture correction | Incomplete timed-out attempt safely becomes void |
-| question_review_wrapper_security.sql | Pass | Public reviewer reads are invoker wrappers; anonymous execution denied; private review tables remain unreadable; synthetic student receives no review queue and cannot open a slice |
+| question_review_wrapper_security.sql | Pass | Public reviewer reads/capability are invoker wrappers; anonymous execution denied; private review tables remain unreadable; synthetic student has no reviewer capability, receives no review queue and cannot open a slice |
 
 Assessment fixture correction: the old tests impersonated an admin by profile role to move fixture timestamps. The stricter registry authority correctly rejected that. Tests now set the timestamp as the database maintenance actor, then return to the learner role to exercise the real submission boundary. No production authorization was relaxed.
 
-The reviewer wrapper regression was also executed directly against production inside `BEGIN ... ROLLBACK`; no fixture persisted. A separate negative check with an existing student identity returned an empty review queue and `verified educator subject access required` for a review slice. No approved educator was fabricated to create a positive certification result.
+The reviewer wrapper regression was also executed directly against production inside `BEGIN ... ROLLBACK`; no fixture persisted. Separate negative checks with an existing student identity returned `false` for reviewer capability, an empty review queue and `verified educator subject access required` for a review slice. No approved educator was fabricated to create a positive certification result.
 
 These SQL regressions are targeted engineering evidence, not complete product certifications. No 5,000-user test or multi-connection ledger stress run was performed against production.
 
@@ -41,7 +42,7 @@ These SQL regressions are targeted engineering evidence, not complete product ce
 
 Before Phase 2 index repair: four missing foreign-key indexes. After: zero; remaining performance notices are unused-index INFO findings. Do not drop them without workload evidence.
 
-Security advisor after reviewer-wrapper hardening: **110 authenticated SECURITY DEFINER notices, down from 112**; one intended anonymous certificate-verification notice; eleven RLS-enabled/no-policy INFO notices; and disabled leaked-password-protection WARN. The two removed privileged notices are `get_question_review_queue_v18` and `get_question_review_slice_v18`; both continue to enforce authorization through their private implementations. No ERROR-level advisor finding appeared. Private/admin tables without browser policies are intentional default-deny boundaries, not a request to grant browser access.
+Security advisor after reviewer-wrapper hardening: **109 authenticated SECURITY DEFINER notices, down from 112**; one intended anonymous certificate-verification notice; eleven RLS-enabled/no-policy INFO notices; and disabled leaked-password-protection WARN. The three removed privileged notices are `get_question_review_queue_v18`, `get_question_review_slice_v18`, and `can_review_questions_v18`; each continues to enforce authorization through its private implementation. No ERROR-level advisor finding appeared. Private/admin tables without browser policies are intentional default-deny boundaries, not a request to grant browser access.
 
 Production npm dependency audits returned zero reported vulnerabilities in both current checkouts. A targeted tracked-file scan found no known-format secret keys or private-key blocks. This is not an exhaustive Git history, entropy-based, or deployed-secret audit; no credential rotation was performed without an identified secret.
 
@@ -54,7 +55,7 @@ References:
 ## Remaining Phase 2 gates
 
 1. Recover/reconcile the historical schema and omitted Edge Function sources, then prove a fresh staging restore. A migration list alone cannot reconstruct the database.
-2. Continue individual negative authorization review of the remaining 110 authenticated privileged RPCs, associated helpers and remaining per-role policies. Do not replace the review with blanket grants/revocations.
+2. Continue individual negative authorization review of the remaining 109 authenticated privileged RPCs, associated helpers and remaining per-role policies. Do not replace the review with blanket grants/revocations.
 3. Complete financial/provider/referral/escrow invariants and full admin/moderation audit coverage. The existing Chapa-only model does not meet the requested telebirr/CBE Birr provider requirements.
 4. Verify backend reward callers use stable event IDs, concurrent ledger behavior, immutable balance provenance, and legal account-erasure integration.
 5. Enable supported leaked-password protection and validate public Auth/SMTP/session behavior with real accounts.
