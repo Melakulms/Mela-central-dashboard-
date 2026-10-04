@@ -13,18 +13,25 @@ begin
   if (select p.prosecdef from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='get_question_review_slice_v18' and pg_get_function_identity_arguments(p.oid)='p_slice_id bigint') then
     raise exception 'question review slice public wrapper must be SECURITY INVOKER';
   end if;
+  if (select p.prosecdef from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='can_review_questions_v18' and pg_get_function_identity_arguments(p.oid)='') then
+    raise exception 'reviewer capability public wrapper must be SECURITY INVOKER';
+  end if;
 
   if has_function_privilege('anon','public.get_question_review_queue_v18(text,integer)','EXECUTE')
      or has_function_privilege('anon','public.get_question_review_slice_v18(bigint)','EXECUTE')
+     or has_function_privilege('anon','public.can_review_questions_v18()','EXECUTE')
      or has_function_privilege('anon','private.get_question_review_queue_v18(text,integer)','EXECUTE')
-     or has_function_privilege('anon','private.get_question_review_slice_v18(bigint)','EXECUTE') then
+     or has_function_privilege('anon','private.get_question_review_slice_v18(bigint)','EXECUTE')
+     or has_function_privilege('anon','private.can_review_questions_v18()','EXECUTE') then
     raise exception 'anonymous reviewer execution was exposed';
   end if;
 
   if not has_function_privilege('authenticated','public.get_question_review_queue_v18(text,integer)','EXECUTE')
      or not has_function_privilege('authenticated','public.get_question_review_slice_v18(bigint)','EXECUTE')
+     or not has_function_privilege('authenticated','public.can_review_questions_v18()','EXECUTE')
      or not has_function_privilege('authenticated','private.get_question_review_queue_v18(text,integer)','EXECUTE')
-     or not has_function_privilege('authenticated','private.get_question_review_slice_v18(bigint)','EXECUTE') then
+     or not has_function_privilege('authenticated','private.get_question_review_slice_v18(bigint)','EXECUTE')
+     or not has_function_privilege('authenticated','private.can_review_questions_v18()','EXECUTE') then
     raise exception 'authenticated reviewer execution path is incomplete';
   end if;
 
@@ -43,6 +50,8 @@ begin
 
   perform set_config('request.jwt.claims',jsonb_build_object('sub',fixture_user,'role','authenticated')::text,true);
   execute 'set local role authenticated';
+
+  if public.can_review_questions_v18() then raise exception 'unqualified learner gained reviewer capability'; end if;
 
   select public.get_question_review_queue_v18(null,5) into queue_result;
   if queue_result <> '[]'::jsonb then raise exception 'unqualified learner received a question review queue'; end if;
