@@ -4,8 +4,7 @@ const cors={
   'Access-Control-Allow-Origin':'*',
   'Access-Control-Allow-Headers':'authorization, apikey, content-type',
   'Access-Control-Allow-Methods':'POST, OPTIONS',
-  'Content-Type':'application/json',
-  'Cache-Control':'no-store'
+  'Content-Type':'application/json'
 };
 function json(d:unknown,s=200){return new Response(JSON.stringify(d),{status:s,headers:cors})}
 async function authenticatedUser(req:Request){
@@ -24,49 +23,25 @@ async function featureAvailable(key:string){return (await rest('rpc/platform_fea
 async function notify(user_id:string,title:string,body:string,ref_table?:string,ref_id?:string){try{await rest('notifications',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({user_id,title,body,ref_table:ref_table||null,ref_id:ref_id||null})})}catch(e){console.error('notify',e)}}
 function paymentMode(){return Deno.env.get('MELA_PAYMENT_MODE')==='live'?'live':'test'}
 function chapaKey(){const key=Deno.env.get('CHAPA_SECRET_KEY');if(!key)throw Object.assign(new Error('Chapa secret key is not configured.'),{status:503,code:'CHAPA_NOT_CONFIGURED'});const mode=paymentMode();if(mode==='test'&&!/TEST/i.test(key))throw Object.assign(new Error('Test mode requires a Chapa TEST secret key.'),{status:503,code:'CHAPA_TEST_KEY_REQUIRED'});if(mode==='live'&&/TEST/i.test(key))throw Object.assign(new Error('Live mode requires a Chapa live secret key.'),{status:503,code:'CHAPA_LIVE_KEY_REQUIRED'});return key}
-async function hasEmployerAccess(uid:string,employerId:string){const e=await rest(`employers?id=eq.${employerId}&select=owner_id&limit=1`);if(e?.[0]?.owner_id===uid)return true;const m=await rest(`employer_members?employer_id=eq.${employerId}&user_id=eq.${uid}&status=eq.active&member_role=in.(admin,hiring_manager,recruiter)&select=id&limit=1`);return !!m?.length}
+async function isAdmin(uid:string){const r=await rest(`profiles?id=eq.${uid}&select=role,account_status,deleted_at&limit=1`);return r?.[0]?.role==='admin'&&r[0].account_status==='active'&&!r[0].deleted_at}
+async function hasEmployerAccess(uid:string,employerId:string){if(await isAdmin(uid))return true;const e=await rest(`employers?id=eq.${employerId}&select=owner_id&limit=1`);if(e?.[0]?.owner_id===uid)return true;const m=await rest(`employer_members?employer_id=eq.${employerId}&user_id=eq.${uid}&status=eq.active&member_role=in.(admin,hiring_manager,recruiter)&select=id&limit=1`);return !!m?.length}
 async function getEscrowContext(escrowId:string){
-  const es=(await rest(`escrow_transactions?id=eq.${encodeURIComponent(escrowId)}&select=id,status,amount_minor,currency,contract_id,task_id,user_id,funded_at,transaction_type&limit=1`))?.[0];
+  const es=(await rest(`escrow_transactions?id=eq.${escrowId}&select=id,status,amount_minor,currency,contract_id,task_id,user_id,funded_at,transaction_type&limit=1`))?.[0];
   if(!es)throw Object.assign(new Error('Escrow not found'),{status:404});
   const c=(await rest(`freelance_contracts?id=eq.${es.contract_id}&select=id,employer_id,freelancer_id,task_id,status,funding_status,agreed_amount&limit=1`))?.[0];
   if(!c)throw Object.assign(new Error('Contract not found'),{status:404});return {es,c}
 }
-function exactAmountMinor(value:unknown):number|null {
-  if(typeof value!=='string'&&typeof value!=='number')return null;
-  const match=/^(\d+)(?:\.(\d{1,2}))?$/.exec(String(value));if(!match)return null;
-  const minor=Number(match[1])*100+Number((match[2]||'').padEnd(2,'0'));
-  return Number.isSafeInteger(minor)&&minor>0?minor:null;
-}
-async function updateUnfinishedAttempt(id:string,body:unknown){
-  return patch('escrow_payment_attempts',`id=eq.${encodeURIComponent(id)}&status=in.(initiated,pending)`,body);
-}
 async function verifyFundingAttempt(p:any){
-  if(p.mode!==paymentMode())throw Object.assign(new Error('Payment belongs to a different environment.'),{status:409,code:'PAYMENT_MODE_MISMATCH'});
-  const key=chapaKey();const r=await fetch(`https://api.chapa.co/v1/transaction/verify/${encodeURIComponent(p.tx_ref)}`,{headers:{Authorization:`Bearer ${key}`},signal:AbortSignal.timeout(15000)});
-  const tx=await r.text();let b:any={};try{b=tx?JSON.parse(tx):{}}catch{}
-  if(!r.ok||b?.status!=='success'||typeof b?.data?.status!=='string'||!b.data.status){
-    throw Object.assign(new Error('Payment verification temporarily unavailable. Please retry.'),{status:503,code:'VERIFICATION_UNAVAILABLE'});
-  }
-  const now=new Date().toISOString(),d=b.data,ps=d.status.toLowerCase();
-  if(ps!=='success'){
-    const mapped=ps==='failed'?'failed':'pending';
-    await updateUnfinishedAttempt(p.id,{status:mapped,provider_status:ps,verify_payload:b,failure_reason:mapped==='failed'?'Provider reported payment failure':null,last_verified_at:now});
-    return {state:mapped};
-  }
-  const minor=exactAmountMinor(d.amount),expected=Number(p.expected_amount_minor),providerRef=d.reference||d.ref_id;
-  const checks={
-    mode:String(d.mode||'').toLowerCase()===p.mode,
-    tx_ref:typeof d.tx_ref==='string'&&d.tx_ref===p.tx_ref,
-    amount:minor!==null&&Number.isSafeInteger(expected)&&minor===expected,
-    currency:p.currency==='ETB'&&String(d.currency||'').toUpperCase()===p.currency,
-    provider_reference:typeof providerRef==='string'&&!!providerRef.trim()
-  };
-  if(!Object.values(checks).every(Boolean)){
-    await updateUnfinishedAttempt(p.id,{provider_status:ps,verify_payload:b,failure_reason:`Verification mismatch: ${JSON.stringify(checks)}`,last_verified_at:now});
-    return {state:'mismatch',checks};
-  }
-  const out=await rest('rpc/finalize_escrow_payment',{method:'POST',body:JSON.stringify({p_payment_id:p.id,p_provider_ref:providerRef,p_provider_method:d.method||null,p_provider_type:d.type||null,p_provider_charge:minor,p_verify_payload:b})});
-  return {state:'success',result:out};
+  const key=chapaKey();const r=await fetch(`https://api.chapa.co/v1/transaction/verify/${encodeURIComponent(p.tx_ref)}`,{headers:{Authorization:`Bearer ${key}`}});
+  const tx=await r.text();let b:any={};try{b=tx?JSON.parse(tx):{}}catch{}const now=new Date().toISOString();
+  if(!r.ok){await patch('escrow_payment_attempts',`id=eq.${p.id}`,{status:r.status===404?'pending':p.status,provider_status:b?.status||'pending',failure_reason:b?.message||`Chapa verify HTTP ${r.status}`,last_verified_at:now});return {state:r.status===404?'pending':'error',provider:b}}
+  const d=b?.data||{},ps=String(d.status||'').toLowerCase();
+  if(ps!=='success'){const mapped=ps==='failed'?'failed':'pending';await patch('escrow_payment_attempts',`id=eq.${p.id}`,{status:mapped,provider_status:ps||mapped,verify_payload:b,failure_reason:mapped==='failed'?(b?.message||'Payment failed'):null,last_verified_at:now});return {state:mapped,provider:b}}
+  const minor=Math.round(Number(d.amount)*100);const checks:any={mode:String(d.mode||'').toLowerCase()===String(p.mode||'').toLowerCase(),tx_ref:String(d.tx_ref||'')===p.tx_ref,amount:Number.isFinite(minor)&&minor===Number(p.expected_amount_minor),currency:String(d.currency||'').toUpperCase()===String(p.currency||'').toUpperCase()};
+  
+  if(!Object.values(checks).every(Boolean)){await patch('escrow_payment_attempts',`id=eq.${p.id}`,{status:'failed',provider_status:ps,verify_payload:b,failure_reason:`Verification mismatch: ${JSON.stringify(checks)}`,last_verified_at:now});return {state:'mismatch',checks}}
+  const out=await rest('rpc/finalize_escrow_payment',{method:'POST',body:JSON.stringify({p_payment_id:p.id,p_provider_ref:d.reference||d.ref_id||null,p_provider_method:d.method||null,p_provider_type:d.type||null,p_provider_charge:minor,p_verify_payload:b})});
+  return {state:'success',result:out}
 }
 async function fundEscrow(uid:string,body:any){
   const escrowId=String(body?.escrow_id||'');if(!escrowId)throw Object.assign(new Error('escrow_id is required'),{status:400});const {es,c}=await getEscrowContext(escrowId);
@@ -89,15 +64,15 @@ async function verifyPayoutRow(pr:any){
   const key=chapaKey();const r=await fetch(`https://api.chapa.co/v1/transfers/verify/${encodeURIComponent(pr.payout_ref)}`,{headers:{Authorization:`Bearer ${key}`}});const tx=await r.text();let b:any={};try{b=tx?JSON.parse(tx):{}}catch{}
   if(!r.ok){await patch('payout_requests',`id=eq.${pr.id}&status=eq.queued`,{failure_reason:b?.message||`Transfer verification unavailable (${r.status})`,provider_payload:b});return {state:'queued'}}
   const st=String(b?.data?.status||'').toLowerCase();
-  if(st==='success'){const details=b.data;const amount=exactAmountMinor(details.amount);if(String(details.reference||'')!==pr.payout_ref||amount===null||amount!==Number(pr.amount_minor)||String(details.currency||'').toUpperCase()!==pr.currency){await patch('payout_requests',`id=eq.${pr.id}&status=eq.queued`,{failure_reason:'Transfer verification mismatch; manual reconciliation required',provider_payload:b});return {state:'queued'}}const ref=b?.data?.chapa_reference||b?.data?.reference||null;await patch('payout_requests',`id=eq.${pr.id}`,{provider_ref:ref,provider_payload:b,failure_reason:null});await finalizePayout(pr,ref||pr.payout_ref);return {state:'success',provider:b}}
+  if(st==='success'){const details=b.data;const amount=Math.round(Number(details.amount)*100);if(String(details.reference||'')!==pr.payout_ref||!Number.isSafeInteger(amount)||amount!==Number(pr.amount_minor)||String(details.currency||'').toUpperCase()!==pr.currency){await patch('payout_requests',`id=eq.${pr.id}&status=eq.queued`,{failure_reason:'Transfer verification mismatch; manual reconciliation required',provider_payload:b});return {state:'queued'}}const ref=b?.data?.chapa_reference||b?.data?.reference||null;await patch('payout_requests',`id=eq.${pr.id}`,{provider_ref:ref,provider_payload:b,failure_reason:null});await finalizePayout(pr,ref||pr.payout_ref);return {state:'success',provider:b}}
   if(st.includes('fail')||st.includes('cancel')){await patch('payout_requests',`id=eq.${pr.id}&status=eq.queued`,{status:'failed',provider_payload:b,failure_reason:b?.message||st});return {state:'failed',provider:b}}
   await patch('payout_requests',`id=eq.${pr.id}&status=eq.queued`,{provider_payload:b});return {state:'queued',provider:b}
 }
 async function payout(uid:string,body:any){
   const milestoneId=String(body?.milestone_id||'');if(!milestoneId)throw Object.assign(new Error('milestone_id is required'),{status:400});
-  const m=(await rest(`task_milestones?id=eq.${encodeURIComponent(milestoneId)}&select=id,contract_id,status&limit=1`))?.[0];if(!m)throw Object.assign(new Error('Milestone not found'),{status:404});if(!['approved','paid'].includes(m.status))throw Object.assign(new Error('Milestone must be approved before payout'),{status:409});
+  const m=(await rest(`task_milestones?id=eq.${milestoneId}&select=id,contract_id,status&limit=1`))?.[0];if(!m)throw Object.assign(new Error('Milestone not found'),{status:404});if(!['approved','paid'].includes(m.status))throw Object.assign(new Error('Milestone must be approved before payout'),{status:409});
   const c=(await rest(`freelance_contracts?id=eq.${m.contract_id}&select=id,employer_id,freelancer_id&limit=1`))?.[0];if(!c||!(await hasEmployerAccess(uid,c.employer_id)))throw Object.assign(new Error('Not authorized'),{status:403});
-  let pr=(await rest(`payout_requests?milestone_id=eq.${encodeURIComponent(milestoneId)}&status=in.(pending,queued,failed,success)&select=*&order=created_at.desc&limit=1`))?.[0];if(!pr)throw Object.assign(new Error('Payout request not found'),{status:404});if(pr.status==='success'||m.status==='paid')return {status:'success',already_paid:true,payout_ref:pr.payout_ref};
+  let pr=(await rest(`payout_requests?milestone_id=eq.${milestoneId}&status=in.(pending,queued,failed,success)&select=*&order=created_at.desc&limit=1`))?.[0];if(!pr)throw Object.assign(new Error('Payout request not found'),{status:404});if(pr.status==='success'||m.status==='paid')return {status:'success',already_paid:true,payout_ref:pr.payout_ref};
   if(body?.action==='verify'||pr.status==='queued'||pr.status==='failed'){const vr=await verifyPayoutRow(pr);return {status:vr.state,payout_ref:pr.payout_ref}}
   const account=(await rest(`payout_accounts?user_id=eq.${c.freelancer_id}&active=eq.true&select=*&limit=1`))?.[0];if(!account)throw Object.assign(new Error('Freelancer must configure an active payout account'),{status:409});
   if(pr.status!=='pending')throw Object.assign(new Error('Payout is not available for initiation'),{status:409});
@@ -124,3 +99,4 @@ Deno.serve(async(req)=>{
     return json(out)
   }catch(e:any){console.error('mela-finance',e);return json({code:e?.code,error:e instanceof Error?e.message:'Unexpected error'},e?.status||500)}
 });
+

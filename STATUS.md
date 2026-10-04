@@ -63,3 +63,11 @@ Financial gates must remain disabled. No synthetic provider success, fake conten
 - Payments, payouts, earn_work and video flags were read back as false. Readiness scores remain unchanged; see `docs/audit/PHASE_4_PAYMENTS_2026-10-04.md` for current limitations and provider onboarding gates.
 
 - Live callback smoke: GET 405, unsigned POST 503 (webhook verification unavailable). Configure the provider webhook secret securely before signed sandbox testing; no secret was read or changed.
+
+## Phase 4 continuation — finance and course verification
+
+- Previous release `c5f5e91`: Admin CI and GitHub Pages both completed successfully.
+- Found deployed `mela-finance` version 5 lagging behind repository authorization fixes. Deployed version 6 removes profile-label admin access to unrelated employers, adds exact transfer/escrow amounts, checks attempt environment, and restricts delayed updates to unfinished attempts. JWT verification remains enabled; unauthenticated live smoke returned 401.
+- Recovered six additional deployed checkout/course-payment sources. Hardened and deployed course verification: `chapa-verify` v4, `chapa-callback` v6, `mela-learning-payment-verify` v3, `mela-learning-payment-callback` v7. Manual verification checks Auth identity and scopes payment lookup to that user; callbacks retain HMAC verification. All four reject invalid amounts/modes and provider outages safely.
+- Validation: 164 automated tests pass across eleven suites; production frontend build passes. No provider sandbox payment or signed live event was performed. Tests simulate provider/database responses, so concurrent database acceptance remains open.
+- Read back payments/payouts/earn_work/video flags: all false. No readiness percentage increased and Phase 4 remains in progress.

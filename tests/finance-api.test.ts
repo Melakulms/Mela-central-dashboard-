@@ -49,3 +49,15 @@ describe('Finance transfer boundary',()=>{
   expect(server.requests.some(r=>r.url.endsWith('/v1/transfers'))).toBe(false)
  })
 })
+describe('Transfer amount precision',()=>{
+ it.each(['10.001','1e1',null,true,'9007199254740992'])('does not finalize invalid amount %j',async amount=>{
+  const server=api('queued',true,{status:'success',data:{status:'success',reference:'payout-reference',amount,currency:'ETB'}})
+  await server.request('verify_payout')
+  expect(server.requests.some(r=>r.url.includes('rpc/record_milestone_payout'))).toBe(false)
+ })
+ it('finalizes an exactly verified amount',async()=>{
+  const server=api('queued',true,{status:'success',data:{status:'success',reference:'payout-reference',amount:'10.00',currency:'ETB'}})
+  await server.request('verify_payout')
+  expect(server.requests.some(r=>r.url.includes('rpc/record_milestone_payout'))).toBe(true)
+ })
+})

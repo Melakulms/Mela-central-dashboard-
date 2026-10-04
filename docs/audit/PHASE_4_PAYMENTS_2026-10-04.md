@@ -49,3 +49,33 @@ OWNER_ACTION_REQUIRED: provide official telebirr and CBE Birr merchant sandbox o
 - https://supabase.com/docs/guides/functions/function-configuration — per-function JWT configuration.
 
 These documents support integration mechanics, not proof that this merchant account is configured or certified.
+
+## Continuation: manual verification and course payments
+
+### Deployment drift resolved
+
+The live `mela-finance` v5 source still contained an `isAdmin` profile-role override that had already been removed in the repository. A source comparison established the difference before deployment. Version 6 now matches the hardened implementation; tests demonstrate that an unrelated admin profile cannot act as an employer. The previous source is archived for analysis, not ordinary rollback.
+
+### Additional fixes and evidence
+
+- Manual escrow verification and payout verification now reject invalid decimal precision, coercions and unsafe amounts. Escrow verification compares the stored mode with configured mode before contacting the provider, then checks reference, amount, currency, provider mode and provider reference before finalization.
+- Provider outages or malformed verification envelopes return retryable failure without overwriting payment state. Conditional updates restrict late pending/failed responses to unfinished attempts.
+- Four course-payment endpoints were recovered, repaired, formatted and deployed. The legacy callback previously omitted mode verification. Both manual course verifiers now ask Supabase Auth to validate identity before querying user-owned payments, in addition to gateway JWT enforcement.
+- Legacy course success updates use conditional writes and inspect the result. A lost race to a failed payment cannot grant enrollment or report successful finalization. Full cross-process database concurrency testing remains a separate release gate.
+- Source recovery includes the two checkout initializers, which are unchanged and require further review of initiation race handling, rate limits and registration/premium/referral product alignment.
+
+| Function | Previous version | Deployed version | Authentication |
+|---|---:|---:|---|
+| mela-finance | 5 | 6 | Gateway JWT plus Auth user validation and employer ownership/membership |
+| chapa-verify | 3 | 4 | Gateway JWT plus Auth user validation and user-scoped payment lookup |
+| chapa-callback | 5 | 6 | Body-bound HMAC |
+| mela-learning-payment-verify | 2 | 3 | Gateway JWT plus Auth user validation and user-scoped payment lookup |
+| mela-learning-payment-callback | 6 | 7 | Body-bound HMAC |
+
+Validation: 164 tests across eleven suites passed, including 24 new finance tests and 64 new course-payment tests. The production frontend build passed. These counts include local synthetic fixtures; they do not certify a merchant account or real payment settlement. Supabase accepted all five deployments as ACTIVE. The finance endpoint rejected an unauthenticated POST with 401. Financial gates were read back as disabled after deployment.
+
+### Still open
+
+Provider-issued sandbox setup and the webhook secret are still required. Additional engineering remains: checkout initiation races, fully atomic legacy course fulfillment/reconciliation, consistent audit/event persistence, refunds/disputes, complete referral payout fraud controls, translated receipts, load testing, restore acceptance and pilot evidence. The direct telebirr/CBE Birr integrations remain absent. No real charge or transfer was initiated.
+
+Deployed negative smoke checks also returned 401 for both manual course verifiers, and 503 (webhook secret not configured) for both course callbacks. These checks exercised rejection paths only and did not read or mutate payment records.
