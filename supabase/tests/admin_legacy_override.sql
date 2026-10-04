@@ -5,6 +5,8 @@ declare
   v_admin uuid := gen_random_uuid();
   v_super_role uuid;
   v_platform_role uuid;
+  v_role uuid;
+  v_blocked boolean;
 begin
   insert into auth.users(
     id,email,raw_app_meta_data,raw_user_meta_data,email_confirmed_at,created_at,updated_at
@@ -67,19 +69,20 @@ begin
     raise exception 'Non-super central admin received broad legacy override';
   end if;
 
-  -- Explicitly disabling MFA for a central super-admin remains supported by the
-  -- control-plane flag.
-  update admin.admin_users
-  set role_id=v_super_role, mfa_required=false
-  where user_id=v_admin;
-  perform set_config(
-    'request.jwt.claims',
-    jsonb_build_object('sub',v_admin,'role','authenticated','aal','aal1')::text,
-    true
-  );
-  if not private.is_admin_user() then
-    raise exception 'Super-admin with MFA explicitly disabled was denied';
-  end if;
+  -- Every granular role is denied the broad override.
+  for v_role in select id from admin.roles where key<>'super_admin' loop
+    update admin.admin_users set role_id=v_role where user_id=v_admin;
+    if private.is_admin_user() then raise exception 'Granular role received legacy override'; end if;
+  end loop;
+
+  -- Active administrators cannot disable MFA at the data layer.
+  v_blocked:=false;
+  begin
+    update admin.admin_users set role_id=v_super_role,mfa_required=false where user_id=v_admin;
+  exception when check_violation then v_blocked:=true;
+  end;
+  if not v_blocked then raise exception 'Active administrator disabled MFA'; end if;
+  update admin.admin_users set role_id=v_super_role where user_id=v_admin;
 
   update admin.admin_users set active=false where user_id=v_admin;
   if private.is_admin_user() then

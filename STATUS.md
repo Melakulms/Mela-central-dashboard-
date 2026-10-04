@@ -2,7 +2,7 @@
 
 Updated: 4 October 2026, Africa/Addis_Ababa. Decision: **NO-GO for unrestricted public or paid launch**.
 
-Phase 1 audit is complete at inventory/targeted-inspection depth. Phase 2 is in progress. Phases 3–11 are not certified. A code audit is not a real-user pilot, payment-provider certification, legal approval, or capacity proof.
+Phase 1 audit is complete at inventory/targeted-inspection depth. Phase 2 remains open. Phase 3 safety repairs are implemented; Phase 4 inspection is starting at the owner’s request. Phases 3–11 are not certified. A code audit is not a real-user pilot, payment-provider certification, legal approval, or capacity proof.
 
 ## Evidence-based readiness
 
@@ -45,3 +45,11 @@ Financial gates must remain disabled. No synthetic provider success, fake conten
 - Archived all 607 recorded migrations with checksums and an integrity verifier. This is recovery source material, not a backup/restore certification: the oldest recorded migration depends on an earlier, missing baseline.
 - Current advisor snapshot: 94 authenticated privileged-function warnings; individual authorization review and leaked-password protection remain open. Readiness percentages above remain conservative; no restore credit was added merely for recovering SQL.
 - `supabase/recovery/README.md` records the isolated restore procedure and missing baseline/staging prerequisites. Phase 2 remains in progress. Phases 3–11 remain subject to the ordered acceptance gates.
+
+## Phase 3 checkpoint — admin authority and MFA
+
+- Reproduced and fixed a legacy authorization regression: a profile label alone could grant generic admin authority. Only an active Central Admin super admin with an active profile and AAL2 now gets that override; other roles use permission-specific APIs.
+- Applied migration `20261004103224_restore_central_super_admin_legacy_boundary`. Active admin records must require MFA.
+- Fixed double-encoded authenticator QR images, duplicate verification submissions, failed refresh handling and stale enrollment callbacks. No real authenticator acceptance is claimed.
+- Validation: 57 admin automated tests and production build passed; live rollback tests for legacy override, registry authority, atomic admin updates and user journeys passed.
+- See `docs/audit/PHASE_3_ADMIN_CERTIFICATION_2026-10-04.md` for all 23 gates. Percentages remain unchanged because broader acceptance is still missing.

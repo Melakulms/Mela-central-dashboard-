@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { verifyEnrollment } from '../lib/verify-enrollment'
 
 type Props = {
   client: SupabaseClient
@@ -11,6 +12,9 @@ type Props = {
 export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
   const onEnrolledRef=useRef(onEnrolled)
   useEffect(()=>{onEnrolledRef.current=onEnrolled},[onEnrolled])
+  const generation = useRef(0)
+  const verificationPending = useRef(false)
+  const [retry, setRetry] = useState(0)
   const [factorId, setFactorId] = useState('')
   const [qr, setQr] = useState('')
   const [secret, setSecret] = useState('')
@@ -21,6 +25,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
 
   useEffect(() => {
     let active = true
+    generation.current++
 
     const prepareEnrollment = async () => {
       setLoading(true)
@@ -33,6 +38,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       try {
         const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
         if (factorsError) throw factorsError
+        if (!factors) throw new Error('Could not check existing authenticators. Please retry.')
         if (!active) return
 
         // A verified factor already exists. Do not call enroll() again: the existing
@@ -76,39 +82,28 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
     void prepareEnrollment()
     return () => {
       active = false
+      generation.current++
     }
-  }, [client, email])
+  }, [client, email, retry])
 
   const verify = async () => {
-    if (!factorId || !/^\d{6}$/.test(code)) return
-
+    if (!factorId || !/^\d{6}$/.test(code) || verificationPending.current) return
+    verificationPending.current = true
+    const currentGeneration = generation.current
     setVerifying(true)
     setError('')
-
     try {
-      const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId })
-      if (challengeError) throw challengeError
-
-      const { error: verifyError } = await client.auth.mfa.verify({
-        factorId,
-        challengeId: challenge.id,
-        code,
-      })
-      if (verifyError) throw verifyError
-
-      await client.auth.refreshSession()
-      const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
-      if (assuranceError) throw assuranceError
-
-      if (assurance?.currentLevel !== 'aal2' || assurance.nextLevel !== 'aal2') {
-        throw new Error('MFA verification succeeded but the session is not at AAL2. Sign out, sign in again, and retry.')
-      }
-
-      onEnrolled()
+      await verifyEnrollment(client, factorId, code)
+      if (generation.current !== currentGeneration) return
+      setCode(''); setSecret(''); setQr('')
+      onEnrolledRef.current()
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'MFA verification failed. Check the 6-digit code and try again.')
+      if (generation.current === currentGeneration) {
+        setError(cause instanceof Error ? cause.message : 'MFA verification failed. Check the code and retry.')
+      }
     } finally {
-      setVerifying(false)
+      verificationPending.current = false
+      if (generation.current === currentGeneration) setVerifying(false)
     }
   }
 
@@ -120,13 +115,14 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
     <div className="card login">
       <h1>Set up administrator MFA</h1>
       <p className="muted">Scan this QR code with Google Authenticator, Microsoft Authenticator, 1Password, or another TOTP authenticator.</p>
-      {qr && <img src={`data:image/svg+xml;utf8,${encodeURIComponent(qr)}`} alt="MFA enrollment QR code" style={{ width: 220, height: 220, margin: '12px auto', display: 'block' }} />}
+      {qr && <img src={qr} alt="MFA enrollment QR code" style={{ width: 220, height: 220, margin: '12px auto', display: 'block' }} />}
       <p className="muted">If you cannot scan it, enter this setup secret manually:</p>
       <code style={{ display: 'block', wordBreak: 'break-all', padding: 12 }}>{secret}</code>
-      <label>Authenticator code<input className="mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></label>
-      {error && <div className="error">{error}</div>}
-      <button disabled={verifying || code.length !== 6} onClick={() => void verify()}>{verifying ? 'Verifying…' : 'Enable MFA and continue'}</button>
-      <button className="secondary" onClick={onCancel}>Sign out</button>
+      <label>Authenticator code<input className="mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} disabled={verifying} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></label>
+      {error && <div className="error" role="alert">{error}</div>}
+      <button disabled={verifying || !factorId || code.length !== 6} onClick={() => void verify()}>{verifying ? 'Verifying…' : 'Enable MFA and continue'}</button>
+      {!factorId && <button className="secondary" onClick={() => setRetry(value => value + 1)}>Retry MFA setup</button>}
+      <button className="secondary" disabled={verifying} onClick={onCancel}>Sign out</button>
     </div>
   </div>
 }
