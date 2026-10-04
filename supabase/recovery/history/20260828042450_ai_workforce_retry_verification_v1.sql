@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260828042450
+alter table public.mela_ai_tasks add column if not exists retry_count integer not null default 0; alter table public.mela_ai_tasks add column if not exists max_retries integer not null default 2; alter table public.mela_ai_tasks add column if not exists verification_status text not null default 'pending'; alter table public.mela_ai_tasks add column if not exists verification_notes text; alter table public.mela_ai_runs add column if not exists retry_count integer not null default 0; alter table public.mela_ai_runs add column if not exists verification_status text not null default 'pending'; create index if not exists idx_mela_ai_tasks_retryable on public.mela_ai_tasks (status, retry_count, max_retries, updated_at) where status in ('failed','running');
+;

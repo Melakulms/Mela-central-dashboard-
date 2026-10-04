@@ -38,3 +38,10 @@ See [full audit](docs/audit/FULL_AUDIT_2026-10-04.md) for module status, evidenc
 OWNER_ACTION_REQUIRED: provide provider-issued sandbox onboarding/documentation and credentials through secure configuration for telebirr and CBE Birr; configure/verify public transactional SMTP and a sender domain when budget permits; enable supported leaked-password protection; select/control the production domain; appoint qualified content/translation/safeguarding reviewers and Ethiopian legal counsel; supply the canonical 53-field curriculum if not present elsewhere; arrange the school pilot and consent. These are dependencies, not completed actions. No unrestricted public launch date is committed until release gates pass.
 
 Financial gates must remain disabled. No synthetic provider success, fake content approval, fabricated pilot, or self-issued external certification counts as evidence. The zero-budget invite-only beta may continue independently of the unrestricted public-launch decision.
+
+## Latest Phase 2 checkpoint — video boundary and recovery archive
+
+- Applied and regression-tested database enforcement of video shutdown. Create/invite/rejoin/recording/signaling/presence are blocked while disabled; leave/end cleanup remains available. Financial and video feature flags remain disabled.
+- Archived all 607 recorded migrations with checksums and an integrity verifier. This is recovery source material, not a backup/restore certification: the oldest recorded migration depends on an earlier, missing baseline.
+- Current advisor snapshot: 94 authenticated privileged-function warnings; individual authorization review and leaked-password protection remain open. Readiness percentages above remain conservative; no restore credit was added merely for recovering SQL.
+- `supabase/recovery/README.md` records the isolated restore procedure and missing baseline/staging prerequisites. Phase 2 remains in progress. Phases 3–11 remain subject to the ordered acceptance gates.

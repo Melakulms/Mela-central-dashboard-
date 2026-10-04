@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260822061453
+revoke execute on function public.get_mela_chapter_material(text) from anon; revoke execute on function public.get_mela_learning_material(text) from anon; revoke execute on function public.get_my_audience_context() from anon; revoke execute on function public.get_my_curriculum_map() from anon; revoke execute on function public.get_my_growth_plan_v1() from anon; revoke execute on function public.get_my_learning_home_v3() from anon; revoke execute on function public.get_my_learning_home_v4() from anon; revoke execute on function public.get_my_partner_education_outcomes() from anon; revoke execute on function public.get_my_policy_status() from anon; revoke execute on function public.my_audience_feature_access(text) from anon;
+;

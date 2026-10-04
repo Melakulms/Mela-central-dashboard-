@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260822061244
+create or replace function private.guard_learner_project_verification() returns trigger language plpgsql security definer set search_path='' as $function$ begin if private.is_admin_user() then return new; end if; if new.id is distinct from old.id or new.user_id is distinct from old.user_id or new.verified is distinct from old.verified or new.verified_by is distinct from old.verified_by or new.verified_at is distinct from old.verified_at then raise exception 'project verification fields can only be changed by authorized verification operations'; end if; return new; end; $function$; drop trigger if exists trg_guard_learner_project_verification on public.learner_projects; create trigger trg_guard_learner_project_verification before update on public.learner_projects for each row execute function private.guard_learner_project_verification();
+;

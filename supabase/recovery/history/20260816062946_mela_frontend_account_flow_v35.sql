@@ -1,0 +1,35 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260816062946
+do $$
+declare h text; sha text;
+begin
+ select html into h from private.mela_frontend_builds where active=true order by created_at desc limit 1;
+ h:=replace(h,'v34','v35');
+ h:=replace(h,'<button id="reviewTab" class="btn hide" data-tab="review">Quality Review</button>','<button class="btn" data-tab="account">Account</button><button id="reviewTab" class="btn hide" data-tab="review">Quality Review</button>');
+ h:=replace(h,'async function profile(){let r=await fetch(U+"/rest/v1/profiles?id=eq."+X.user.id+"&select=id,full_name,preferred_language,education_stage_key,grade_level,institution_name"', 'async function profile(){let r=await fetch(U+"/rest/v1/profiles?id=eq."+X.user.id+"&select=id,full_name,preferred_language,education_stage_key,grade_level,institution_name,role,account_status,profile_completion,onboarding_step,role_selected_at,email_verified,phone_verified"');
+ h:=replace(h,'document.documentElement.classList.toggle("large",Number(X.acc.text_scale||1)>1.1)}','document.documentElement.classList.toggle("large",Number(X.acc.text_scale||1)>1.1);try{X.ctx=await rpc("get_my_access_context_v35",{})}catch{X.ctx=null}}');
+ h:=replace(h,'async function Q(){', $js$
+async function ACCOUNT(){
+ try{X.ctx=await rpc("get_my_access_context_v35",{})}catch(e){$("c").innerHTML='<div class="card"><h2>Account access unavailable</h2><p class="mut">'+E(e.message)+'</p></div>';return}
+ let x=X.ctx||{},s=x.subscription||{};
+ if(!x.verified||x.account_status==="pending_verification"){$("c").innerHTML='<div class="card"><div class="ey">ACCOUNT VERIFICATION</div><h2>Verify your account to continue</h2><p class="mut">Full platform access is blocked until your email or phone is verified. Verification status is enforced by Supabase, not by this screen.</p><span class="chip warn">Verification required</span></div>';return}
+ if(x.account_status!=="active"){$("c").innerHTML='<div class="card"><div class="ey">ACCOUNT STATUS</div><h2>Account access is '+E(x.account_status)+'</h2><p class="mut">Protected features are disabled by the backend for this account status.</p></div>';return}
+ if(!x.role_selected_at){$("c").innerHTML='<div class="card"><div class="ey">STEP 3 · ACCOUNT TYPE</div><h2>Choose your account type</h2><p class="mut">This choice is stored and locked server-side. Changing it later requires authorized review.</p><div class="grid">'+['student','parent','teacher','company'].map(r=>'<button class="box click" data-r="'+r+'" onclick="SELECTROLE(this.dataset.r)"><h3>'+r[0].toUpperCase()+r.slice(1)+'</h3><p class="mut">Continue as '+r+'.</p></button>').join('')+'</div></div>';return}
+ let role=x.role,fields='';
+ if(role==='student')fields='<label>School<input id="pf1" class="in" value="'+E(X.p.school_name||'')+'"></label><label>City<input id="pf2" class="in" value="'+E(X.p.city||'')+'"></label><label>Skills (comma separated)<input id="pf3" class="in"></label><label>Goals (comma separated)<input id="pf4" class="in"></label>';
+ if(role==='parent')fields='<label>Occupation<input id="pf1" class="in"></label><label>City<input id="pf2" class="in"></label><label>Skills (comma separated)<input id="pf3" class="in"></label>';
+ if(role==='teacher')fields='<label>Qualification<input id="pf1" class="in"></label><label>Institution<input id="pf2" class="in"></label><label>Subjects taught (comma separated)<input id="pf3" class="in"></label><label>Teaching experience years<input id="pf4" class="in" type="number" min="0"></label>';
+ if(role==='company')fields='<label>Authorized representative<input id="pf1" class="in"></label><label>Representative title<input id="pf2" class="in"></label><label>Business registration number<input id="pf3" class="in"></label>';
+ $("c").innerHTML='<div class="grid"><div class="card"><div class="ey">ROLE PROFILE · '+E(role.toUpperCase())+'</div><h2>Complete your profile</h2>'+fields+'<button class="btn pri" onclick="SAVEPROFILE()">Save profile</button></div><div class="card"><div class="ey">PLAN</div><h2>'+E((s.tier||'free').toUpperCase())+'</h2><p class="mut">Status: '+E(s.status||'free')+(s.expires_at?' · Expires '+E(new Date(s.expires_at).toLocaleDateString()):'')+'</p><div class="box"><h3>Free</h3><p>Basic practice, selected questions, learning content and progress.</p></div><div class="box"><h3>Premium</h3><p>Full authorized practice, advanced tools, jobs, scholarships, duels and earning features according to role.</p><button class="btn pri" onclick="UPGRADE()">Upgrade to Premium</button></div></div></div>';
+}
+async function SELECTROLE(r){try{await rpc("select_account_type_v35",{p_role:r});await profile();await ACCOUNT()}catch(e){alert(e.message)}}
+function arr(v){return String(v||'').split(',').map(x=>x.trim()).filter(Boolean)}
+async function SAVEPROFILE(){let r=X.ctx?.role,b={};if(r==='student')b={school_name:$("pf1").value.trim(),city:$("pf2").value.trim(),skills:arr($("pf3").value),goals:arr($("pf4").value)};if(r==='parent')b={occupation:$("pf1").value.trim(),city:$("pf2").value.trim(),skills:arr($("pf3").value)};if(r==='teacher')b={qualification:$("pf1").value.trim(),institution:$("pf2").value.trim(),subjects_taught:arr($("pf3").value),teaching_experience_years:Number($("pf4").value||0)};if(r==='company')b={authorized_representative:$("pf1").value.trim(),representative_title:$("pf2").value.trim(),business_registration_number:$("pf3").value.trim()};let t=r==='student'?'student_profiles':r==='parent'?'parent_profiles':r==='teacher'?'teacher_profiles':'company_profiles';try{await req(U+'/rest/v1/'+t+'?user_id=eq.'+X.user.id,{m:'PATCH',h:{Authorization:'Bearer '+X.tok,Prefer:'return=representation'},b});alert('Profile saved.')}catch(e){alert(e.message)}}
+async function UPGRADE(){try{let p=await req(U+'/rest/v1/mela_learning_products?select=product_key,product_name,product_type,billing_period,active_price_minor,currency,sale_enabled&product_type=eq.subscription&active=eq.true',{h:{Authorization:'Bearer '+X.tok}}),live=(p||[]).filter(x=>x.sale_enabled&&Number(x.active_price_minor)>0);if(!live.length){alert('Premium checkout is intentionally unavailable in pre-launch until verified pricing and TEST payment configuration are approved.');return}$("c").innerHTML='<div class="card"><h2>Choose Premium plan</h2>'+live.map(x=>'<div class="box"><h3>'+E(x.product_name)+'</h3><p>'+E((x.active_price_minor/100).toFixed(2))+' '+E(x.currency)+' · '+E(x.billing_period)+'</p><button class="btn pri" disabled>Checkout requires verified staging payment flow</button></div>').join('')+'</div>'}catch(e){alert(e.message)}}
+async function Q(){$js$);
+ h:=replace(h,'if(t==="q")await Q();','if(t==="q")await Q();if(t==="account")await ACCOUNT();');
+ h:=replace(h,'await profile();show("app");$("out").classList.remove("hide");NAV("q")','await profile();show("app");$("out").classList.remove("hide");if(!X.ctx?.verified||!X.ctx?.role_selected_at||X.ctx?.account_status!=="active")NAV("account");else NAV("q")');
+ sha:=encode(digest(h,'sha256'),'hex');
+ perform public.publish_frontend_build_v17('v35',h,sha);
+end $$;
+;

@@ -1,0 +1,7 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260827194843
+insert into public.mela_ai_tools (tool_key,name,description,input_schema,output_schema,required_roles,risk_level,enabled) values ('search_platform_data','Search approved public MELA catalog data','Searches only approved published MELA catalog records; never returns private user data.','{"type":"object","properties":{"query":{"type":"string","maxLength":100}},"required":["query"]}','{"type":"array"}','{}',1,true),('generate_report','Create an AI report task','Creates a report task; execution of privileged reports can require approval.','{"type":"object","properties":{"title":{"type":"string","maxLength":200},"description":{"type":"string","maxLength":4000},"approval_level":{"type":"integer","minimum":1,"maximum":3}},"required":["title"]}','{"type":"object"}','{}',2,true) on conflict (tool_key) do update set name=excluded.name,description=excluded.description,input_schema=excluded.input_schema,output_schema=excluded.output_schema,required_roles=excluded.required_roles,risk_level=excluded.risk_level,enabled=true,updated_at=now();
+insert into public.mela_ai_agent_tools(agent_id,tool_id)
+select a.id,t.id from public.mela_ai_agents a cross join public.mela_ai_tools t where t.tool_key in ('create_task','search_platform_data','generate_report') and a.agent_key <> 'security'
+on conflict do nothing;
+;

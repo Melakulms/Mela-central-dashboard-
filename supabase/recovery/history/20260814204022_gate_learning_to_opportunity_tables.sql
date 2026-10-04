@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260814204022
+do $$declare t text;begin foreach t in array array['learning_competencies','learner_mastery_records','learner_mastery_evidence','learner_projects','learner_project_competencies','educator_profiles','educator_classrooms','educator_classroom_members','educator_observations','mela_transition_plans','mela_transition_steps','opportunity_graph_nodes','opportunity_graph_edges'] loop execute format('drop policy if exists mela_master_gate on public.%I',t);execute format('create policy mela_master_gate on public.%I as restrictive for all to anon,authenticated using (public.platform_feature_available(''platform_live'') or private.is_admin_user()) with check (public.platform_feature_available(''platform_live'') or private.is_admin_user())',t);end loop;end$$;
+;

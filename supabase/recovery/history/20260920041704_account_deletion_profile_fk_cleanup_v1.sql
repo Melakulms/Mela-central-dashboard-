@@ -1,0 +1,13 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260920041704
+alter table public.career_passport_entries drop constraint if exists career_passport_entries_verified_by_fkey; alter table public.career_passport_entries add constraint career_passport_entries_verified_by_fkey foreign key (verified_by) references public.profiles(id) on delete set null;
+alter table public.company_profiles drop constraint if exists company_profiles_verified_by_fkey; alter table public.company_profiles add constraint company_profiles_verified_by_fkey foreign key (verified_by) references public.profiles(id) on delete set null;
+alter table public.courses drop constraint if exists courses_created_by_fkey; alter table public.courses add constraint courses_created_by_fkey foreign key (created_by) references public.profiles(id) on delete set null;
+alter table public.marketplace_tasks drop constraint if exists marketplace_tasks_assigned_to_fkey; alter table public.marketplace_tasks add constraint marketplace_tasks_assigned_to_fkey foreign key (assigned_to) references public.profiles(id) on delete set null;
+alter table public.marketplace_tasks drop constraint if exists marketplace_tasks_posted_by_fkey; alter table public.marketplace_tasks add constraint marketplace_tasks_posted_by_fkey foreign key (posted_by) references public.profiles(id) on delete set null;
+alter table public.opportunities drop constraint if exists opportunities_posted_by_fkey; alter table public.opportunities add constraint opportunities_posted_by_fkey foreign key (posted_by) references public.profiles(id) on delete set null;
+alter table public.opportunities drop constraint if exists opportunities_reviewed_by_fkey; alter table public.opportunities add constraint opportunities_reviewed_by_fkey foreign key (reviewed_by) references public.profiles(id) on delete set null;
+alter table public.parent_link_invites drop constraint if exists parent_link_invites_redeemed_by_fkey; alter table public.parent_link_invites add constraint parent_link_invites_redeemed_by_fkey foreign key (redeemed_by) references public.profiles(id) on delete set null;
+alter table public.study_materials drop constraint if exists study_materials_uploaded_by_fkey; alter table public.study_materials add constraint study_materials_uploaded_by_fkey foreign key (uploaded_by) references public.profiles(id) on delete set null;
+alter table public.teacher_profiles drop constraint if exists teacher_profiles_verified_by_fkey; alter table public.teacher_profiles add constraint teacher_profiles_verified_by_fkey foreign key (verified_by) references public.profiles(id) on delete set null;
+;

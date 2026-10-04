@@ -1,0 +1,9 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260814163714
+create index if not exists assessment_language_review_assignments_assigned_by_idx on public.assessment_language_review_assignments(assigned_by);
+create index if not exists assessment_language_review_assignments_language_code_idx on public.assessment_language_review_assignments(language_code);
+create index if not exists assessment_language_reviewer_qualifications_approved_by_idx on public.assessment_language_reviewer_qualifications(approved_by);
+create index if not exists assessment_language_reviewer_qualifications_language_code_idx on public.assessment_language_reviewer_qualifications(language_code);
+create index if not exists assessment_question_translations_language_code_idx on public.assessment_question_translations(language_code);
+create index if not exists assessment_question_translations_updated_by_idx on public.assessment_question_translations(updated_by);
+;

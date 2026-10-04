@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260822043150
+revoke select on table public.mela_learning_chapter_material_content from anon, authenticated; revoke select on table public.mela_learning_material_content from anon, authenticated; create or replace view public.mela_learning_chapter_material_content_public as select material_id, content_markdown from public.mela_learning_chapter_material_content; create or replace view public.mela_learning_material_content_public as select material_id, content_markdown from public.mela_learning_material_content; grant select on public.mela_learning_chapter_material_content_public to anon, authenticated; grant select on public.mela_learning_material_content_public to anon, authenticated;
+;

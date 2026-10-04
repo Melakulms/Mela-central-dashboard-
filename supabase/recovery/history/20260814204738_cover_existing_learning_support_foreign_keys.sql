@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260814204738
+create index if not exists educator_classroom_learners_learner_idx on public.educator_classroom_learners(learner_id); create index if not exists learner_catchup_plan_items_comp_idx on public.learner_catchup_plan_items(competency_id); create index if not exists learner_catchup_plans_stage_idx on public.learner_catchup_plans(stage_key); create index if not exists learner_diagnostic_results_comp_idx on public.learner_diagnostic_results(competency_id); create index if not exists learner_diagnostic_sessions_stage_idx on public.learner_diagnostic_sessions(stage_key); create index if not exists learner_support_signals_comp_idx on public.learner_support_signals(competency_id);
+;

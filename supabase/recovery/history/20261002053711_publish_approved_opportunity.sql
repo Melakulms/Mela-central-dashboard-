@@ -1,0 +1,19 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20261002053711
+create or replace function public.enforce_opportunity_review_transition() returns trigger language plpgsql set search_path='' as $$
+begin
+ if new.moderation_status in ('approved','rejected') and nullif(trim(coalesce(new.moderation_notes,'')),'') is null then raise exception 'Moderation reason is required'; end if;
+ if new.moderation_status is distinct from old.moderation_status and not (
+ (old.moderation_status='pending_review' and new.moderation_status in ('approved','rejected','flagged'))
+ or (old.moderation_status='flagged' and new.moderation_status in ('pending_review','approved','rejected','suspended'))
+ or (old.moderation_status='rejected' and new.moderation_status='pending_review')
+ or (old.moderation_status='approved' and new.moderation_status in ('pending_review','flagged','suspended','archived'))
+ or (old.moderation_status='suspended' and new.moderation_status in ('pending_review','archived'))
+ ) then raise exception 'Invalid opportunity review transition: % -> %',old.moderation_status,new.moderation_status; end if;
+ if new.moderation_status='approved' and new.moderation_status is distinct from old.moderation_status and new.status='pending_review' then new.status:='open'; end if;
+ -- Preparation later derives visibility from moderation, source verification and deadline.
+ if new.moderation_status<>'approved' then new.verified_active:=false; end if;
+ return new;
+end; $$;
+
+;

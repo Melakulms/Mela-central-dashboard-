@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260826160809
+CREATE OR REPLACE FUNCTION private.enforce_mentor_verification_fields() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO 'pg_catalog','public','private' AS $$ BEGIN IF NOT private.is_admin_user() AND (NEW.verified IS DISTINCT FROM OLD.verified OR NEW.verified_by IS DISTINCT FROM OLD.verified_by OR NEW.verified_at IS DISTINCT FROM OLD.verified_at OR NEW.verification_notes IS DISTINCT FROM OLD.verification_notes) THEN RAISE EXCEPTION 'mentor verification fields are admin-controlled'; END IF; RETURN NEW; END; $$; DROP TRIGGER IF EXISTS trg_enforce_mentor_verification_fields ON public.mentor_profiles; CREATE TRIGGER trg_enforce_mentor_verification_fields BEFORE UPDATE ON public.mentor_profiles FOR EACH ROW EXECUTE FUNCTION private.enforce_mentor_verification_fields();
+;

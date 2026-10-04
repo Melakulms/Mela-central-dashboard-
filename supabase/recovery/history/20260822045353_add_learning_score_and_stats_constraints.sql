@@ -1,0 +1,4 @@
+-- Historical recovery only. Do not apply to an existing production database.
+-- Original recorded version: 20260822045353
+alter table public.exam_results add constraint exam_results_score_range_check check (score >= 0 and score <= 100); alter table public.practice_attempts add constraint practice_attempts_score_range_check check (score is null or (score >= 0 and score <= 100)); alter table public.practice_attempts add constraint practice_attempts_time_nonnegative_check check (time_spent_seconds >= 0); alter table public.practice_user_stats add constraint practice_user_stats_counts_check check (total_sessions >= 0 and total_questions >= 0 and correct_answers >= 0 and correct_answers <= total_questions and total_time_seconds >= 0 and current_streak_days >= 0 and longest_streak_days >= 0);
+;
