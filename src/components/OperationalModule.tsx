@@ -4,6 +4,7 @@ import { adminApi } from '../lib/admin-api'
 import { decisionFor } from '../lib/operational-decisions'
 import BetaInvitesPanel from './BetaInvitesPanel'
 import TeacherVerificationPanel from './TeacherVerificationPanel'
+import AssessmentLanguageReviewPanel from './AssessmentLanguageReviewPanel'
 
 type Row = Record<string, unknown>
 type Group = { title: string; rows: Row[] }
@@ -90,8 +91,9 @@ export default function OperationalModule({ client, section, permissions }: { cl
 
   return <section className="panel">
     {section === 'disputes' && <p>Disputed contracts remain on hold. Reviewing a report does not release escrow, pay out funds, or issue a refund. Settlement requires provider reconciliation.</p>}
-    {section === 'moderation' && <p>Proctored assessment decisions are MFA-protected and audited. Clear only when the integrity evidence supports verification; void prevents credential issuance.</p>}
+    {section === 'moderation' && <p>Proctored assessment, educator qualification and translated assessment certification decisions are MFA-protected and audited.</p>}
     {section === 'moderation' && <TeacherVerificationPanel client={client}/>} 
+    {section === 'moderation' && <AssessmentLanguageReviewPanel client={client}/>} 
     {section === 'settings' && <BetaInvitesPanel client={client}/>} 
     <p>Live operational records. Results are limited to the latest records returned by the server.</p>
     <button onClick={() => setRevision(value => value + 1)} disabled={busy || saving}>Refresh records</button>
@@ -118,8 +120,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
           <td>{text(row.verification_status ?? row.moderation_status ?? row.status ?? row.enabled)}</td>
           <td><details><summary>Inspect record</summary><dl>{Object.entries(row).map(([key, value]) => <div key={key}><dt>{key.replaceAll('_', ' ')}</dt><dd style={{ overflowWrap: 'anywhere' }}>{text(value)}</dd></div>)}</dl></details></td>
           <td>{decisionFor(group.title,row,permissions) && <button disabled={saving || busy} onClick={() => {setEditing({group:group.title,row});setDecision('');setNotes('');setError('');setSuccess('')}}>Review</button>}</td>
-        </tr>)}{!group.rows.length && <tr><td colSpan={4}>No records.</td></tr>}</tbody>
-      </table></div>
+        </tr>)}{!group.rows.length && <tr><td colSpan={4}>No records.</td></tr>}</tbody></table></div>
     </section>)}
   </section>
 }
