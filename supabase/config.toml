@@ -8,3 +8,7 @@ verify_jwt = false
 
 [functions.mela-beta-admin]
 verify_jwt = true
+
+# Provider webhook: authenticated by a body-bound HMAC before any database access.
+[functions.mela-finance-callback]
+verify_jwt = false

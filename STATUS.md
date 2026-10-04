@@ -53,3 +53,13 @@ Financial gates must remain disabled. No synthetic provider success, fake conten
 - Fixed double-encoded authenticator QR images, duplicate verification submissions, failed refresh handling and stale enrollment callbacks. No real authenticator acceptance is claimed.
 - Validation: 57 admin automated tests and production build passed; live rollback tests for legacy override, registry authority, atomic admin updates and user journeys passed.
 - See `docs/audit/PHASE_3_ADMIN_CERTIFICATION_2026-10-04.md` for all 23 gates. Percentages remain unchanged because broader acceptance is still missing.
+
+## Phase 4 checkpoint — escrow callback verification
+
+- Phase 3 release `4f3c8ce` published; Admin CI run 37212150488 and Pages run 37212150518 passed.
+- Recovered deployed `mela-finance-callback` version 4 into the recovery directory and checked the maintained callback into version control. Version 5 is deployed with signature authentication preserved.
+- Fixed live/test mode mismatch acceptance, rounding of invalid amount precision, late callback status downgrades, and acknowledgement of provider verification outages. Finalization still uses the existing atomic, idempotent database function.
+- Added 19 isolated callback tests; total admin suite is 76 passing tests, with production build passing. These use synthetic local fixtures and are not provider sandbox certification.
+- Payments, payouts, earn_work and video flags were read back as false. Readiness scores remain unchanged; see `docs/audit/PHASE_4_PAYMENTS_2026-10-04.md` for current limitations and provider onboarding gates.
+
+- Live callback smoke: GET 405, unsigned POST 503 (webhook verification unavailable). Configure the provider webhook secret securely before signed sandbox testing; no secret was read or changed.
