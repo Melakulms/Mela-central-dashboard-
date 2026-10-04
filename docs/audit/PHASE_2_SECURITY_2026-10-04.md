@@ -4,20 +4,24 @@ Status: **in progress; not certified**. Changes below are live and stored as mig
 
 ## Applied changes
 
-- `20261003222024_harden_private_tables_and_review_indexes.sql`: RLS on twelve previously unprotected private tables, explicit backend-service policies, browser grant revocation, and four covering foreign-key indexes. All 259 public, seven admin and sixteen private tables now have RLS. Direct browser access to private data remains denied.
+- `20261003222024_harden_private_tables_and_review_indexes.sql`: RLS on twelve previously unprotected private tables, explicit backend-service policies, browser grant revocation, and four covering foreign-key indexes. All public/admin/private tables audited in this phase have RLS. Direct browser access to private data remains denied.
 - `20261003222127_repair_coin_ledger_and_badge_invariants.sql`: schema-qualified coin trigger, atomic checked balance update, nonzero/non-null entries, nonnegative profile balances, append-only ledger including truncate protection, and service-only `record_coin_event` with payload-bound replay protection using a stable event UUID.
 - Badge counter refresh now handles reassignment as well as insert/delete, locks profiles before recounting, and corrects existing drift. Post-change drift count is zero.
+- `20261003082220_restore_verified_educator_question_review_submission.sql` plus the subsequent educator-review migrations restore controlled question-review submission and bind it to approved teacher identity, approved teaching subjects, explicit reviewer authorization and server-side subject checks.
+- `20261003082930_enable_qualified_educator_content_review_workflows.sql` provides chapter-review queue/item/claim/submit workflows with private append-only decision history. The public API uses SECURITY INVOKER wrappers; private implementations validate the current caller and subject eligibility.
+- `20261003085029_restore_language_review_operations_for_authenticated_reviewers.sql` restores assessment-language review operations through explicit reviewer/admin execution boundaries rather than direct table writes.
+- `20261004040739_harden_question_review_read_wrappers.sql`: converted `get_question_review_queue_v18` and `get_question_review_slice_v18` public wrappers from SECURITY DEFINER to SECURITY INVOKER, explicitly granted only authenticated/service-role execution on the necessary private implementations, and kept anonymous execution revoked.
 
 The coin API accepts the same business-event UUID on retries. Callers must reuse that ID; generating a new random ID on every retry defeats business-event idempotency. Existing deployed reward-handler integration and concurrent multi-connection testing remain to audit. This API creates no paid referral eligibility and initiates no payment.
 
-Append-only history deliberately rejects deletion, including an attempted cascading account deletion that would erase ledger entries. Account erasure must use a legally reviewed retention/anonymization workflow before coin rewards are enabled. There are currently zero ledger rows and zero nonzero coin balances; test data was rolled back.
+Append-only history deliberately rejects deletion, including an attempted cascading account deletion that would erase ledger entries. Account erasure must use a legally reviewed retention/anonymization workflow before coin rewards are enabled. There are currently no launch-certified financial ledger balances; test data was rolled back.
 
 ## Tests run against live schema with rolled-back fixtures
 
 | Regression | Result | Scope |
 |---|---|---|
 | coin_and_badge_invariants.sql | Pass | Credit, valid debit, repeated event, mismatched replay rejection, overdraft rollback, append-only UPDATE/DELETE, mint denial, cross-user ledger denial, badge insert/move/delete |
-| private_table_boundaries.sql | Pass | RLS and direct browser denial for all private tables; anonymous/read and browser/write grants absent |
+| private_table_boundaries.sql | Pass | RLS and direct browser denial for private tables; anonymous/read and browser/write grants absent |
 | user_journeys.sql | Pass | Four-role database registration/confirmation, profiles, practice, parent link, self-promotion rejection |
 | learning_material_access.sql | Pass | Free access and paid-content denial without entitlement |
 | course_credentials.sql | Pass | Progress aggregation, credential issuance, immutable completion evidence, certificate verification |
@@ -25,31 +29,36 @@ Append-only history deliberately rejects deletion, including an attempted cascad
 | mentorship_lifecycle.sql | Pass | Request acceptance, scheduling, reading, cancellation authorization |
 | assessment_integrity.sql | Pass after fixture correction | Server grading, credential and outsider checks; expiry finalization |
 | assessment_expiry_finalization.sql | Pass after fixture correction | Incomplete timed-out attempt safely becomes void |
+| question_review_wrapper_security.sql | Pass | Public reviewer reads are invoker wrappers; anonymous execution denied; private review tables remain unreadable; synthetic student receives no review queue and cannot open a slice |
 
 Assessment fixture correction: the old tests impersonated an admin by profile role to move fixture timestamps. The stricter registry authority correctly rejected that. Tests now set the timestamp as the database maintenance actor, then return to the learner role to exercise the real submission boundary. No production authorization was relaxed.
 
-Nine SQL regression files passed. This does not equal nine complete product certifications. No 5,000-user test or multi-connection ledger stress run was performed against production.
+The reviewer wrapper regression was also executed directly against production inside `BEGIN ... ROLLBACK`; no fixture persisted. A separate negative check with an existing student identity returned an empty review queue and `verified educator subject access required` for a review slice. No approved educator was fabricated to create a positive certification result.
+
+These SQL regressions are targeted engineering evidence, not complete product certifications. No 5,000-user test or multi-connection ledger stress run was performed against production.
 
 ## Advisors and dependency scan
 
-Before: four missing foreign-key indexes. After: zero; remaining performance notices are 245 unused-index INFO findings (including the four newly created indexes). Do not drop them without workload evidence.
+Before Phase 2 index repair: four missing foreign-key indexes. After: zero; remaining performance notices are unused-index INFO findings. Do not drop them without workload evidence.
 
-Security remains: 112 authenticated SECURITY DEFINER notices, one intended anonymous certificate-verification notice, eleven no-policy INFO notices, and disabled leaked-password-protection WARN. No ERROR-level advisor finding appeared. Private/admin tables without browser policies are intentional default-deny boundaries, not a request to grant browser access.
+Security advisor after reviewer-wrapper hardening: **110 authenticated SECURITY DEFINER notices, down from 112**; one intended anonymous certificate-verification notice; eleven RLS-enabled/no-policy INFO notices; and disabled leaked-password-protection WARN. The two removed privileged notices are `get_question_review_queue_v18` and `get_question_review_slice_v18`; both continue to enforce authorization through their private implementations. No ERROR-level advisor finding appeared. Private/admin tables without browser policies are intentional default-deny boundaries, not a request to grant browser access.
 
 Production npm dependency audits returned zero reported vulnerabilities in both current checkouts. A targeted tracked-file scan found no known-format secret keys or private-key blocks. This is not an exhaustive Git history, entropy-based, or deployed-secret audit; no credential rotation was performed without an identified secret.
 
 References:
 - https://supabase.com/docs/guides/database/postgres/row-level-security
+- https://supabase.com/docs/guides/database/functions
 - https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable
 - https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
 
 ## Remaining Phase 2 gates
 
 1. Recover/reconcile the historical schema and omitted Edge Function sources, then prove a fresh staging restore. A migration list alone cannot reconstruct the database.
-2. Finish individual negative authorization review of the 112 authenticated privileged RPCs, associated helpers and remaining per-role policies. Do not replace the review with blanket grants/revocations.
-3. Complete financial/provider/referral/escrow invariants and full admin/moderation audit coverage. The existing Chapa-only model does not meet the requested provider requirements.
+2. Continue individual negative authorization review of the remaining 110 authenticated privileged RPCs, associated helpers and remaining per-role policies. Do not replace the review with blanket grants/revocations.
+3. Complete financial/provider/referral/escrow invariants and full admin/moderation audit coverage. The existing Chapa-only model does not meet the requested telebirr/CBE Birr provider requirements.
 4. Verify backend reward callers use stable event IDs, concurrent ledger behavior, immutable balance provenance, and legal account-erasure integration.
-5. Enable supported leaked-password protection and validate Auth/SMTP/session behavior with real accounts.
+5. Enable supported leaked-password protection and validate public Auth/SMTP/session behavior with real accounts.
 6. Complete historical/deployed secret scanning, safe rotation if actual exposure is found, backup/restore evidence and operational review.
+7. Recruit/approve real qualified educators and language reviewers, then use the now-functional workflows to create genuine chapter/question/translation review evidence. Engineering availability does not count as human approval.
 
-OWNER_ACTION_REQUIRED: Auth/password-protection and Brevo configuration access; merchant sandbox onboarding and official documentation for both requested providers; legal retention decision; secure access to staging/backup/deployment administration where not exposed by current tools. External approval dates remain uncommitted. Phase 3 must not be certified while these gates remain open.
+OWNER_ACTION_REQUIRED: Auth/password-protection and public SMTP/domain configuration; merchant sandbox onboarding and official documentation for both requested providers; legal retention decision; qualified human reviewers; secure access to a disposable staging/backup target where not exposed by current tools. External approval dates remain uncommitted. Phase 3 must not be certified while these gates remain open.
