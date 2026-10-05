@@ -45,7 +45,7 @@ catch { } const now = new Date().toISOString(); if (!r.ok || b?.status !== 'succ
 } const cents = exactAmountMinor(d.amount); const checks = { provider_reference: typeof (d.reference || d.ref_id) === 'string' && !!(d.reference || d.ref_id).trim(), tx_ref: String(d.tx_ref || '') === p.tx_ref, amount: cents !== null && cents === Number(p.expected_amount_minor), currency: p.expected_currency === 'ETB' && String(d.currency || '').toUpperCase() === p.expected_currency, mode: String(d.mode || '').toLowerCase() === String(p.mode || '').toLowerCase() }; if (!Object.values(checks).every(Boolean)) {
     await markAttemptPendingOrFailed(p.id, 'pending', ps, b, `Verification mismatch ${JSON.stringify(checks)}`, now);
     return { state: 'mismatch', checks };
-} const out = await rest('rpc/finalize_mela_learning_payment', { method: 'POST', body: JSON.stringify({ p_payment_id: p.id, p_provider_ref: d.reference || d.ref_id || null, p_provider_method: d.method || null, p_provider_type: d.type || null, p_provider_charge: d.charge ?? null, p_verify_payload: b }) }); return { state: 'success', result: out }; }
+} const out = await rest('rpc/finalize_mela_learning_payment', { method: 'POST', body: JSON.stringify({ p_payment_id: p.id, p_provider_ref: d.reference || d.ref_id || null, p_provider_method: d.method || null, p_provider_type: d.type || null, p_provider_charge: cents, p_verify_payload: b }) }); return { state: 'success', result: out }; }
 Deno.serve(async (req) => { if (req.method === 'OPTIONS')
     return new Response('ok', { headers: cors }); if (req.method !== 'POST')
     return json({ error: 'Method not allowed' }, 405); try {

@@ -27,3 +27,9 @@ verify_jwt = true
 
 [functions.mela-learning-payment-callback]
 verify_jwt = false
+
+[functions.chapa-initialize]
+verify_jwt = true
+
+[functions.mela-learning-checkout]
+verify_jwt = true

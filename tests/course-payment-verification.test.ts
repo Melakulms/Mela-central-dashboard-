@@ -68,3 +68,9 @@ it.each(['chapa-verify','chapa-callback'])('%s does not report success after los
   const server = api(name, { concurrentFailure: true }); expect((await server.request()).status).toBe(409)
   expect(server.requests.some(r => r.url.includes('course_enrollments'))).toBe(false)
 })
+
+it.each(['mela-learning-payment-verify','mela-learning-payment-callback'])('%s passes paid minor units, not provider fees, to the database',async name=>{
+ const server=api(name,{data:{amount:'10.00',charge:'0.25'}});await server.request();
+ const call=server.requests.find(r=>r.url.includes('rpc/finalize_mela_learning_payment'))!;
+ expect(JSON.parse(String(call.init.body)).p_provider_charge).toBe(1000);
+});

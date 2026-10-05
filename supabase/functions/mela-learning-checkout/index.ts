@@ -21,6 +21,7 @@ async function rest(path: string, init: RequestInit = {}) {
   const text = await response.text();
   let body: any = null;
   try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+  if (!response.ok && body?.code === '23505') throw Object.assign(new Error('An open checkout already exists. Verify it before retrying.'), { status: 409, code: 'CHECKOUT_PENDING' });
   if (!response.ok) {
     throw Object.assign(new Error(typeof body === 'object' ? (body?.message || body?.hint || `Database ${response.status}`) : `Database ${response.status}`), { status: 500 });
   }
@@ -54,7 +55,9 @@ function chapaKey() {
   if (mode === 'live' && /TEST/i.test(key)) throw Object.assign(new Error('Live mode requires a Chapa live secret key.'), { status: 503, code: 'CHAPA_LIVE_KEY_REQUIRED' });
   return key;
 }
+function safeCheckout(value: unknown) { try { if (typeof value !== 'string') return false; const u=new URL(value); return u.protocol==='https:' && !u.username && !u.password; } catch { return false; } }
 function positiveMinor(value: unknown) {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
   const amount = Number(value);
   return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
 }
@@ -95,13 +98,12 @@ Deno.serve(async (req) => {
     }
 
     const mode = paymentMode();
-    const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const recent = await rest(`mela_learning_payment_attempts?select=id,tx_ref,status,checkout_url,mode,expected_amount_minor,expected_currency&user_id=eq.${identity.id}&product_key=eq.${encodeURIComponent(productKey)}&status=in.(initiated,pending)&created_at=gte.${encodeURIComponent(since)}&order=created_at.desc&limit=3`);
-    const reusable = (recent || []).find((row: any) => row.status === 'pending' && row.checkout_url && row.mode === mode && Number(row.expected_amount_minor) === amountMinor && row.expected_currency === currency);
+    const recent = await rest(`mela_learning_payment_attempts?select=tx_ref,status,checkout_url,mode,expected_amount_minor,expected_currency&user_id=eq.${identity.id}&product_key=eq.${encodeURIComponent(productKey)}&mode=eq.${mode}&status=in.(initiated,pending)&limit=1`);
+    const reusable = (recent || []).find((row: any) => row.status === 'pending' && safeCheckout(row.checkout_url) && row.mode === mode && Number(row.expected_amount_minor) === amountMinor && row.expected_currency === currency);
     if (reusable) {
       return json({ checkout_url: reusable.checkout_url, tx_ref: reusable.tx_ref, mode, reused: true, product: { product_key: productKey, name: product.product_name, amount: (amountMinor / 100).toFixed(2), currency } });
     }
-    if ((recent?.length || 0) >= 3) return json({ code: 'RATE_LIMITED', error: 'Too many recent payment attempts. Verify an existing checkout or try later.' }, 429);
+    if (recent?.length) return json({ code: 'CHECKOUT_PENDING', tx_ref: recent[0].tx_ref, error: 'A checkout is already being processed. Verify it before starting another.' }, 409);
 
     const key = chapaKey();
     const fullName = String(profile.full_name || 'Mela Learner').trim();
@@ -136,8 +138,8 @@ Deno.serve(async (req) => {
     let provider: any = {};
     try { provider = text ? JSON.parse(text) : {}; } catch {}
     const checkoutUrl = provider?.data?.checkout_url;
-    if (!providerResponse.ok || typeof checkoutUrl !== 'string' || !checkoutUrl) {
-      await patchUnfinished(paymentId, { status: 'failed', failure_reason: provider?.message || `Chapa initialize ${providerResponse.status}`, updated_at: new Date().toISOString() });
+    if (!providerResponse.ok || provider?.status !== 'success' || !safeCheckout(checkoutUrl)) {
+      await patchUnfinished(paymentId, { failure_reason: provider?.message || `Chapa initialize ${providerResponse.status}`, updated_at: new Date().toISOString() });
       return json({ code: 'CHAPA_INITIALIZE_FAILED', error: provider?.message || 'Unable to initialize Chapa checkout.' }, 502);
     }
 

@@ -63,7 +63,7 @@ async function verifyProvider(p: any) {
         await rest(`mela_learning_payment_attempts?id=eq.${encodeURIComponent(p.id)}&status=in.(initiated,pending)`, { method: 'PATCH', body: JSON.stringify({ provider_status: ps, verify_payload: b, failure_reason: `Verification mismatch ${JSON.stringify(checks)}`, last_verified_at: now, updated_at: now }) });
         return { state: 'mismatch', checks };
     }
-    const out = await rest('rpc/finalize_mela_learning_payment', { method: 'POST', body: JSON.stringify({ p_payment_id: p.id, p_provider_ref: d.reference || d.ref_id || null, p_provider_method: d.method || null, p_provider_type: d.type || null, p_provider_charge: d.charge ?? null, p_verify_payload: b }) });
+    const out = await rest('rpc/finalize_mela_learning_payment', { method: 'POST', body: JSON.stringify({ p_payment_id: p.id, p_provider_ref: d.reference || d.ref_id || null, p_provider_method: d.method || null, p_provider_type: d.type || null, p_provider_charge: cents, p_verify_payload: b }) });
     return { state: 'success', result: out };
 }
 Deno.serve(async (req) => { if (req.method === 'OPTIONS')

@@ -1,0 +1,2699 @@
+{
+  "snapshot_date": "2026-10-05",
+  "phase": "8 preparation; prior release gates remain open",
+  "canonical_53_field_mapping": "OWNER_ACTION_REQUIRED: canonical field list/order not identified in inspected program catalog",
+  "limitations": [
+    "Counts are inventory only, not educational accuracy or translation certification.",
+    "Questions may be generated, inactive, duplicated, or awaiting review.",
+    "Chapters counted here are chapter records, not proof of complete lesson text.",
+    "Existing review decisions must be reconciled before assigning individual review work."
+  ],
+  "programs": [
+    {
+      "program_key": "g1_common_native_language",
+      "title": "Grade 1 Native Language",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g1_common_federal_working_language",
+      "title": "Grade 1 Federal Working Language",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g1_common_english",
+      "title": "Grade 1 English Language",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g1_common_environmental_science",
+      "title": "Grade 1 Environmental Science",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g1_common_mathematics",
+      "title": "Grade 1 Mathematics",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 11,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g1_common_moral_education",
+      "title": "Grade 1 Moral Education",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g1_common_art",
+      "title": "Grade 1 Art",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g1_common_health_physical_education",
+      "title": "Grade 1 Health & Physical Education",
+      "stage_key": "school_1_6",
+      "grade_level": 1,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_native_language",
+      "title": "Grade 2 Native Language",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_federal_working_language",
+      "title": "Grade 2 Federal Working Language",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_english",
+      "title": "Grade 2 English Language",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_environmental_science",
+      "title": "Grade 2 Environmental Science",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_mathematics",
+      "title": "Grade 2 Mathematics",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_moral_education",
+      "title": "Grade 2 Moral Education",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_art",
+      "title": "Grade 2 Art",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g2_common_health_physical_education",
+      "title": "Grade 2 Health & Physical Education",
+      "stage_key": "school_1_6",
+      "grade_level": 2,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_native_language",
+      "title": "Grade 3 Native Language",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_federal_working_language",
+      "title": "Grade 3 Federal Working Language",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_english",
+      "title": "Grade 3 English Language",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_environmental_science",
+      "title": "Grade 3 Environmental Science",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_mathematics",
+      "title": "Grade 3 Mathematics",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 12,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_moral_education",
+      "title": "Grade 3 Moral Education",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_art",
+      "title": "Grade 3 Art",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g3_common_health_physical_education",
+      "title": "Grade 3 Health & Physical Education",
+      "stage_key": "school_1_6",
+      "grade_level": 3,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_native_language",
+      "title": "Grade 4 Native Language",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_federal_working_language",
+      "title": "Grade 4 Federal Working Language",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_english",
+      "title": "Grade 4 English Language",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_environmental_science",
+      "title": "Grade 4 Environmental Science",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_mathematics",
+      "title": "Grade 4 Mathematics",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 9,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_moral_education",
+      "title": "Grade 4 Moral Education",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_art",
+      "title": "Grade 4 Art",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g4_common_health_physical_education",
+      "title": "Grade 4 Health & Physical Education",
+      "stage_key": "school_1_6",
+      "grade_level": 4,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_native_language",
+      "title": "Grade 5 Native Language",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_federal_working_language",
+      "title": "Grade 5 Federal Working Language",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_english",
+      "title": "Grade 5 English Language",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_environmental_science",
+      "title": "Grade 5 Environmental Science",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_mathematics",
+      "title": "Grade 5 Mathematics",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_moral_education",
+      "title": "Grade 5 Moral Education",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_art",
+      "title": "Grade 5 Art",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g5_common_health_physical_education",
+      "title": "Grade 5 Health & Physical Education",
+      "stage_key": "school_1_6",
+      "grade_level": 5,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_native_language",
+      "title": "Grade 6 Native Language",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_federal_working_language",
+      "title": "Grade 6 Federal Working Language",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_english",
+      "title": "Grade 6 English Language",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_environmental_science",
+      "title": "Grade 6 Environmental Science",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_mathematics",
+      "title": "Grade 6 Mathematics",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_moral_education",
+      "title": "Grade 6 Moral Education",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_art",
+      "title": "Grade 6 Art",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g6_common_health_physical_education",
+      "title": "Grade 6 Health & Physical Education",
+      "stage_key": "school_1_6",
+      "grade_level": 6,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_native_language",
+      "title": "Grade 7 Native Language",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_federal_working_language",
+      "title": "Grade 7 Federal Working Language",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_english",
+      "title": "Grade 7 English Language",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_general_science",
+      "title": "Grade 7 General Science",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_social_science",
+      "title": "Grade 7 Social Science",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_civics",
+      "title": "Grade 7 Civics Education",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_information_technology",
+      "title": "Grade 7 Information Technology",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_health_physical_education",
+      "title": "Grade 7 Health & Physical Education",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_employment_technical_education",
+      "title": "Grade 7 Employment & Technical Education",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_mathematics",
+      "title": "Grade 7 Mathematics",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g7_common_art",
+      "title": "Grade 7 Art",
+      "stage_key": "school_7_8",
+      "grade_level": 7,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_native_language",
+      "title": "Grade 8 Native Language",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_federal_working_language",
+      "title": "Grade 8 Federal Working Language",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_english",
+      "title": "Grade 8 English Language",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_general_science",
+      "title": "Grade 8 General Science",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_social_science",
+      "title": "Grade 8 Social Science",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_civics",
+      "title": "Grade 8 Civics Education",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_information_technology",
+      "title": "Grade 8 Information Technology",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_health_physical_education",
+      "title": "Grade 8 Health & Physical Education",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_employment_technical_education",
+      "title": "Grade 8 Employment & Technical Education",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_mathematics",
+      "title": "Grade 8 Mathematics",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g8_common_art",
+      "title": "Grade 8 Art",
+      "stage_key": "school_7_8",
+      "grade_level": 8,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_english",
+      "title": "Grade 9 English",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_mathematics",
+      "title": "Grade 9 Mathematics",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 9,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_information_technology",
+      "title": "Grade 9 Information Technology",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_physics",
+      "title": "Grade 9 Physics",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_chemistry",
+      "title": "Grade 9 Chemistry",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_biology",
+      "title": "Grade 9 Biology",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_geography",
+      "title": "Grade 9 Geography",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_history",
+      "title": "Grade 9 History",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 9,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_civics",
+      "title": "Grade 9 Civics Education",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_economics",
+      "title": "Grade 9 Economics",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_native_language",
+      "title": "Grade 9 Native Language",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_health_physical_education",
+      "title": "Grade 9 Health & Physical Education",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_federal_working_language",
+      "title": "Grade 9 Federal Working Language",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_foreign_language",
+      "title": "Grade 9 Foreign Language",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "800",
+      "active_questions": "800",
+      "question_languages": {
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g9_common_art",
+      "title": "Grade 9 Art",
+      "stage_key": "school_9_10",
+      "grade_level": 9,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_english",
+      "title": "Grade 10 English",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_mathematics",
+      "title": "Grade 10 Mathematics",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_information_technology",
+      "title": "Grade 10 Information Technology",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_physics",
+      "title": "Grade 10 Physics",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_chemistry",
+      "title": "Grade 10 Chemistry",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_biology",
+      "title": "Grade 10 Biology",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_geography",
+      "title": "Grade 10 Geography",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_history",
+      "title": "Grade 10 History",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 9,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_civics",
+      "title": "Grade 10 Civics Education",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_economics",
+      "title": "Grade 10 Economics",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_native_language",
+      "title": "Grade 10 Native Language",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "2800",
+      "active_questions": "2800",
+      "question_languages": {
+        "am": 500,
+        "om": 500,
+        "so": 500,
+        "ti": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_health_physical_education",
+      "title": "Grade 10 Health & Physical Education",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_federal_working_language",
+      "title": "Grade 10 Federal Working Language",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "1300",
+      "active_questions": "1300",
+      "question_languages": {
+        "am": 500,
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_foreign_language",
+      "title": "Grade 10 Foreign Language",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "800",
+      "active_questions": "800",
+      "question_languages": {
+        "unspecified": 800
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g10_common_art",
+      "title": "Grade 10 Art",
+      "stage_key": "school_9_10",
+      "grade_level": 10,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_natural_sciences_english",
+      "title": "Grade 11 English — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_social_sciences_english",
+      "title": "Grade 11 English — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_natural_sciences_mathematics",
+      "title": "Grade 11 Mathematics — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_social_sciences_mathematics",
+      "title": "Grade 11 Mathematics — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_natural_sciences_physics",
+      "title": "Grade 11 Physics — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_social_sciences_geography",
+      "title": "Grade 11 Geography — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_natural_sciences_chemistry",
+      "title": "Grade 11 Chemistry — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_social_sciences_history",
+      "title": "Grade 11 History — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 9,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_natural_sciences_biology",
+      "title": "Grade 11 Biology — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_social_sciences_economics",
+      "title": "Grade 11 Economics — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 7,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_natural_sciences_information_technology",
+      "title": "Grade 11 Information Technology — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_social_sciences_information_technology",
+      "title": "Grade 11 Information Technology — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g11_natural_sciences_agriculture",
+      "title": "Grade 11 Agriculture — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 11,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 16,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_natural_sciences_english",
+      "title": "Grade 12 English — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_social_sciences_english",
+      "title": "Grade 12 English — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 10,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_natural_sciences_mathematics",
+      "title": "Grade 12 Mathematics — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_social_sciences_mathematics",
+      "title": "Grade 12 Mathematics — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "944",
+      "active_questions": "944",
+      "question_languages": {
+        "unspecified": 944
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_natural_sciences_physics",
+      "title": "Grade 12 Physics — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_social_sciences_geography",
+      "title": "Grade 12 Geography — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_natural_sciences_chemistry",
+      "title": "Grade 12 Chemistry — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 5,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_social_sciences_history",
+      "title": "Grade 12 History — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 9,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_natural_sciences_biology",
+      "title": "Grade 12 Biology — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_social_sciences_economics",
+      "title": "Grade 12 Economics — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 8,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_natural_sciences_information_technology",
+      "title": "Grade 12 Information Technology — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_social_sciences_information_technology",
+      "title": "Grade 12 Information Technology — Social Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 6,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "g12_natural_sciences_agriculture",
+      "title": "Grade 12 Agriculture — Natural Sciences",
+      "stage_key": "school_11_12",
+      "grade_level": 12,
+      "program_kind": "school_subject",
+      "active": true,
+      "official_alignment_status": "official_subject_listing_confirmed_content_pending_mapping",
+      "chapters": 16,
+      "source_verified_chapters": 0,
+      "questions": "962",
+      "active_questions": "962",
+      "question_languages": {
+        "unspecified": 962
+      },
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_foundation_communication",
+      "title": "TVET Applied English & Communication",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_foundation_math",
+      "title": "TVET Applied Mathematics",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_foundation_digital",
+      "title": "TVET Digital Literacy & Productivity",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_foundation_entrepreneurship",
+      "title": "TVET Entrepreneurship & Small Business",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_foundation_safety",
+      "title": "TVET Workplace Safety & Professional Practice",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_pathway_ict",
+      "title": "ICT Support & Networking Foundations",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_occupational_standard_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_pathway_accounting",
+      "title": "Accounting & Bookkeeping Foundations",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_occupational_standard_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_pathway_agriculture",
+      "title": "Agriculture & Agribusiness Foundations",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_occupational_standard_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "tvet_pathway_hospitality",
+      "title": "Hospitality & Tourism Foundations",
+      "stage_key": "college_tvet",
+      "grade_level": null,
+      "program_kind": "tvet_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_occupational_standard_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_academic_english",
+      "title": "University Academic English & Communication",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_quantitative",
+      "title": "University Quantitative Reasoning",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_digital",
+      "title": "University Digital & Information Literacy",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_critical_thinking",
+      "title": "University Critical Thinking & Logic",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_research",
+      "title": "University Research Methods & Academic Integrity",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_data",
+      "title": "University Data Literacy & Statistics",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_innovation",
+      "title": "University Entrepreneurship & Innovation",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_foundation_career",
+      "title": "University Career & Professional Skills",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_foundation",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_institution_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_pathway_computing",
+      "title": "Computing & Engineering Foundation Pathway",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_department_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_pathway_business",
+      "title": "Business & Economics Foundation Pathway",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_department_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_pathway_health",
+      "title": "Health & Life Sciences Foundation Pathway",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_department_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_pathway_agriculture",
+      "title": "Agriculture & Environmental Foundation Pathway",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_department_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_pathway_social",
+      "title": "Social Sciences & Humanities Foundation Pathway",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_department_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    },
+    {
+      "program_key": "university_pathway_education",
+      "title": "Education & Teaching Foundation Pathway",
+      "stage_key": "university",
+      "grade_level": null,
+      "program_kind": "university_pathway",
+      "active": true,
+      "official_alignment_status": "mela_supplemental_department_mapping_required",
+      "chapters": 0,
+      "source_verified_chapters": 0,
+      "questions": "0",
+      "active_questions": "0",
+      "question_languages": {},
+      "next_action": "Reconcile lesson completeness, review decisions, source permissions and five-language acceptance",
+      "delivery_status": "acceptance_not_certified"
+    }
+  ]
+}

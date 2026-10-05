@@ -1,6 +1,6 @@
 # MELA delivery status
 
-Updated: 4 October 2026, Africa/Addis_Ababa. Decision: **NO-GO for unrestricted public or paid launch**.
+Updated: 5 October 2026, Africa/Addis_Ababa. Decision: **NO-GO for unrestricted public or paid launch**.
 
 Phase 1 audit is complete at inventory/targeted-inspection depth. Phase 2 remains open. Phase 3 safety repairs are implemented; Phases 4 and 5 are actively being hardened at the owner’s request. Phases 3–11 are not certified. A code audit is not a real-user pilot, payment-provider certification, legal approval, or capacity proof.
 
@@ -80,3 +80,15 @@ Financial gates must remain disabled. No synthetic provider success, fake conten
 - Rollback-only mentorship rating regression passes: valid mentee rating succeeds; duplicate/outsider/direct-write attempts fail; aggregate refresh is correct. No fixtures persisted.
 - Learner PR #25 adds the rating UI and test. Admin/backend PR #26 contains payment source recovery, migrations, regression and evidence. CI must be green before merge.
 - See `docs/audit/PHASE_4_5_CONTINUATION_2026-10-04.md`. Readiness percentages remain conservative because provider sandbox, reconciliation, real-user E2E, human content/translation review and other launch gates are still open.
+
+## 5 October checkpoint — payment repair and Phase 8 preparation
+
+- Phases 4–7 have implementation progress, including newer mentorship and safeguarding/legal review work, but are not fully accepted/certified. Phase 8 inventory is started at the owner's request; earlier launch gates remain open.
+- Fixed two live Premium activation blockers: conflicting status constraints, and a legacy trigger silently discarding trusted settlement updates. The canonical premium_* status check remains enforced; client identities cannot verify their own payments.
+- Referral sign-up records are now provisional/pending and create no spendable earnings. Rollback tests cover 10 ETB free and 20 ETB Premium provisional rewards, self-referral denial and replay idempotency.
+- Unique partial indexes prohibit simultaneous unfinished course, learning and escrow checkouts. Checkout endpoints reuse eligible existing sessions, refuse an unresolved attempt, handle a uniqueness race without provider initialization, and preserve uncertain provider outcomes for reconciliation.
+- Learning settlement sends the full verified amount in minor units, not the provider fee. Database tests confirm fee rejection, one Premium activation and idempotent replay.
+- Validation: 208 automated tests pass; production frontend build passes; three live transactional regression scripts pass with all fixtures rolled back. Real merchant sandbox, concurrent multi-connection/load acceptance and restore remain open.
+- Pricing inspection: normal_monthly=20 ETB and premium_monthly=50 ETB, both monthly plans. This does not implement the requested one-time registration fee. All nine learning products remain off sale; seven priced learning products plus the institution product have no active price. No sale/financial flag was enabled.
+- Phase 8 catalog snapshot: 149 programs, 887 chapter records, 142,396 question records; 23 programs have neither chapters nor questions. Zero chapter records are marked source_verified. These counts do not certify lesson completeness or translation quality. See content/backlog/catalog-2026-10-05.json and docs/audit/PHASE_8_CONTENT_BACKLOG_2026-10-05.md.
+- Security advisor: 90 authenticated privileged-function warnings, one intentional anonymous certificate verifier warning, eleven no-policy informational findings, and leaked-password protection warning. No readiness percentage increased based solely on test counts.
