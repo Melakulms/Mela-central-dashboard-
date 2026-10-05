@@ -104,6 +104,14 @@ export async function adminApi(
   return invokeAdminFunction(client, 'mela-admin-api', action, body)
 }
 
+export async function contentAdminApi(
+  client: SupabaseClient,
+  action: string,
+  body: Record<string, unknown> = {},
+) {
+  return invokeAdminFunction(client, 'mela-content-admin', action, body)
+}
+
 export async function betaAdminApi(
   client: SupabaseClient,
   action: string,

@@ -3,6 +3,9 @@ project_id = "duizgtmbptmlbyipreqg"
 [functions.mela-admin-api]
 verify_jwt = true
 
+[functions.mela-content-admin]
+verify_jwt = true
+
 [functions.mela-beta-auth]
 verify_jwt = false
 
