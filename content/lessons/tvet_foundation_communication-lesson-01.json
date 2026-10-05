@@ -1,0 +1,61 @@
+{
+  "program_key": "tvet_foundation_communication",
+  "title": "A clear workplace request and confirmation",
+  "estimated_minutes": 30,
+  "learning_objectives": [
+    "Identify audience, purpose and required action in a workplace message.",
+    "Write a specific, respectful request.",
+    "Confirm an instruction without assuming missing details."
+  ],
+  "lesson_explanation": "A useful workplace message helps its reader act. Before writing, identify who needs the message, what they need to know and what response you need. Include enough detail to prevent confusion, but leave out unrelated personal information. A short request often has five parts: a subject, a respectful greeting, the situation, a specific request and a closing.\n\nCompare these two fictional training messages. “Bring the things soon” leaves the recipient guessing about the items and time. “Hello Hana, for our supervised workshop practice on Tuesday, please bring two blank job sheets to Room 2 by 9:00 a.m. Please confirm whether they are available. Thank you, Meron” identifies the activity, items, place, deadline and response. In real work, include the date when “Tuesday” could be ambiguous. Use the calendar and time convention agreed by your workplace; do not assume that everyone means the same time from an unqualified number.\n\nA request should be polite without hiding the action. “Could you confirm the delivery date by tomorrow afternoon?” is clearer than “Please do the necessary.” If you cannot meet a request, state the problem early and offer a realistic alternative: “I can prepare one sheet today and the second tomorrow morning. Would that work?” Do not promise a deadline you cannot meet.\n\nWhen receiving an instruction, listen or read completely. Repeat the essential action and ask about missing information: “To confirm, I should prepare two blank sheets for Room 2. Which date and time should I use?” Confirmation is especially important when quantities, dates, locations or responsibilities are unclear. For hazardous work, stop and ask the authorised supervisor rather than guessing; this lesson does not qualify anyone to perform technical tasks.\n\nBefore sending a message, check names, quantities, attachments and recipient. Use the approved class or workplace channel. Practise with fictional details instead of sharing your phone number, identification documents, passwords or a real customer's data. A message is complete when the reader understands the next step, not merely when the writer has sent it.",
+  "ethiopian_context_examples": [
+    "A fictional TVET workshop group uses an agreed calendar and time convention to arrange supervised practice. Learners may discuss the message in their strongest language before drafting in English."
+  ],
+  "worked_practice": [
+    {
+      "question": "What is missing from “Please bring the tools tomorrow”?",
+      "answer": "Which tools, how many, where, what date/time and whether confirmation is needed.",
+      "explanation": "The recipient cannot reliably carry out the request without these details. Do not invent them; ask."
+    },
+    {
+      "question": "Rewrite “I cannot do it” as a constructive response when you can complete the task on Friday.",
+      "answer": "I cannot complete the task by Thursday. I can finish it on Friday. Would that meet your needs?",
+      "explanation": "The response states the limit and a specific alternative without promising the original deadline."
+    },
+    {
+      "question": "An instruction uses a time convention you do not understand. What should you do?",
+      "answer": "Ask the sender to confirm the exact time and agreed convention.",
+      "explanation": "Repeating an unclear time does not resolve the ambiguity. Confirmation prevents a missed appointment."
+    }
+  ],
+  "independent_task": "Write a 60–90 word fictional request for class materials. Include audience, purpose, quantity, place, a clearly stated date/time and a request for confirmation. Swap with a partner and mark any detail that requires a guess.",
+  "assessment_rubric": [
+    "Purpose and requested action are explicit.",
+    "Quantities, place and date/time are unambiguous.",
+    "Tone is respectful and concise.",
+    "No private personal data is included.",
+    "Recipient can reply with a clear next step."
+  ],
+  "schema_version": 1,
+  "language_code": "en",
+  "status": "draft",
+  "review_status": "needs_qualified_review",
+  "source_status": "original_draft_needs_curriculum_alignment",
+  "source_attribution": [
+    {
+      "type": "original",
+      "note": "Original AI-assisted teaching draft; not copied from or certified against an official textbook."
+    }
+  ],
+  "accessibility_text_alternatives": [
+    "All information is in selectable text. No image, colour or audio is needed to complete the activity."
+  ],
+  "translation_workflow": {
+    "am": "not_started",
+    "om": "not_started",
+    "ti": "not_started",
+    "so": "not_started"
+  },
+  "translation_notes": "Keep Birr units and quantities consistent. Ask native-language reviewers to check terminology, natural phrasing and equivalence of answers. Do not mark a translation approved automatically.",
+  "publication_blocked_reason": "Qualified subject, language and accessibility review required; official curriculum alignment unverified."
+}

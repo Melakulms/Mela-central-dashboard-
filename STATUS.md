@@ -92,3 +92,11 @@ Financial gates must remain disabled. No synthetic provider success, fake conten
 - Pricing inspection: normal_monthly=20 ETB and premium_monthly=50 ETB, both monthly plans. This does not implement the requested one-time registration fee. All nine learning products remain off sale; seven priced learning products plus the institution product have no active price. No sale/financial flag was enabled.
 - Phase 8 catalog snapshot: 149 programs, 887 chapter records, 142,396 question records; 23 programs have neither chapters nor questions. Zero chapter records are marked source_verified. These counts do not certify lesson completeness or translation quality. See content/backlog/catalog-2026-10-05.json and docs/audit/PHASE_8_CONTENT_BACKLOG_2026-10-05.md.
 - Security advisor: 90 authenticated privileged-function warnings, one intentional anonymous certificate verifier warning, eleven no-policy informational findings, and leaked-password protection warning. No readiness percentage increased based solely on test counts.
+
+## Owner direction — payments deferred; Phases 8 and 9 in progress
+
+- Payment work is paused until the owner returns to it. Preserve all fixes and keep financial gates disabled; this is not payment acceptance or a paid-launch go-ahead.
+- Phase 8: two complete introductory TVET lesson drafts are now in structured JSON and live versioned Content Studio storage. They remain unpublished and unreviewed. Other lessons, the canonical 53-field mapping, translations and qualified publication review remain open.
+- Phase 9: recovered 26-agent inventory; repaired admin payload, execution profile lookup and queued task text. Deployed authenticated OpenAI proxy with atomic per-user/global daily limits, bounded output, timeouts and server-owned safety instructions. Disabled implicit retry amplification and profile-label report exports.
+- Validation: 225 tests across 15 suites and production build pass. Live quota tests and service-role access test passed with rollback. No real provider request or human safety acceptance was performed.
+- See `docs/audit/PHASE_8_9_CONTINUATION_2026-10-05.md` for exact scope, deployed versions, advisor findings, rollback and owner actions. All readiness percentages above remain unchanged. Phases 8 and 9 are in progress, not certified.
