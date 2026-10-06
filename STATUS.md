@@ -100,3 +100,10 @@ Financial gates must remain disabled. No synthetic provider success, fake conten
 - Phase 9: recovered 26-agent inventory; repaired admin payload, execution profile lookup and queued task text. Deployed authenticated OpenAI proxy with atomic per-user/global daily limits, bounded output, timeouts and server-owned safety instructions. Disabled implicit retry amplification and profile-label report exports.
 - Validation: 225 tests across 15 suites and production build pass. Live quota tests and service-role access test passed with rollback. No real provider request or human safety acceptance was performed.
 - See `docs/audit/PHASE_8_9_CONTINUATION_2026-10-05.md` for exact scope, deployed versions, advisor findings, rollback and owner actions. All readiness percentages above remain unchanged. Phases 8 and 9 are in progress, not certified.
+
+## 6 October — AI admin access repair
+
+- Prior release d943546 passed CI. Its Pages build and deployment jobs succeeded, but the smoke job was cancelled; the overall workflow therefore did not finish successfully.
+- Recovered and deployed `mela-ai-admin` v3. The live GitHub Pages origin is now allowed; MFA assurance receives the actual bearer token and requires AAL2 regardless of a legacy optional flag. Permission lookup failures deny access. Responses are not cacheable; the Supabase client dependency is pinned.
+- 232 tests in 16 suites pass, including production-origin preflight, unknown-origin denial, explicit token propagation, AAL1 denial and permission-service failure. No real-user authenticator acceptance is claimed.
+- Direct hosted smoke checks encountered a network/proxy timeout. This is incomplete live-flow evidence, not proof of an application outage. Content and AI phases remain open; payment work stays deferred.
