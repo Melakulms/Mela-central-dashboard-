@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { prepareEnrollment } from '../lib/prepare-enrollment'
 import { verifyEnrollment } from '../lib/verify-enrollment'
 
 type Props = {
@@ -27,7 +28,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
     let active = true
     generation.current++
 
-    const prepareEnrollment = async () => {
+    const prepare = async () => {
       setLoading(true)
       setError('')
       setFactorId('')
@@ -36,41 +37,15 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       setCode('')
 
       try {
-        const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
-        if (factorsError) throw factorsError
-        if (!factors) throw new Error('Could not check existing authenticators. Please retry.')
+        const enrollment = await prepareEnrollment(client, email)
         if (!active) return
-
-        // A verified factor already exists. Do not call enroll() again: the existing
-        // factor is the factor that must be challenged during administrator login.
-        const verifiedTotp = factors?.totp?.find((factor) => factor.status === 'verified')
-        if (verifiedTotp) {
-          if (!active) return
-          setError('Administrator MFA is already configured. Continuing to MFA verification…')
+        if (enrollment.kind === 'verified') {
           onEnrolledRef.current()
           return
         }
-
-        // Remove abandoned/unverified TOTP factors before creating a fresh enrollment.
-        // Only unverified factors are removed; a verified factor is never deleted here.
-        const unverifiedTotp = factors?.totp?.filter((factor) => factor.status !== 'verified') ?? []
-        for (const factor of unverifiedTotp) {
-          if (!active) return
-          const { error: unenrollError } = await client.auth.mfa.unenroll({ factorId: factor.id })
-          if (unenrollError) throw unenrollError
-        }
-
-        if (!active) return
-        const { data, error: enrollError } = await client.auth.mfa.enroll({
-          factorType: 'totp',
-          friendlyName: email ? `MELA Central Admin - ${email}` : 'MELA Central Admin',
-        })
-        if (enrollError) throw enrollError
-        if (!active) return
-
-        setFactorId(data.id)
-        setQr(data.totp.qr_code)
-        setSecret(data.totp.secret)
+        setFactorId(enrollment.id)
+        setQr(enrollment.qr)
+        setSecret(enrollment.secret)
       } catch (cause) {
         if (!active) return
         setError(cause instanceof Error ? cause.message : 'Unable to start MFA enrollment. Please sign in again and retry.')
@@ -79,7 +54,7 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       }
     }
 
-    void prepareEnrollment()
+    void prepare()
     return () => {
       active = false
       generation.current++
@@ -114,11 +89,11 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
   return <div className="center">
     <div className="card login">
       <h1>Set up administrator MFA</h1>
-      <p className="muted">Scan this QR code with Google Authenticator, Microsoft Authenticator, 1Password, or another TOTP authenticator.</p>
-      {qr && <img src={qr} alt="MFA enrollment QR code" style={{ width: 220, height: 220, margin: '12px auto', display: 'block' }} />}
+      {factorId && <><p className="muted">Scan this QR code with Google Authenticator, Microsoft Authenticator, 1Password, or another TOTP authenticator.</p>
+      {qr && <img src={qr} alt="MFA enrollment QR code" style={{ width: 220, maxWidth: '100%', height: 'auto', margin: '12px auto', display: 'block' }} />}
       <p className="muted">If you cannot scan it, enter this setup secret manually:</p>
       <code style={{ display: 'block', wordBreak: 'break-all', padding: 12 }}>{secret}</code>
-      <label>Authenticator code<input className="mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} disabled={verifying} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></label>
+      <label>Authenticator code<input className="mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} disabled={verifying} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></label></>}
       {error && <div className="error" role="alert">{error}</div>}
       <button disabled={verifying || !factorId || code.length !== 6} onClick={() => void verify()}>{verifying ? 'Verifying…' : 'Enable MFA and continue'}</button>
       {!factorId && <button className="secondary" onClick={() => setRetry(value => value + 1)}>Retry MFA setup</button>}
