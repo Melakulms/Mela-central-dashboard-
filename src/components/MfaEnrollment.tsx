@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { verifyEnrollment } from '../lib/verify-enrollment'
+import { prepareTotpEnrollment } from '../lib/mfa-enrollment'
 
 type Props = {
   client: SupabaseClient
@@ -36,41 +37,18 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       setCode('')
 
       try {
-        const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
-        if (factorsError) throw factorsError
-        if (!factors) throw new Error('Could not check existing authenticators. Please retry.')
+        const prepared = await prepareTotpEnrollment(client)
         if (!active) return
 
-        // A verified factor already exists. Do not call enroll() again: the existing
-        // factor is the factor that must be challenged during administrator login.
-        const verifiedTotp = factors?.totp?.find((factor) => factor.status === 'verified')
-        if (verifiedTotp) {
-          if (!active) return
+        if (prepared.kind === 'verified') {
           setError('Administrator MFA is already configured. Continuing to MFA verification…')
           onEnrolledRef.current()
           return
         }
 
-        // Remove abandoned/unverified TOTP factors before creating a fresh enrollment.
-        // Only unverified factors are removed; a verified factor is never deleted here.
-        const unverifiedTotp = factors?.totp?.filter((factor) => factor.status !== 'verified') ?? []
-        for (const factor of unverifiedTotp) {
-          if (!active) return
-          const { error: unenrollError } = await client.auth.mfa.unenroll({ factorId: factor.id })
-          if (unenrollError) throw unenrollError
-        }
-
-        if (!active) return
-        const { data, error: enrollError } = await client.auth.mfa.enroll({
-          factorType: 'totp',
-          friendlyName: email ? `MELA Central Admin - ${email}` : 'MELA Central Admin',
-        })
-        if (enrollError) throw enrollError
-        if (!active) return
-
-        setFactorId(data.id)
-        setQr(data.totp.qr_code)
-        setSecret(data.totp.secret)
+        setFactorId(prepared.factorId)
+        setQr(prepared.qrCode)
+        setSecret(prepared.secret)
       } catch (cause) {
         if (!active) return
         setError(cause instanceof Error ? cause.message : 'Unable to start MFA enrollment. Please sign in again and retry.')
