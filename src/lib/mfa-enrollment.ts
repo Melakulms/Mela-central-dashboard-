@@ -1,32 +1,32 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-export type TotpEnrollmentPreparation =
-  | { kind: 'verified'; factorId: string }
-  | { kind: 'new'; factorId: string; qrCode: string; secret: string }
+export type Enrollment = { kind: 'verified' } | { kind: 'enroll'; id: string; qr: string; secret: string }
+// Share an in-flight setup across React remounts; never persist QR codes or secrets.
+const pending = new WeakMap<SupabaseClient, Map<string, Promise<Enrollment>>>()
 
-export async function prepareTotpEnrollment(client: SupabaseClient): Promise<TotpEnrollmentPreparation> {
-  const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
-  if (factorsError) throw factorsError
-  if (!factors) throw new Error('Could not check existing authenticators. Please retry.')
-
-  const verified = factors.totp.find(factor => factor.status === 'verified')
-  if (verified) return { kind: 'verified', factorId: verified.id }
-
-  for (const factor of factors.totp.filter(factor => factor.status !== 'verified')) {
-    const { error: unenrollError } = await client.auth.mfa.unenroll({ factorId: factor.id })
-    if (unenrollError) throw unenrollError
-  }
-
-  // A friendly name is optional in Supabase. Leaving it unset avoids
-  // mfa_factor_name_conflict when a stale server-side enrollment with the
-  // previous display name survives a failed setup attempt.
-  const { data, error: enrollError } = await client.auth.mfa.enroll({ factorType: 'totp' })
-  if (enrollError) throw enrollError
-
-  return {
-    kind: 'new',
-    factorId: data.id,
-    qrCode: data.totp.qr_code,
-    secret: data.totp.secret,
-  }
+export function prepareEnrollment(client: SupabaseClient, email?: string): Promise<Enrollment> {
+  const name = email ? `MELA Central Admin - ${email}` : 'MELA Central Admin'
+  let setups = pending.get(client)
+  if (!setups) { setups = new Map(); pending.set(client, setups) }
+  const existing = setups.get(name)
+  if (existing) return existing
+  const operation = (async (): Promise<Enrollment> => {
+    const { data: factors, error } = await client.auth.mfa.listFactors()
+    if (error) throw error
+    if (!factors) throw new Error('Could not check existing authenticators. Please retry.')
+    // listFactors().totp contains VERIFIED factors only; unfinished factors are in all.
+    if (factors.all.some(f => f.factor_type === 'totp' && f.status === 'verified')) return { kind: 'verified' }
+    for (const factor of factors.all) {
+      if (factor.factor_type !== 'totp' || factor.status !== 'unverified' || factor.friendly_name !== name) continue
+      const { error: removeError } = await client.auth.mfa.unenroll({ factorId: factor.id })
+      if (removeError) throw removeError
+    }
+    const { data, error: enrollError } = await client.auth.mfa.enroll({ factorType: 'totp', friendlyName: name })
+    if (enrollError) throw enrollError
+    if (!data?.id || !data.totp?.qr_code || !data.totp.secret) throw new Error('The authenticator setup was incomplete. Please retry MFA setup.')
+    return { kind: 'enroll', id: data.id, qr: data.totp.qr_code, secret: data.totp.secret }
+ })()
+ setups.set(name, operation)
+ void operation.finally(() => { if (setups?.get(name) === operation) setups.delete(name) }).catch(() => {})
+ return operation
 }

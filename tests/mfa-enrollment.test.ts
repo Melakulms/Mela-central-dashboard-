@@ -1,68 +1,44 @@
-import { beforeEach, expect, it, vi } from 'vitest'
-import { prepareTotpEnrollment } from '../src/lib/mfa-enrollment'
-
-const listFactors = vi.fn()
-const unenroll = vi.fn()
-const enroll = vi.fn()
-
-const client = {
-  auth: {
-    mfa: { listFactors, unenroll, enroll },
-  },
-} as any
-
-beforeEach(() => {
-  vi.resetAllMocks()
-  listFactors.mockResolvedValue({ data: { totp: [], phone: [] }, error: null })
-  unenroll.mockResolvedValue({ data: {}, error: null })
-  enroll.mockResolvedValue({
-    data: { id: 'fresh-factor', totp: { qr_code: 'data:image/svg+xml;base64,qr', secret: 'SECRET' } },
-    error: null,
+import { describe, expect, it, vi } from 'vitest'
+import { prepareEnrollment } from '../src/lib/mfa-enrollment'
+const name = 'MELA Central Admin - admin@example.invalid'
+function setup(all: object[] = []) {
+  const mfa = { listFactors: vi.fn().mockResolvedValue({ data: { all, totp: [] }, error: null }),
+    unenroll: vi.fn().mockResolvedValue({ error: null }),
+    enroll: vi.fn().mockResolvedValue({ data: { id: 'new', totp: { qr_code: 'test-qr', secret: 'test-secret' } }, error: null }) }
+  return { mfa, client: { auth: { mfa } } as any }
+}
+describe('MFA enrollment recovery', () => {
+  it('removes an abandoned matching TOTP from all even when totp is empty', async () => {
+    const { client, mfa } = setup([{ id: 'old', friendly_name: name, factor_type: 'totp', status: 'unverified' }])
+    expect(await prepareEnrollment(client, 'admin@example.invalid')).toEqual({ kind: 'enroll', id: 'new', qr: 'test-qr', secret: 'test-secret' })
+    expect(mfa.unenroll).toHaveBeenCalledWith({ factorId: 'old' })
+    expect(mfa.enroll).toHaveBeenCalledOnce()
+    expect(mfa.unenroll.mock.invocationCallOrder[0]).toBeLessThan(mfa.enroll.mock.invocationCallOrder[0])
   })
-})
-
-it('reuses a verified TOTP factor without creating or deleting factors', async () => {
-  listFactors.mockResolvedValue({
-    data: { totp: [{ id: 'verified-factor', status: 'verified', friendly_name: 'MELA Central Admin' }], phone: [] },
-    error: null,
+  it('preserves verified factors and returns to the challenge flow', async () => {
+    const { client, mfa } = setup([{ id: 'verified', factor_type: 'totp', status: 'verified' }])
+    expect(await prepareEnrollment(client)).toEqual({ kind: 'verified' })
+    expect(mfa.unenroll).not.toHaveBeenCalled(); expect(mfa.enroll).not.toHaveBeenCalled()
   })
-
-  await expect(prepareTotpEnrollment(client)).resolves.toEqual({
-    kind: 'verified',
-    factorId: 'verified-factor',
+  it('preserves unrelated unfinished factors', async () => {
+    const { client, mfa } = setup([{ id: 'other', friendly_name: 'Other app', factor_type: 'totp', status: 'unverified' }])
+    await prepareEnrollment(client); expect(mfa.unenroll).not.toHaveBeenCalled()
   })
-  expect(unenroll).not.toHaveBeenCalled()
-  expect(enroll).not.toHaveBeenCalled()
-})
-
-it('removes abandoned TOTP factors and enrolls without a collision-prone friendly name', async () => {
-  listFactors.mockResolvedValue({
-    data: {
-      totp: [
-        { id: 'stale-one', status: 'unverified', friendly_name: 'MELA Central Admin - admin@example.com' },
-        { id: 'stale-two', status: 'unverified', friendly_name: 'MELA Central Admin' },
-      ],
-      phone: [],
-    },
-    error: null,
+  it('shares concurrent preparation calls rather than enrolling twice', async () => {
+    const { client, mfa } = setup()
+    await Promise.all([prepareEnrollment(client), prepareEnrollment(client)])
+    expect(mfa.enroll).toHaveBeenCalledOnce()
   })
-
-  await expect(prepareTotpEnrollment(client)).resolves.toEqual({
-    kind: 'new',
-    factorId: 'fresh-factor',
-    qrCode: 'data:image/svg+xml;base64,qr',
-    secret: 'SECRET',
+  it('stops if listing or removing old factors fails', async () => {
+    const { client, mfa } = setup([{ id: 'old', friendly_name: name, factor_type: 'totp', status: 'unverified' }])
+    mfa.unenroll.mockResolvedValue({ error: new Error('offline') })
+    await expect(prepareEnrollment(client, 'admin@example.invalid')).rejects.toThrow('offline')
+    expect(mfa.enroll).not.toHaveBeenCalled()
   })
-
-  expect(unenroll).toHaveBeenNthCalledWith(1, { factorId: 'stale-one' })
-  expect(unenroll).toHaveBeenNthCalledWith(2, { factorId: 'stale-two' })
-  expect(enroll).toHaveBeenCalledWith({ factorType: 'totp' })
-  expect(enroll.mock.calls[0]?.[0]).not.toHaveProperty('friendlyName')
-})
-
-it('fails closed when factors cannot be listed', async () => {
-  listFactors.mockResolvedValue({ data: null, error: new Error('Network unavailable') })
-  await expect(prepareTotpEnrollment(client)).rejects.toThrow('Network unavailable')
-  expect(unenroll).not.toHaveBeenCalled()
-  expect(enroll).not.toHaveBeenCalled()
+  it('allows retry after a rejected setup', async () => {
+    const { client, mfa } = setup()
+    mfa.listFactors.mockRejectedValueOnce(new Error('offline'))
+    await expect(prepareEnrollment(client)).rejects.toThrow('offline')
+    await expect(prepareEnrollment(client)).resolves.toMatchObject({ kind: 'enroll' })
+  })
 })
