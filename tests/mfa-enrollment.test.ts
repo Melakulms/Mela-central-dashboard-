@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { prepareEnrollment } from '../src/lib/prepare-enrollment'
+import { prepareEnrollment } from '../src/lib/mfa-enrollment'
 const name = 'MELA Central Admin - admin@example.invalid'
 function setup(all: object[] = []) {
   const mfa = { listFactors: vi.fn().mockResolvedValue({ data: { all, totp: [] }, error: null }),

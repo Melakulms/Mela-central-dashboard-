@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { prepareEnrollment } from '../lib/prepare-enrollment'
+import { prepareEnrollment } from '../lib/mfa-enrollment'
 import { verifyEnrollment } from '../lib/verify-enrollment'
 
 type Props = {
