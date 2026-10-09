@@ -131,13 +131,59 @@ Deno.serve(async (req) => {
       })
     }
 
+    if (action === 'courses.list') {
+      const limit = limitOf((body as any).limit, 100)
+      const offset = offsetOf((body as any).offset)
+      let query = adminDb.schema('admin').from('course_content_inventory').select('*', { count: 'exact' })
+        .order('featured_rank', { nullsFirst: false }).order('id').range(offset, offset + limit - 1)
+      const search = clean((body as any).search, 120).replace(/[,%()]/g, ' ')
+      if (search) query = query.ilike('title', `%${search}%`)
+      if ((body as any).missing_only === true) query = query.eq('content_available', false)
+      const { data, error, count } = await query
+      if (error) return json({ error: 'Unable to load course inventory' }, 500)
+      return json({ data: data ?? [], total: count ?? 0, offset, limit })
+    }
+
+    if (action === 'courses.lessons') {
+      const courseId = clean((body as any).course_id, 80)
+      if (!validUuid(courseId)) return json({ error: 'Valid course ID is required' }, 400)
+      const limit = limitOf((body as any).limit, 100)
+      const offset = offsetOf((body as any).offset)
+      const { data, error, count } = await adminDb.from('course_lessons')
+        .select('id,course_id,module_title,module_position,title,lesson_position,duration_minutes,is_preview,content_text', { count: 'exact' })
+        .eq('course_id', courseId).order('module_position').order('lesson_position').order('id').range(offset, offset + limit - 1)
+      if (error) return json({ error: 'Unable to load course lessons' }, 500)
+      return json({ data: data ?? [], total: count ?? 0, offset, limit })
+    }
+
+    if (action === 'review.queue') {
+      const kind = clean((body as any).kind, 20)
+      if (!['chapters', 'questions'].includes(kind)) return json({ error: 'Choose chapters or questions' }, 400)
+      const grade = (body as any).grade_level
+      if (grade != null && (!Number.isInteger(grade) || grade < 1 || grade > 12)) return json({ error: 'Grade must be 1–12' }, 400)
+      const limit = limitOf((body as any).limit, 100)
+      const offset = offsetOf((body as any).offset)
+      const program = clean((body as any).program_key, 160)
+      let query = kind === 'chapters'
+        ? adminDb.from('mela_chapter_review_queue').select('id,chapter_id,program_key,grade_level,subject_key,chapter_number,chapter_title,source_state,review_type,priority,status,reviewer_requirement,assigned_to,updated_at', { count: 'exact' }).order('priority', { ascending: false }).order('id')
+        : adminDb.from('mela_question_review_batches').select('program_key,grade_level,subject_title,target_question_count,generated_question_count,deterministic_validated_count,educator_verified_count,review_status,assigned_to,reviewed_by,reviewed_at,updated_at', { count: 'exact' }).order('grade_level').order('program_key')
+      if (grade != null) query = query.eq('grade_level', grade)
+      if (program) query = query.eq('program_key', program)
+      const { data, error, count } = await query.range(offset, offset + limit - 1)
+      if (error) return json({ error: 'Unable to load qualified-review queue' }, 500)
+      return json({ data: data ?? [], total: count ?? 0, offset, limit })
+    }
+
     if (action === 'programs.list') {
       const limit = limitOf((body as any).limit)
       const offset = offsetOf((body as any).offset)
       let query = adminDb.schema('admin').from('content_program_inventory').select('*', { count: 'exact' })
-        .order('stage_key').order('grade_level', { nullsFirst: false }).order('title').range(offset, offset + limit - 1)
+        .order('stage_key').order('grade_level', { nullsFirst: false }).order('title').order('program_key').range(offset, offset + limit - 1)
       const stage = clean((body as any).stage_key, 80)
       const search = clean((body as any).search, 120).replace(/[,%()]/g, ' ')
+      const grade = (body as any).grade_level
+      if (grade != null && (!Number.isInteger(grade) || grade < 1 || grade > 12)) return json({ error: 'Grade must be 1–12' }, 400)
+      if (grade != null) query = query.eq('grade_level', grade)
       if (stage) query = query.eq('stage_key', stage)
       if ((body as any).empty_only === true) query = query.eq('has_content', false)
       if (search) query = query.or(`program_key.ilike.%${search}%,title.ilike.%${search}%,subject_title.ilike.%${search}%`)
@@ -150,7 +196,7 @@ Deno.serve(async (req) => {
       const limit = limitOf((body as any).limit)
       const offset = offsetOf((body as any).offset)
       let query = adminDb.schema('admin').from('content_drafts').select('*', { count: 'exact' })
-        .order('updated_at', { ascending: false }).range(offset, offset + limit - 1)
+        .order('updated_at', { ascending: false }).order('id').range(offset, offset + limit - 1)
       const status = clean((body as any).status, 30)
       const entityType = clean((body as any).entity_type, 40)
       const programKey = clean((body as any).program_key, 160)
@@ -231,6 +277,18 @@ Deno.serve(async (req) => {
       if (!existing) return json({ error: 'Content draft not found' }, 404)
       if (!EDITABLE_STATUSES.has(existing.status)) return json({ error: 'Only draft or rejected content can be submitted' }, 409)
       if (!existing.payload || !Object.keys(existing.payload).length) return json({ error: 'Draft payload cannot be empty' }, 400)
+      if (existing.entity_type === 'material' && existing.payload.course_id != null) {
+        const lesson = existing.payload
+        if (!validUuid(String(lesson.course_id)) || !clean(lesson.title) || !clean(lesson.module_title)
+          || typeof lesson.content_text !== 'string' || lesson.content_text.trim().length < 100
+          || !Array.isArray(lesson.objectives) || !lesson.objectives.some((value: unknown) => typeof value === 'string' && value.trim())
+          || !['module_position','lesson_position','duration_minutes'].every(key => Number.isInteger(lesson[key]) && lesson[key] > 0)) {
+          return json({ error: 'Complete the course lesson title, module, text, objectives, ordering and duration before submitting.' }, 400)
+        }
+        const { data: course, error: courseError } = await adminDb.from('courses').select('id').eq('id', lesson.course_id).maybeSingle()
+        if (courseError) return json({ error: 'Unable to validate the lesson course' }, 500)
+        if (!course) return json({ error: 'The lesson course no longer exists' }, 400)
+      }
       const { data, error } = await adminDb.schema('admin').from('content_drafts').update({
         status: 'submitted',
         submitted_at: new Date().toISOString(),

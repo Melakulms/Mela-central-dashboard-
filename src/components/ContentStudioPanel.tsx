@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import ContentBacklog from './ContentBacklog'
 import { contentAdminApi } from '../lib/admin-api'
 
 type Summary = {
@@ -90,6 +91,11 @@ export default function ContentStudioPanel({ client }: { client: SupabaseClient 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [versions, setVersions] = useState<Record<string, unknown>[]>([])
+  const [draftOffset, setDraftOffset] = useState(0)
+  const [draftTotal, setDraftTotal] = useState(0)
+  const [draftStatus, setDraftStatus] = useState('')
+  const [draftBusy, setDraftBusy] = useState(false)
+  const [draftError, setDraftError] = useState('')
   const [revision, setRevision] = useState(0)
 
   useEffect(() => {
@@ -98,20 +104,45 @@ export default function ContentStudioPanel({ client }: { client: SupabaseClient 
     setError('')
     Promise.all([
       contentAdminApi(client, 'overview'),
-      contentAdminApi(client, 'drafts.list', { limit: 100 }),
-    ]).then(([overviewResult, draftResult]) => {
+
+    ]).then(([overviewResult]) => {
       if (!active) return
       setOverview(overviewResult as Overview)
-      setDrafts(Array.isArray(draftResult?.data) ? draftResult.data : [])
     }).catch((cause) => {
       if (active) setError(cause instanceof Error ? cause.message : 'Could not load the Content Studio.')
     }).finally(() => { if (active) setBusy(false) })
     return () => { active = false }
   }, [client, revision])
 
+  useEffect(() => {
+    let active = true
+    setDraftBusy(true); setDraftError(''); setDrafts([])
+    contentAdminApi(client, 'drafts.list', { limit: 25, offset: draftOffset, status: draftStatus || undefined }).then(result => {
+      if (!active) return
+      const total = Number(result.total ?? 0)
+      if (draftOffset > 0 && draftOffset >= total) { setDraftOffset(Math.max(0, Math.floor((total - 1) / 25) * 25)); return }
+      setDrafts(result.data ?? []); setDraftTotal(total)
+    }).catch(cause => { if (active) setDraftError(cause instanceof Error ? cause.message : 'Could not load drafts.') })
+      .finally(() => { if (active) setDraftBusy(false) })
+    return () => { active = false }
+  }, [client, draftOffset, draftStatus, revision])
+
   const pendingTranslations = useMemo(() => (
     overview?.translations.reduce((total, row) => total + (row.review_status === 'pending' ? Number(row.item_count) : 0), 0) ?? 0
   ), [overview])
+
+  const coursePayload = useMemo(() => {
+    try {
+      const value = JSON.parse(form.payloadText)
+      return form.entityType === 'material' && typeof value?.course_id === 'string' ? value as Record<string, unknown> : null
+    } catch { return null }
+  }, [form.payloadText, form.entityType])
+  const updateCourseField = (key: string, value: unknown) => {
+    setForm(current => {
+      const payload = JSON.parse(current.payloadText)
+      return { ...current, payloadText: JSON.stringify({ ...payload, [key]: value }, null, 2) }
+    })
+  }
 
   const resetForm = () => {
     setForm(EMPTY_FORM)
@@ -138,6 +169,18 @@ export default function ContentStudioPanel({ client }: { client: SupabaseClient 
         translation_notes: '',
       }, null, 2),
     })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const prepareCourse = (course: Record<string, unknown>) => {
+    setForm({ ...EMPTY_FORM, entityType: 'material', targetId: String(course.id), title: `${course.title}: new lesson`, payloadText: JSON.stringify({
+      course_id: course.id, course_slug: course.slug, course_title: course.title,
+      module_title: '', module_position: 1, lesson_position: 1,
+      title: '', duration_minutes: 15, objectives: [], content_text: '',
+      practice: '', answer_explanations: '', sources: [], language_code: 'en',
+      editorial_status: 'needs_qualified_review',
+    }, null, 2) })
+    setVersions([]); setError(''); setSuccess('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -263,17 +306,21 @@ export default function ContentStudioPanel({ client }: { client: SupabaseClient 
         <label>Existing target ID<input value={form.targetId} onChange={event => setForm(current => ({ ...current, targetId: event.target.value }))} placeholder="Optional UUID" disabled={busy}/></label>
       </div>
       <label>Draft title<input value={form.title} onChange={event => setForm(current => ({ ...current, title: event.target.value }))} maxLength={300} required disabled={busy}/></label>
-      <label>Structured payload<textarea value={form.payloadText} onChange={event => setForm(current => ({ ...current, payloadText: event.target.value }))} rows={12} spellCheck={false} required disabled={busy}/></label>
+      {coursePayload ? <fieldset disabled={busy}><legend>Course lesson draft</legend><p>{String(coursePayload.course_title ?? coursePayload.course_slug ?? coursePayload.course_id)}</p>
+        <label>Lesson title<input value={String(coursePayload.title ?? '')} onChange={event=>updateCourseField('title',event.target.value)} maxLength={300}/></label>
+        <label>Module title<input value={String(coursePayload.module_title ?? '')} onChange={event=>updateCourseField('module_title',event.target.value)} maxLength={200}/></label>
+        <div className="toolbar">{[['module_position','Module number'],['lesson_position','Lesson number'],['duration_minutes','Minutes']].map(([key,label])=><label key={key}>{label}<input type="number" min={1} step={1} value={Number(coursePayload[key] ?? 1)} onChange={event=>updateCourseField(key,Number(event.target.value))}/></label>)}</div>
+        <label>Learning objectives (one per line)<textarea rows={4} value={Array.isArray(coursePayload.objectives) ? coursePayload.objectives.join('\n') : ''} onChange={event=>updateCourseField('objectives',event.target.value.split('\n'))}/></label>
+        <label>Lesson content<textarea rows={14} value={String(coursePayload.content_text ?? '')} onChange={event=>updateCourseField('content_text',event.target.value)}/></label>
+        <label>Practice exercise<textarea rows={5} value={String(coursePayload.practice ?? '')} onChange={event=>updateCourseField('practice',event.target.value)}/></label>
+        <label>Answer explanations<textarea rows={5} value={String(coursePayload.answer_explanations ?? '')} onChange={event=>updateCourseField('answer_explanations',event.target.value)}/></label>
+        <label>Sources and permissions notes (one per line)<textarea rows={4} value={Array.isArray(coursePayload.sources) ? coursePayload.sources.join('\n') : ''} onChange={event=>updateCourseField('sources',event.target.value.split('\n'))}/></label>
+        <p className="muted">Saving retains a private draft. Submission requires lesson text, an objective, ordering, and a duration; qualified review is still required before publication.</p>
+      </fieldset> : <label>Structured payload<textarea value={form.payloadText} onChange={event => setForm(current => ({ ...current, payloadText: event.target.value }))} rows={12} spellCheck={false} required disabled={busy}/></label>}
       <div className="toolbar"><button type="submit" disabled={busy || !form.title.trim()}>{busy ? 'Saving…' : 'Save draft'}</button>{form.id && <span className="muted">Editing version {form.expectedVersion ?? '—'}; the server creates the next immutable snapshot.</span>}</div>
     </form>
 
-    {overview && <section>
-      <div className="module-head"><div><h3>Empty program queue</h3><p>Programs with neither chapters nor questions. Create a reviewable seed draft without publishing unverified educational claims.</p></div><strong>{overview.empty_programs.length}</strong></div>
-      <div className="table-wrap"><table><thead><tr><th>Program</th><th>Stage</th><th>Inventory</th><th/></tr></thead><tbody>
-        {overview.empty_programs.map(program => <tr key={program.program_key}><td><strong>{program.title}</strong><small>{program.program_key}</small></td><td>{program.stage_key}{program.grade_level ? ` · Grade ${program.grade_level}` : ''}</td><td>{program.chapter_count} chapters · {program.question_count} questions</td><td><button onClick={() => seedGap(program)} disabled={busy}>Prepare seed</button></td></tr>)}
-        {!overview.empty_programs.length && <tr><td colSpan={4}>No empty active programs.</td></tr>}
-      </tbody></table></div>
-    </section>}
+    <ContentBacklog client={client} onPrepareCourse={prepareCourse} onPrepareProgram={row => seedGap(row as ProgramInventory)} />
 
     {overview && <section>
       <h3>Translation review inventory</h3>
@@ -282,20 +329,17 @@ export default function ContentStudioPanel({ client }: { client: SupabaseClient 
       </tbody></table></div>
     </section>}
 
-    {overview && <section>
-      <h3>Qualified-review queues</h3>
-      <p className="muted">Read-only here. Educator/language reviewer authorization remains enforced by the dedicated review workflow.</p>
-      <div className="grid"><div className="metric"><span>Chapter queue shown</span><strong>{overview.chapter_reviews.length}</strong><small>Up to 50 oldest/highest-priority items</small></div><div className="metric"><span>Question batches shown</span><strong>{overview.question_review_batches.length}</strong><small>Up to 50 review batches</small></div></div>
-    </section>}
-
     <section>
-      <div className="module-head"><div><h3>Versioned drafts</h3><p>Submitted drafts remain non-public until the qualified review and publishing workflow is completed.</p></div><strong>{drafts.length}</strong></div>
+      <div className="module-head"><div><h3>Versioned drafts</h3><p>Submitted drafts remain non-public until the qualified review and publishing workflow is completed.</p></div><strong>{draftTotal}</strong></div>
+      <div className="toolbar"><label>Draft status<select value={draftStatus} onChange={event => {setDraftStatus(event.target.value);setDraftOffset(0)}}><option value="">All statuses</option>{['draft','submitted','approved','rejected','published','archived'].map(status => <option key={status} value={status}>{status}</option>)}</select></label><span>{draftBusy ? 'Loading drafts…' : `${drafts.length} shown of ${draftTotal}`}</span></div>
+      {draftError && <div role="alert" className="error">{draftError}<button onClick={() => setRevision(v=>v+1)}>Retry drafts</button></div>}
       <div className="table-wrap"><table><thead><tr><th>Draft</th><th>Status</th><th>Version</th><th>Updated</th><th>Actions</th></tr></thead><tbody>
         {drafts.map(draft => <tr key={draft.id}><td><strong>{draft.title}</strong><small>{draft.entity_type} · {draft.program_key ?? 'no program'} · {langName(draft.language_code)}</small></td><td><span className={`status-pill ${draft.status}`}>{draft.status}</span></td><td>v{draft.version}</td><td>{dateText(draft.updated_at)}</td><td><div className="toolbar">{['draft','rejected'].includes(draft.status) && <button onClick={() => editDraft(draft)} disabled={busy}>Edit</button>}{['draft','rejected'].includes(draft.status) && <button onClick={() => void submitDraft(draft)} disabled={busy}>Submit</button>}<button onClick={() => void loadVersions(draft)} disabled={busy}>Versions</button>{draft.status !== 'archived' && <button className="secondary" onClick={() => void archiveDraft(draft)} disabled={busy}>Archive</button>}</div></td></tr>)}
-        {!drafts.length && <tr><td colSpan={5}>No content drafts yet.</td></tr>}
+        {!draftBusy && !draftError && !drafts.length && <tr><td colSpan={5}>No content drafts yet.</td></tr>}
       </tbody></table></div>
     </section>
 
+      <div className="toolbar"><button disabled={draftBusy || draftOffset === 0} onClick={() => setDraftOffset(v=>Math.max(0,v-25))}>Previous drafts page</button><button disabled={draftBusy || draftOffset + 25 >= draftTotal} onClick={() => setDraftOffset(v=>v+25)}>Next drafts page</button></div>
     {!!versions.length && <section className="panel"><h3>Version history</h3><div className="table-wrap"><table><thead><tr><th>Version</th><th>Change</th><th>Created</th><th>Snapshot</th></tr></thead><tbody>{versions.map((version: any) => <tr key={String(version.id)}><td>v{String(version.version_no)}</td><td>{String(version.change_kind)}</td><td>{version.created_at ? dateText(String(version.created_at)) : '—'}</td><td><details><summary>Inspect</summary><pre style={{ whiteSpace: 'pre-wrap', maxWidth: '60rem' }}>{JSON.stringify(version.snapshot, null, 2)}</pre></details></td></tr>)}</tbody></table></div></section>}
   </section>
 }
