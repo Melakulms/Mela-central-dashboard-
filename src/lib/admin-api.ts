@@ -57,7 +57,7 @@ export async function signOutAdmin(client: SupabaseClient) {
   if (error) throw error
 }
 
-async function invokeAdminFunction(
+export async function invokeAdminFunction(
   client: SupabaseClient,
   functionName: string,
   action: string,

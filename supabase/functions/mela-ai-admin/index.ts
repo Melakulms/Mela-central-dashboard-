@@ -15,6 +15,7 @@ Deno.serve(async req=>{
  const caller=createClient(url,anon,{global:{headers:{Authorization:ah}}}), db=createClient(url,service)
  const {data:{user},error:ue}=await caller.auth.getUser(); if(ue||!user)return json({error:'Invalid session'},401,h)
  const {data:au,error:ae}=await db.schema('admin').from('admin_users').select('user_id,role_id,active,mfa_required').eq('user_id',user.id).eq('active',true).maybeSingle(); if(ae||!au)return json({error:'Admin access denied'},403,h)
+ const {data:profile,error:profileError}=await db.from('profiles').select('account_status,deleted_at').eq('id',user.id).maybeSingle();if(profileError||profile?.account_status!=='active'||profile.deleted_at!==null)return json({error:'Active administrator account required'},403,h);
  const {data:role,error:re}=await db.schema('admin').from('roles').select('key,name').eq('id',au.role_id).single(); if(re||!role)return json({error:'Admin role is invalid'},403,h)
  const {data:assurance,error:assuranceError}=await caller.auth.mfa.getAuthenticatorAssuranceLevel(ah.slice(7)); if(assuranceError||assurance?.currentLevel!=='aal2')return json({error:'MFA required',code:'MFA_REQUIRED'},403,h)
  const {data:rps,error:pe}=await db.schema('admin').from('role_permissions').select('permission_id').eq('role_id',au.role_id); if(pe)return json({error:'Permission resolution failed'},500,h)
@@ -26,13 +27,18 @@ Deno.serve(async req=>{
   const {data,error}=await db.from('mela_ai_agents').select('id,agent_key,name,domain,description,enabled,autonomy_level,max_steps,timeout_seconds,updated_at').order('domain').order('name');
   if(error)return json({error:'Unable to load AI agents'},500,h); return json({data:data??[]},200,h)
  }
- if(action==='runs.list'){
-  const {data,error}=await db.from('mela_ai_runs').select('id,agent_id,user_id,model,route_class,step_count,status,latency_ms,created_at,completed_at').order('created_at',{ascending:false}).limit(limitOf(body.limit));
-  if(error)return json({error:'Unable to load AI runs'},500,h); return json({data:data??[]},200,h)
- }
- if(action==='approvals.list'){
-  const {data,error}=await db.from('mela_ai_approvals').select('id,task_id,requested_by,level,action_type,action_payload,status,created_at,reviewed_by,reviewed_at,review_note').eq('status','pending').order('created_at',{ascending:false}).limit(limitOf(body.limit));
-  if(error)return json({error:'Unable to load AI approvals'},500,h); return json({data:data??[]},200,h)
+ if(action==='runs.list'||action==='approvals.list'){
+  const limit=limitOf(body.limit,100), offset=Number(body.offset??0), status=String(body.status??(action==='approvals.list'?'pending':''));
+  if(!Number.isSafeInteger(offset)||offset<0)return json({error:'offset must be a non-negative integer'},400,h);
+  const allowedStatuses=action==='runs.list'?['running','completed','failed']:['pending','approved','rejected'];
+  if(status&&!allowedStatuses.includes(status))return json({error:'Invalid status filter'},400,h);
+  const table=action==='runs.list'?'mela_ai_runs':'mela_ai_approvals';
+  const columns=action==='runs.list'?'id,agent_id,user_id,model,route_class,step_count,status,latency_ms,error_message,created_at,completed_at':'id,task_id,requested_by,level,action_type,action_payload,status,created_at,reviewed_by,reviewed_at,review_note';
+  let query=db.from(table).select(columns,{count:'exact'}).order('created_at',{ascending:false}).order('id',{ascending:false});
+  if(status)query=query.eq('status',status);
+  const {data,error,count}=await query.range(offset,offset+limit-1);
+  if(error)return json({error:'Unable to load AI history'},500,h);
+  return json({data:data??[],total:count??0},200,h);
  }
  if(action==='agent.toggle'||action==='approval.review'){
   const id=String(action==='agent.toggle'?body.agent_id??'':body.approval_id??'');

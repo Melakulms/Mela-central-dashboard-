@@ -20,3 +20,9 @@ describe('Admin route authorization', () => {
     expect(authorizeSection(session, true, ['users.read'], 'users')).toEqual({ allowed: true, section: 'users' })
   })
 })
+
+it('protects AI Workforce with system management permission',()=>{
+ const session={user:{id:'admin'}} as Session;
+ expect(authorizeSection(session,true,['users.read'],'ai')).toEqual({allowed:false,reason:'PERMISSION_DENIED'});
+ expect(visibleSections(['system.manage'])).toContain('ai');
+});

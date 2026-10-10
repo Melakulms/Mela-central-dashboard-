@@ -1,2 +1,1 @@
-import AIWorkforcePanel from './AIWorkforcePanel';
-export default function AIWorkforcePage(){ return <AIWorkforcePanel/>; }
+export { default } from './AIWorkforcePanel'

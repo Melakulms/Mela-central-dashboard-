@@ -12,6 +12,7 @@ export type ProtectedSection =
   | 'access'
   | 'audit'
   | 'settings'
+  | 'ai'
 
 const SECTION_PERMISSIONS: Record<Exclude<ProtectedSection, 'overview'>, string> = {
   users: 'users.read',
@@ -23,6 +24,7 @@ const SECTION_PERMISSIONS: Record<Exclude<ProtectedSection, 'overview'>, string>
   access: 'authorization.manage',
   audit: 'audit.read',
   settings: 'system.manage',
+  ai: 'system.manage',
 }
 
 export type RouteDecision =

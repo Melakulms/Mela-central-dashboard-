@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
   if (action === 'users.list') {
     if (!allowed('users.read')) return json({error:'Permission denied'},403)
     const limit=limitOf(body.limit,100), offset=Number.isFinite(Number(body.offset??0))?Math.max(Math.trunc(Number(body.offset??0)),0):0
-    let query=adminDb.from('profiles').select('id,full_name,email,phone_number,role,region,city,account_status,email_verified,phone_verified,profile_completion,created_at,updated_at,deleted_at,availability_status',{count:'exact'}).order('created_at',{ascending:false}).range(offset,offset+limit-1)
+    let query=adminDb.from('profiles').select('id,full_name,email,phone_number,role,region,city,account_status,email_verified,phone_verified,profile_completion,created_at,updated_at,deleted_at,availability_status',{count:'exact'}).order('created_at',{ascending:false}).order('id',{ascending:false}).range(offset,offset+limit-1)
     if(body.role) query=query.eq('role',body.role)
     if(body.status) query=query.eq('account_status',body.status)
     const search=cleanSearch(body.search); if(search) query=query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,phone_number.ilike.%${search}%`)
@@ -109,7 +109,8 @@ Deno.serve(async (req) => {
     const {data:existing,error:readError}=await adminDb.from('profiles').select('id,account_status,email_verified,phone_verified,updated_at').eq('id',userId).maybeSingle(); if(readError)return json({error:'Unable to read user'},500); if(!existing)return json({error:'User not found'},404)
     const patch:Record<string,unknown>={}; if(nextStatus!==undefined)patch.account_status=nextStatus; for(const field of ['email_verified','phone_verified']) { if(body[field]!==undefined) { if(typeof body[field]!=='boolean')return json({error:'Verification fields require true or false'},400); patch[field]=body[field] } } if(!Object.keys(patch).length)return json({error:'No supported changes supplied'},400)
 
-    return auditedUpdate(userId,existing,patch,{changed_fields:Object.keys(patch)})
+    if(body.reason!==undefined&&(typeof body.reason!=='string'||body.reason.trim().length<5||body.reason.length>1000))return json({error:'Reason must be 5 to 1000 characters'},400)
+    return auditedUpdate(userId,existing,patch,{changed_fields:Object.keys(patch),reason:typeof body.reason==='string'?body.reason.trim():null})
   }
 
   if (action === 'employers.list') {
@@ -218,7 +219,16 @@ Deno.serve(async (req) => {
   if (action === 'authorization.matrix') {
     if (!allowed('authorization.manage')) return json({error:'Permission denied'},403); const [{data:roles,error:re},{data:allPermissions,error:pe},{data:mappings,error:me}]=await Promise.all([adminDb.schema('admin').from('roles').select('id,key,name,description,is_privileged').order('name'),adminDb.schema('admin').from('permissions').select('id,key,name,description').order('key'),adminDb.schema('admin').from('role_permissions').select('role_id,permission_id')]); if(re||pe||me)return json({error:'Authorization matrix unavailable'},500); return json({roles,permissions:allPermissions,mappings})
   }
-  if (action === 'audit.list') { if(!allowed('audit.read'))return json({error:'Permission denied'},403); const {data,error}=await adminDb.schema('admin').from('audit_log').select('*').order('created_at',{ascending:false}).limit(limitOf(body.limit,200)); if(error)return json({error:error.message},500); return json({data:data??[]}) }
+  if(action==='audit.list') {
+    if(!allowed('audit.read'))return json({error:'Permission denied'},403)
+    const limit=limitOf(body.limit,100),offset=Number(body.offset??0)
+    if(!Number.isSafeInteger(offset)||offset<0)return json({error:'Invalid audit offset'},400)
+    let query=adminDb.schema('admin').from('audit_log').select('*',{count:'exact'}).order('created_at',{ascending:false}).order('id',{ascending:false})
+    const search=cleanSearch(body.search);if(search)query=query.ilike('action',`%${search}%`)
+    const {data,error,count}=await query.range(offset,offset+limit-1)
+    if(error)return json({error:'Unable to load audit history'},500)
+    return json({data:data??[],total:count??0})
+  }
   if (action === 'access.list') {
     if(!allowed('authorization.manage'))return json({error:'Permission denied'},403)
     const {data,error}=await adminDb.schema('admin').from('access_requests').select('*').order('created_at',{ascending:false}).limit(100)

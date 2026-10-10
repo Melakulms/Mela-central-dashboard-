@@ -12,7 +12,7 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
   const filters: unknown[][] = []
   function query(result: object) {
     const builder: any = {}
-    for (const method of ['select', 'eq', 'in', 'order', 'limit', 'gte', 'or']) builder[method] = () => builder
+    for (const method of ['select', 'eq', 'in', 'order', 'limit', 'gte', 'or', 'ilike']) builder[method] = () => builder
     builder.in = (...args: unknown[]) => { filters.push(args); return builder }
     builder.range = (...args: unknown[]) => { ranges.push(args); return builder }
     builder.update = () => builder
@@ -175,3 +175,17 @@ it('retains reviewing reports in both moderation queues',async()=>{
  expect((await api.request({action:'queues'})).status).toBe(200)
  expect(api.filters).toContainEqual(['status',['pending','open','review','reviewing','escalated']])
 })
+
+it('includes a user status-change reason in the atomic audit metadata',async()=>{
+ const api=server(['users.manage'],{fixtures:{profiles:{data:{id:'user-id',account_status:'active',updated_at:'version'}}}});
+ expect((await api.request({action:'user.update',user_id:'user-id',account_status:'suspended',expected_updated_at:'version',reason:'Confirmed moderation decision'})).status).toBe(200);
+ expect(api.rpc.mock.calls[0][1].p_metadata.reason).toBe('Confirmed moderation decision');
+});
+it('rejects malformed review reasons before writes',async()=>{
+ const api=server(['users.manage'],{fixtures:{profiles:{data:{id:'user-id',account_status:'active'}}}});
+ expect((await api.request({action:'user.update',user_id:'user-id',account_status:'suspended',reason:{text:'wrong type'}})).status).toBe(400);expect(api.rpc).not.toHaveBeenCalled();
+});
+it('browses complete audit history with bounded pagination',async()=>{
+ const api=server(['audit.read'],{fixtures:{audit_log:{data:[],count:600}}});const response=await api.request({action:'audit.list',offset:50,limit:25,search:'user.update'});
+ expect(response.status).toBe(200);expect((await response.json()).total).toBe(600);expect(api.ranges).toContainEqual([50,74]);
+});
