@@ -116,9 +116,10 @@ begin
   where q.active and (p_program_key is null or q.program_key=p_program_key)
     and private.question_reviewer_allowed_v18(v_uid,q.program_key);
 
-  select count(*) into v_in_slices
+  select count(distinct q.id) into v_in_slices
   from private.mela_question_review_slices_v18 s
   cross join lateral unnest(s.question_ids) ids(question_id)
+  join public.mela_question_bank q on q.id=ids.question_id and q.active
   where (p_program_key is null or s.program_key=p_program_key)
     and private.question_reviewer_allowed_v18(v_uid,s.program_key);
 
@@ -126,12 +127,13 @@ begin
   where (p_program_key is null or s.program_key=p_program_key)
     and private.question_reviewer_allowed_v18(v_uid,s.program_key);
 
-  select count(*),
-    count(*) filter(where d.decision='approved'),
-    count(*) filter(where d.decision='changes_required')
+  select count(distinct d.question_id),
+    count(distinct d.question_id) filter(where d.decision='approved'),
+    count(distinct d.question_id) filter(where d.decision='changes_required')
   into v_recorded,v_approved,v_changes
   from private.mela_question_review_decisions_v18 d
   join private.mela_question_review_slices_v18 s on s.id=d.slice_id
+  join public.mela_question_bank q on q.id=d.question_id and q.active
   join public.profiles p on p.id=d.reviewer_id and p.role::text='teacher'
   join public.teacher_profiles t on t.user_id=d.reviewer_id and t.verification_status='approved'
   where (p_program_key is null or s.program_key=p_program_key)
@@ -208,3 +210,19 @@ begin
 end $fn$;
 revoke all on function public.review_question_slice_v18(bigint,jsonb) from public,anon;
 grant execute on function public.review_question_slice_v18(bigint,jsonb) to authenticated,service_role;
+
+-- Grading evidence may only be loaded for slices claimed by the teacher.
+create or replace function public.get_question_review_slice_v18(p_slice_id bigint)
+returns jsonb language plpgsql stable security definer set search_path='' as $fn$
+declare v_uid uuid:=(select auth.uid()); v_slice private.mela_question_review_slices_v18%rowtype;
+begin
+  if v_uid is null then raise exception 'verified teacher sign-in required' using errcode='42501'; end if;
+  select * into v_slice from private.mela_question_review_slices_v18 where id=p_slice_id;
+  if not found then raise exception 'review slice not found'; end if;
+  if not private.question_reviewer_allowed_v18(v_uid,v_slice.program_key)
+    or v_slice.assigned_to is distinct from v_uid
+    then raise exception 'claim your subject-qualified review slice before opening grading evidence' using errcode='42501'; end if;
+  return private.get_question_review_slice_v18(p_slice_id);
+end $fn$;
+revoke all on function public.get_question_review_slice_v18(bigint) from public,anon;
+grant execute on function public.get_question_review_slice_v18(bigint) to authenticated,service_role;
