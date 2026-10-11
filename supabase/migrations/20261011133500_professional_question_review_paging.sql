@@ -226,3 +226,11 @@ begin
 end $fn$;
 revoke all on function public.get_question_review_slice_v18(bigint) from public,anon;
 grant execute on function public.get_question_review_slice_v18(bigint) to authenticated,service_role;
+
+-- Prevent authenticated callers from invoking the legacy privileged
+-- implementations directly. Public SECURITY DEFINER wrappers remain the only
+-- browser-authorized entry points for grading and decision writes.
+revoke all on function private.get_question_review_slice_v18(bigint) from public,anon,authenticated;
+revoke all on function private.review_question_slice_v18(bigint,jsonb) from public,anon,authenticated;
+grant execute on function private.get_question_review_slice_v18(bigint) to service_role;
+grant execute on function private.review_question_slice_v18(bigint,jsonb) to service_role;
