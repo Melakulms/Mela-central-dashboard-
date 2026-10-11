@@ -119,11 +119,17 @@ Deno.serve(async (req) => {
       const fullName = String((body as any).full_name ?? '').trim()
       const password = String((body as any).password ?? '')
       const accessCode = String((body as any).access_code ?? '').trim()
+      // The selected account type is a consistency check, never a grant of authority.
+      // The invitation remains the only source of the new user's role.
+      const requestedRole = String((body as any).requested_role ?? '').trim().toLowerCase()
 
       if (!validUsername(username)) return json(req, { error: 'Username must be 3–32 characters using letters, numbers, dot, dash, or underscore.' }, 400)
       if (fullName.length < 2 || fullName.length > 100) return json(req, { error: 'Please enter your full name.' }, 400)
       if (!validPassword(password)) return json(req, { error: 'Password must be at least 12 characters and include uppercase, lowercase, and a number.' }, 400)
       if (accessCode.length < 16 || accessCode.length > 200) return json(req, { error: 'The beta access code is invalid or expired.' }, 400)
+      if (requestedRole && !['student', 'parent', 'teacher', 'company'].includes(requestedRole)) {
+        return json(req, { error: 'Choose a supported account type.' }, 400)
+      }
       if (!(await enforceRateLimits(admin, req, action, username))) {
         return json(req, { error: 'Too many beta signup attempts. Please wait 10 minutes and try again.' }, 429)
       }
@@ -134,17 +140,22 @@ Deno.serve(async (req) => {
 
       const codeHash = await sha256Hex(accessCode)
       const now = new Date().toISOString()
-      const { data: invite, error: inviteError } = await admin
+      const inviteQuery = admin
         .from('beta_access_invites')
         .update({ used_at: now })
         .eq('code_hash', codeHash)
         .is('used_at', null)
         .is('revoked_at', null)
         .gt('expires_at', now)
+      // Constrain the *atomic consume update*, so a mismatched choice cannot
+      // consume an invitation or create an account with the wrong role.
+      const { data: invite, error: inviteError } = await (requestedRole ? inviteQuery.eq('role', requestedRole) : inviteQuery)
         .select('id,role')
         .maybeSingle()
 
-      if (inviteError || !invite) return json(req, { error: 'The beta access code is invalid, expired, or already used.' }, 400)
+      if (inviteError || !invite) return json(req, { error: requestedRole
+        ? 'The invitation is invalid, expired, already used, or issued for a different account type. Ask your administrator for a code for the role you selected.'
+        : 'The beta access code is invalid, expired, or already used.' }, 400)
 
       const syntheticEmail = `${username}@beta.mela.invalid`
       const { data: created, error: createError } = await admin.auth.admin.createUser({
