@@ -40,7 +40,7 @@ describe('MFA enrollment recovery', () => {
   it('stops if listing or removing old factors fails', async () => {
     const { client, mfa } = setup([{ id: 'old', friendly_name: name, factor_type: 'totp', status: 'unverified' }])
     mfa.unenroll.mockResolvedValue({ error: new Error('offline') })
-    await expect(prepareEnrollment(client, 'admin@example.invalid')).rejects.toThrow('offline')
+    await expect(prepareEnrollment(client, 'admin@example.invalid', true)).rejects.toThrow('offline')
     expect(mfa.enroll).not.toHaveBeenCalled()
   })
   it('allows retry after a rejected setup', async () => {
