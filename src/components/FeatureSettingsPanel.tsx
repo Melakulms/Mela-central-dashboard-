@@ -54,6 +54,7 @@ export default function FeatureSettingsPanel({ client }: { client: SupabaseClien
         enabled,
         maintenance_message: message.trim(),
         expected_updated_at: editing.updated_at,
+        change_reason: reason.trim(),
       })
       setEditing(null)
       setNotice('Feature setting saved through the audited administration API.')
@@ -101,7 +102,7 @@ export default function FeatureSettingsPanel({ client }: { client: SupabaseClien
       <label>Reason for this change (required for confirmation)
         <textarea value={reason} onChange={e => setReason(e.target.value)} maxLength={1000} minLength={10} required disabled={saving} />
       </label>
-      <p className="muted">The server records the setting change. The reason is required for human confirmation but is not currently persisted to the audit record.</p>
+      <p className="muted">The server records the change and the reason in the administrator audit trail.</p>
       <button type="submit" disabled={saving || reason.trim().length < 10 || (deferredFinance.test(editing.feature_key) && enabled)}>
         {saving ? 'Saving…' : 'Confirm change'}
       </button>{' '}
