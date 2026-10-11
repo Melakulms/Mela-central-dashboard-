@@ -85,7 +85,7 @@ export default function BetaInvitesPanel({ client }: { client: SupabaseClient })
       <div className="module-head">
         <div>
           <h2>Beta invites</h2>
-          <p>Create one-time access codes for the zero-budget closed beta. The role is locked into the code and cannot be chosen by the learner.</p>
+          <p>Create one-time access codes for the zero-budget closed beta. New users choose Student, Family, Teacher, or Employer in the registration screen. Their selection must match this one-time invitation. Account type is never granted by changing a browser field; teachers and employers still need verification.</p>
         </div>
         <button className="refresh" type="button" onClick={() => void load()} disabled={busy}>
           <RefreshCw size={15}/>{busy ? 'Loading' : 'Refresh'}
