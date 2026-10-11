@@ -25,6 +25,9 @@ export default function BetaInvitesPanel({ client }: { client: SupabaseClient })
   const [error, setError] = useState('')
   const [accessCode, setAccessCode] = useState('')
   const [copied, setCopied] = useState(false)
+  const [teacherCodes, setTeacherCodes] = useState<string[]>([])
+  const [teacherBatchCount, setTeacherBatchCount] = useState(5)
+  const [batchCopied, setBatchCopied] = useState(false)
 
   const load = async () => {
     setBusy(true)
@@ -57,6 +60,39 @@ export default function BetaInvitesPanel({ client }: { client: SupabaseClient })
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to create beta invite.')
+      setBusy(false)
+    }
+  }
+
+  // Deliberately use the existing authenticated, permission-checked, MFA-gated
+  // invite.create API for each code. No direct database write or privileged
+  // browser credentials are used. A partial batch keeps all issued codes visible.
+  const createTeacherBatch = async () => {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    setTeacherCodes([])
+    setBatchCopied(false)
+    const created: string[] = []
+    try {
+      const count = Math.min(Math.max(teacherBatchCount, 1), 20)
+      for (let index = 0; index < count; index++) {
+        const result = await betaAdminApi(client, 'invite.create', {
+          role: 'teacher',
+          expires_in_days: days,
+          note: note.trim() || 'Teacher review onboarding',
+        })
+        const code = result.data?.access_code
+        if (typeof code !== 'string' || !code.startsWith('MELA-B-')) {
+          throw new Error('The server did not return the one-time code. Contact support before continuing.')
+        }
+        created.push(code)
+        setTeacherCodes([...created])
+      }
+      setNote('')
+      await load()
+    } catch (err) {
+      setError(`${created.length} teacher codes were generated before this error: ${err instanceof Error ? err.message : 'Unable to create teacher invites.'} Save the displayed codes before leaving this screen.`)
       setBusy(false)
     }
   }
@@ -126,6 +162,32 @@ export default function BetaInvitesPanel({ client }: { client: SupabaseClient })
           <UserPlus size={16}/>{busy ? 'Working…' : 'Create access code'}
         </button>
       </div>
+
+      <div className="toolbar" aria-label="Verified teacher invitation batch">
+        <div>
+          <strong>Invite subject teachers for question review</strong>
+          <p className="muted">Only a signed-in authorized administrator with required MFA can generate these codes. Registration does not approve a teacher or grant question review access.</p>
+        </div>
+        <label>Teacher codes
+          <select aria-label="Number of teacher invitation codes" value={teacherBatchCount} onChange={event => setTeacherBatchCount(Number(event.target.value))} disabled={busy}>
+            <option value={5}>5</option><option value={10}>10</option><option value={20}>20</option>
+          </select>
+        </label>
+        <button type="button" onClick={() => void createTeacherBatch()} disabled={busy}><UserPlus size={16}/> Generate teacher codes</button>
+      </div>
+
+      {teacherCodes.length > 0 && <div className="notice" role="status">
+        <Check size={18}/>
+        <div style={{flex:1,minWidth:0}}>
+          <strong>{teacherCodes.length} one-time teacher invites generated — copy them now</strong>
+          <p className="muted">Each code must be shared privately with exactly one teacher. Full codes are shown only now; refreshing the page clears this list. Never post them publicly. After signup, verify each teacher's qualifications before assigning questions.</p>
+          <textarea aria-label="New teacher invitation codes" readOnly rows={Math.min(teacherCodes.length+1,12)} style={{width:'100%',maxWidth:'100%'}} value={teacherCodes.map((code,index)=>`${index+1}. ${code}`).join('\n')}/>
+        </div>
+        <button type="button" className="refresh" onClick={async () => {
+          try { await navigator.clipboard.writeText(teacherCodes.join('\n')); setBatchCopied(true) }
+          catch { setBatchCopied(false); setError('The browser could not copy the codes; select the list and copy it manually.') }
+        }}><Copy size={15}/>{batchCopied ? 'Copied' : 'Copy codes'}</button>
+      </div>}
 
       {accessCode && (
         <div className="notice" role="status">
