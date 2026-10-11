@@ -155,3 +155,56 @@ grant execute on function public.get_my_question_review_progress_v39(text) to au
 
 -- Existing review submission API stays intact for backward compatibility;
 -- its private implementation invokes question_reviewer_allowed_v18 before writes.
+
+-- Claim ownership before editing, eliminating simultaneous teachers overwriting one another.
+create or replace function public.claim_question_review_slice_v39(p_slice_id bigint)
+returns jsonb language plpgsql security definer set search_path='' as $fn$
+declare v_uid uuid:=(select auth.uid()); v_slice private.mela_question_review_slices_v18%rowtype;
+begin
+  if v_uid is null then raise exception 'sign in required' using errcode='42501'; end if;
+  select * into v_slice from private.mela_question_review_slices_v18
+  where id=p_slice_id for update;
+  if not found then raise exception 'review slice not found'; end if;
+  if not private.question_reviewer_allowed_v18(v_uid,v_slice.program_key)
+    then raise exception 'verified teacher subject and grade access required' using errcode='42501'; end if;
+  if v_slice.assigned_to is not null and v_slice.assigned_to<>v_uid
+    then raise exception 'another teacher already owns this review slice' using errcode='42501'; end if;
+  if v_slice.status='approved' then raise exception 'this review slice is already approved'; end if;
+  update private.mela_question_review_slices_v18
+    set assigned_to=v_uid,status=case when status='pending' then 'assigned' else status end,
+        updated_at=now()
+    where id=p_slice_id;
+  return jsonb_build_object('slice_id',p_slice_id,'assigned_to_me',true);
+end $fn$;
+revoke all on function public.claim_question_review_slice_v39(bigint) from public,anon;
+grant execute on function public.claim_question_review_slice_v39(bigint) to authenticated,service_role;
+
+-- Keep the existing public function signature so older clients continue to
+-- work once they claim the slice. The database, not a UI checkbox, enforces
+-- actual teacher identity and a nonempty human verification note.
+create or replace function public.review_question_slice_v18(p_slice_id bigint,p_decisions jsonb)
+returns jsonb language plpgsql security definer set search_path='' as $fn$
+declare v_uid uuid:=(select auth.uid()); v_slice private.mela_question_review_slices_v18%rowtype; v_entry jsonb;
+begin
+  if v_uid is null or jsonb_typeof(p_decisions)<>'array' or jsonb_array_length(p_decisions) < 1
+    then raise exception 'one or more authenticated review decisions are required'; end if;
+  select * into v_slice from private.mela_question_review_slices_v18
+    where id=p_slice_id for update;
+  if not found then raise exception 'review slice not found'; end if;
+  if not private.question_reviewer_allowed_v18(v_uid,v_slice.program_key)
+    then raise exception 'verified teacher subject and grade access required' using errcode='42501'; end if;
+  if v_slice.assigned_to is distinct from v_uid
+    then raise exception 'claim your review slice before recording decisions' using errcode='42501'; end if;
+  if v_slice.status='approved' then raise exception 'already approved; request an authorized re-review'; end if;
+  for v_entry in select value from jsonb_array_elements(p_decisions) loop
+    if char_length(btrim(coalesce(v_entry->>'note',''))) < 5
+      then raise exception 'each review decision requires a teacher note of at least five characters'; end if;
+    if v_entry->>'decision'='approved' and not (
+       v_entry->>'note' like 'Teacher test response:%' and
+       v_entry->>'note' like E'%\nVerification:%'
+    ) then raise exception 'approval requires recorded human test response and verification evidence'; end if;
+  end loop;
+  return private.review_question_slice_v18(p_slice_id,p_decisions);
+end $fn$;
+revoke all on function public.review_question_slice_v18(bigint,jsonb) from public,anon;
+grant execute on function public.review_question_slice_v18(bigint,jsonb) to authenticated,service_role;
