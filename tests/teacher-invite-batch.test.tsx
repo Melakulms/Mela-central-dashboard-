@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { SupabaseClient } from '@supabase/supabase-js'
