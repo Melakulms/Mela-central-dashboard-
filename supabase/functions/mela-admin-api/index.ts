@@ -194,7 +194,24 @@ Deno.serve(async (req) => {
   if (action === 'settings.flag.update') {
     if (!allowed('system.manage')) return json({error:'Permission denied'},403)
     const featureKey=String(body.feature_key??''); if(!featureKey)return json({error:'Feature key is required'},400); const {data:existing,error:r}=await adminDb.from('platform_feature_flags').select('*').eq('feature_key',featureKey).maybeSingle(); if(r)return json({error:'Unable to read feature flag'},500); if(!existing)return json({error:'Feature flag not found'},404)
-    const patch:any={}; if(body.enabled!==undefined){if(typeof body.enabled!=='boolean')return json({error:'Enabled must be true or false'},400);patch.enabled=body.enabled;} if(body.maintenance_message!==undefined)patch.maintenance_message=String(body.maintenance_message); if(body.config!==undefined)patch.config=body.config; patch.updated_by=user.id; patch.updated_at=new Date().toISOString(); return auditedUpdate(featureKey,existing,patch,{changed_fields:Object.keys(patch)})
+    const changeReason=typeof body.change_reason==='string' ? body.change_reason.trim() : ''
+    if(changeReason.length<10||changeReason.length>1000) return json({error:'A change reason of 10–1000 characters is required'},400)
+    if(body.enabled === true && /(payment|payout|escrow|finance|cash|withdraw)/i.test(featureKey)) {
+      return json({error:'Financial features are deferred and cannot be enabled here'},403)
+    }
+    const patch:any={}
+    if(body.enabled!==undefined){
+      if(typeof body.enabled!=='boolean')return json({error:'Enabled must be true or false'},400)
+      patch.enabled=body.enabled
+    }
+    if(body.maintenance_message!==undefined){
+      if(typeof body.maintenance_message!=='string'||body.maintenance_message.length>500) return json({error:'Invalid maintenance message'},400)
+      patch.maintenance_message=body.maintenance_message.trim()
+    }
+    if(body.config!==undefined) return json({error:'Configuration changes require a separate reviewed operation'},403)
+    if(!Object.keys(patch).length) return json({error:'No changes supplied'},400)
+    patch.updated_by=user.id;patch.updated_at=new Date().toISOString()
+    return auditedUpdate(featureKey,existing,patch,{changed_fields:Object.keys(patch),reason:changeReason})
   }
 
   if (action === 'commission.list') {
