@@ -234,3 +234,60 @@ revoke all on function private.get_question_review_slice_v18(bigint) from public
 revoke all on function private.review_question_slice_v18(bigint,jsonb) from public,anon,authenticated;
 grant execute on function private.get_question_review_slice_v18(bigint) to service_role;
 grant execute on function private.review_question_slice_v18(bigint,jsonb) to service_role;
+
+-- Read-only admin oversight requires the existing MFA-aware private admin gate.
+-- This endpoint cannot approve or mutate a question.
+create index if not exists mela_question_review_decisions_by_question_idx
+  on private.mela_question_review_decisions_v18(question_id,reviewed_at desc);
+
+create or replace function public.get_admin_question_review_progress_v39()
+returns jsonb language plpgsql stable security definer set search_path='' as $fn$
+declare v_summary jsonb;
+begin
+  if (select auth.uid()) is null or not private.is_admin_user()
+    then raise exception 'MFA-protected admin authorization required' using errcode='42501'; end if;
+
+  with latest_qualified_reviews as (
+    select distinct on (d.question_id) d.question_id,d.decision,d.reviewed_at
+    from private.mela_question_review_decisions_v18 d
+    join public.teacher_profiles t on t.user_id=d.reviewer_id and t.verification_status='approved'
+    join public.profiles p on p.id=d.reviewer_id and p.role::text='teacher'
+    order by d.question_id,d.reviewed_at desc
+  ),
+  active_questions as (
+    select q.id,q.program_key,p.grade_level,p.subject_title,l.decision
+    from public.mela_question_bank q
+    join public.mela_learning_programs p on p.program_key=q.program_key
+    left join latest_qualified_reviews l on l.question_id=q.id
+    where q.active
+  ),
+  by_program as (
+    select program_key,grade_level,subject_title,count(*) total,
+       count(*) filter(where decision='approved') approved,
+       count(*) filter(where decision='changes_required') needs_changes
+    from active_questions
+    group by program_key,grade_level,subject_title
+  )
+  select jsonb_build_object(
+    'active_questions',coalesce(sum(total),0),
+    'teacher_approved',coalesce(sum(approved),0),
+    'teacher_changes_required',coalesce(sum(needs_changes),0),
+    'pending_or_unverified',coalesce(sum(total-approved-needs_changes),0),
+    'review_slices',(select count(*) from private.mela_question_review_slices_v18),
+    'assigned_slices',(select count(*) from private.mela_question_review_slices_v18 where assigned_to is not null),
+    'qualified_teacher_reviewers',(select count(*) from private.educator_review_authorizations a
+        join public.teacher_profiles t on t.user_id=a.user_id and t.verification_status='approved'
+        where a.active),
+    'programs',coalesce(jsonb_agg(jsonb_build_object(
+      'program_key',program_key,'grade_level',grade_level,'subject_title',subject_title,
+      'total',total,'teacher_approved',approved,'needs_changes',needs_changes,
+      'remaining',total-approved-needs_changes
+    ) order by total-approved-needs_changes desc),'[]'::jsonb),
+    'generated_at',now(),
+    'warning','Qualified teacher review decisions recorded in the database; historical subject/grade validation and independent curricular QA are not automatic.'
+  )
+  into v_summary from by_program;
+  return v_summary;
+end $fn$;
+revoke all on function public.get_admin_question_review_progress_v39() from public,anon;
+grant execute on function public.get_admin_question_review_progress_v39() to authenticated,service_role;
