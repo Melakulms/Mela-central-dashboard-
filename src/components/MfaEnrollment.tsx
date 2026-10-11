@@ -16,6 +16,8 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
   const generation = useRef(0)
   const verificationPending = useRef(false)
   const [retry, setRetry] = useState(0)
+  const resetPending = useRef(false)
+  const [restartRequired, setRestartRequired] = useState(false)
   const [factorId, setFactorId] = useState('')
   const [qr, setQr] = useState('')
   const [secret, setSecret] = useState('')
@@ -35,12 +37,19 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       setQr('')
       setSecret('')
       setCode('')
+      setRestartRequired(false)
 
       try {
-        const enrollment = await prepareEnrollment(client, email)
+        const explicitRestart = resetPending.current
+        resetPending.current = false
+        const enrollment = await prepareEnrollment(client, email, explicitRestart)
         if (!active) return
         if (enrollment.kind === 'verified') {
           onEnrolledRef.current()
+          return
+        }
+        if (enrollment.kind === 'restart_required') {
+          setRestartRequired(true)
           return
         }
         setFactorId(enrollment.id)
@@ -61,6 +70,12 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
     }
   }, [client, email, retry])
 
+  const beginNewSetup = () => {
+    if (verifying || loading) return
+    resetPending.current = true
+    setRetry(value => value + 1)
+  }
+
   const verify = async () => {
     if (!factorId || !/^\d{6}$/.test(code) || verificationPending.current) return
     verificationPending.current = true
@@ -74,7 +89,10 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
       onEnrolledRef.current()
     } catch (cause) {
       if (generation.current === currentGeneration) {
-        setError(cause instanceof Error ? cause.message : 'MFA verification failed. Check the code and retry.')
+        const detail = cause instanceof Error ? cause.message : 'MFA verification failed.'
+        setError(/invalid|code|expired|factor|challenge/i.test(detail)
+          ? 'The code was not accepted. Use the current MELA Central Admin entry in Google Authenticator, confirm Automatic date & time is enabled on your phone, and enter a fresh six-digit code before it changes. If you scanned an earlier QR code, start a new setup below.'
+          : detail)
       }
     } finally {
       verificationPending.current = false
@@ -89,14 +107,18 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
   return <div className="center">
     <div className="card login">
       <h1>Set up administrator MFA</h1>
-      {factorId && <><p className="muted">Scan this QR code with Google Authenticator, Microsoft Authenticator, 1Password, or another TOTP authenticator.</p>
+      {restartRequired && <div className="notice" role="status"><strong>Unfinished authenticator setup found</strong><p>You previously started MFA enrollment, but it was not verified. For security, the original setup key cannot be displayed again. The existing Google Authenticator code might refer to that earlier setup.</p><p>To recover, start a new setup, add its current key to Google Authenticator, and verify the fresh six-digit code. Older authenticator entries will no longer work.</p><button type="button" className="secondary" onClick={beginNewSetup}>Start a new MFA setup</button></div>}
+      {factorId && <><p className="muted">Add a new <strong>MELA Central Admin</strong> entry in Google Authenticator using this QR code. Do not use codes from older MELA entries.</p>
       {qr && <img src={qr} alt="MFA enrollment QR code" style={{ width: 220, maxWidth: '100%', height: 'auto', margin: '12px auto', display: 'block' }} />}
-      <p className="muted">If you cannot scan it, enter this setup secret manually:</p>
+      <p className="muted">Using one Android phone? In Google Authenticator tap + → Enter a setup key, enter account name MELA Central Admin, paste the key below, and choose Time based. Do not share the key or the six-digit code.</p>
       <code style={{ display: 'block', wordBreak: 'break-all', padding: 12 }}>{secret}</code>
+      <button className="secondary" type="button" disabled={verifying} onClick={() => { void navigator.clipboard?.writeText(secret).catch(() => setError('Could not copy the setup key. Select it manually.')) }}>Copy setup key</button>
+      <p className="muted">Confirm Android Settings → System → Date & time → Set time automatically. Enter the current code before the timer changes.</p>
       <label>Authenticator code<input className="mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} disabled={verifying} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></label></>}
       {error && <div className="error" role="alert">{error}</div>}
       <button disabled={verifying || !factorId || code.length !== 6} onClick={() => void verify()}>{verifying ? 'Verifying…' : 'Enable MFA and continue'}</button>
-      {!factorId && <button className="secondary" onClick={() => setRetry(value => value + 1)}>Retry MFA setup</button>}
+      {factorId && <button className="secondary" type="button" disabled={verifying} onClick={beginNewSetup}>Discard this setup and start again</button>}
+      {!factorId && !restartRequired && <button className="secondary" type="button" onClick={() => setRetry(value => value + 1)}>Retry MFA setup</button>}
       <button className="secondary" disabled={verifying} onClick={onCancel}>Sign out</button>
     </div>
   </div>
