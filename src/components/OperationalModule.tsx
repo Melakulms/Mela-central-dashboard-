@@ -3,6 +3,9 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { adminApi } from '../lib/admin-api'
 import { decisionFor } from '../lib/operational-decisions'
 import BetaInvitesPanel from './BetaInvitesPanel'
+import FeatureSettingsPanel from './FeatureSettingsPanel'
+import AdminSettingsDirectory from './AdminSettingsDirectory'
+import type { ProtectedSection } from '../lib/auth-route-guard'
 import TeacherVerificationPanel from './TeacherVerificationPanel'
 import ContentStudioPanel from './ContentStudioPanel'
 
@@ -10,7 +13,7 @@ type Row = Record<string, unknown>
 type Group = { title: string; rows: Row[] }
 const text = (value: unknown) => value == null ? '—' : typeof value === 'object' ? JSON.stringify(value) : String(value)
 
-export default function OperationalModule({ client, section, permissions }: { client: SupabaseClient; section: string; permissions: string[] }) {
+export default function OperationalModule({ client, section, permissions, onNavigate }: { client: SupabaseClient; section: string; permissions: string[]; onNavigate?: (section: ProtectedSection) => void }) {
   const saveLock = useRef(false)
   const [groups, setGroups] = useState<Group[]>([])
   const [busy, setBusy] = useState(false)
@@ -53,8 +56,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
             { title: 'Flagged opportunities', rows: result.flagged_opportunities },
           ]
         } else if (section === 'settings') {
-          const result = await adminApi(client, 'settings.flags')
-          next = [{ title: 'Platform feature flags', rows: result.data }]
+          next = []
         } else {
           throw new Error('This section is not available in the operations module.')
         }
@@ -95,6 +97,8 @@ export default function OperationalModule({ client, section, permissions }: { cl
     {section === 'moderation' && <p>Proctored assessment decisions are MFA-protected and audited. Clear only when the integrity evidence supports verification; void prevents credential issuance.</p>}
     {section === 'moderation' && <TeacherVerificationPanel client={client}/>} 
     {section === 'moderation' && canManageContent && <ContentStudioPanel client={client}/>} 
+    {section === 'settings' && onNavigate && <AdminSettingsDirectory permissions={permissions} onOpen={onNavigate}/>}
+    {section === 'settings' && <FeatureSettingsPanel client={client}/>}
     {section === 'settings' && <BetaInvitesPanel client={client}/>} 
     <p>Live operational records. Results are limited to the latest records returned by the server.</p>
     <button onClick={() => setRevision(value => value + 1)} disabled={busy || saving}>Refresh records</button>
@@ -114,7 +118,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
       <button type="submit" disabled={saving || !decision || !notes.trim()}>{saving ? 'Saving…' : 'Save decision'}</button>
       <button type="button" disabled={saving} onClick={() => setEditing(null)}>Cancel</button>
     </form>}
-    {groups.map(group => <section key={group.title}><h2>{group.title}</h2>
+    {section !== 'settings' && groups.map(group => <section key={group.title}><h2>{group.title}</h2>
       <div className="table-wrap"><table><thead><tr><th>Record</th><th>Status</th><th>Details</th><th>Actions</th></tr></thead>
         <tbody>{group.rows.map((row, index) => <tr key={text(row.id ?? row.feature_key ?? index)}>
           <td><strong>{text(row.assessment_title ?? row.title ?? row.company_name ?? row.feature_key ?? row.tx_ref ?? row.payout_ref ?? row.id)}</strong></td>
