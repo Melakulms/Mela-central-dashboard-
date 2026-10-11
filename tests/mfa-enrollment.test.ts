@@ -8,9 +8,17 @@ function setup(all: object[] = []) {
   return { mfa, client: { auth: { mfa } } as any }
 }
 describe('MFA enrollment recovery', () => {
-  it('removes an abandoned matching TOTP from all even when totp is empty', async () => {
+  it('does not silently invalidate a pending Google Authenticator entry on refresh', async () => {
     const { client, mfa } = setup([{ id: 'old', friendly_name: name, factor_type: 'totp', status: 'unverified' }])
-    expect(await prepareEnrollment(client, 'admin@example.invalid')).toEqual({ kind: 'enroll', id: 'new', qr: 'test-qr', secret: 'test-secret' })
+    expect(await prepareEnrollment(client, 'admin@example.invalid')).toEqual({ kind: 'restart_required' })
+    expect(mfa.unenroll).not.toHaveBeenCalled()
+    expect(mfa.enroll).not.toHaveBeenCalled()
+  })
+  it('rotates only that admin’s unfinished factor after an explicit restart', async () => {
+    const { client, mfa } = setup([{ id: 'old', friendly_name: name, factor_type: 'totp', status: 'unverified' }])
+    expect(await prepareEnrollment(client, 'admin@example.invalid', true)).toEqual({
+      kind: 'enroll', id: 'new', qr: 'test-qr', secret: 'test-secret',
+    })
     expect(mfa.unenroll).toHaveBeenCalledWith({ factorId: 'old' })
     expect(mfa.enroll).toHaveBeenCalledOnce()
     expect(mfa.unenroll.mock.invocationCallOrder[0]).toBeLessThan(mfa.enroll.mock.invocationCallOrder[0])
