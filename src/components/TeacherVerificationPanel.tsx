@@ -1,3 +1,4 @@
+import AICourseAssignments from './AICourseAssignments'
 import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -101,6 +102,7 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
         <dt>Reviewer access</dt><dd>{selected.review_authorized ? `Active · ${list(selected.review_subject_areas)}` : 'Not active'}</dd>
         <dt>Previous verification note</dt><dd>{selected.verification_notes || '—'}</dd>
       </dl>
+      {selected.verification_status === 'approved' && <AICourseAssignments client={client} userId={selected.user_id} />}
       <label>Decision<select value={decision} onChange={event => setDecision(event.target.value as Decision | '')} required disabled={busy}><option value="">Choose a decision</option><option value="approved">Approve teacher + review access</option><option value="rejected">Reject</option><option value="suspended">Suspend</option></select></label>
       <label>Verification note<textarea value={note} onChange={event => setNote(event.target.value)} minLength={5} maxLength={4000} required disabled={busy} placeholder="Record the qualification evidence you checked and the reason for this decision." /></label>
       <div className="toolbar"><button type="button" className="refresh" onClick={() => setSelected(null)} disabled={busy}>Cancel</button><button type="submit" disabled={busy || !decision || note.trim().length < 5}>{busy ? 'Saving…' : 'Save audited decision'}</button></div>
