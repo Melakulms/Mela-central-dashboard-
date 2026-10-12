@@ -10,7 +10,7 @@ function setup(all: object[] = []) {
 describe('MFA enrollment recovery', () => {
   it('does not silently invalidate a pending Google Authenticator entry on refresh', async () => {
     const { client, mfa } = setup([{ id: 'old', friendly_name: name, factor_type: 'totp', status: 'unverified' }])
-    expect(await prepareEnrollment(client, 'admin@example.invalid')).toEqual({ kind: 'restart_required' })
+    expect(await prepareEnrollment(client, 'admin@example.invalid')).toEqual({ kind: 'resume', id: 'old' })
     expect(mfa.unenroll).not.toHaveBeenCalled()
     expect(mfa.enroll).not.toHaveBeenCalled()
   })

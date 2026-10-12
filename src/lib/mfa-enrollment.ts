@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type Enrollment =
   | { kind: 'verified' }
-  | { kind: 'restart_required' }
+  | { kind: 'resume'; id: string }
   | { kind: 'enroll'; id: string; qr: string; secret: string }
 
 // Share only truly concurrent requests. Never store a TOTP seed across page reloads.
@@ -29,7 +29,7 @@ export function prepareEnrollment(client: SupabaseClient, email?: string, restar
     // Never invalidate one behind the user's back or generate multiple QR seeds.
     const unfinished = factors.all.filter(f =>
       f.factor_type === 'totp' && f.status === 'unverified' && f.friendly_name === name)
-    if (unfinished.length && !restartUnverified) return { kind: 'restart_required' }
+    if (unfinished.length && !restartUnverified) return { kind: 'resume', id: unfinished[unfinished.length - 1].id }
 
     if (restartUnverified) {
       for (const factor of unfinished) {

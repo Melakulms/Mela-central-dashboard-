@@ -48,7 +48,8 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
           onEnrolledRef.current()
           return
         }
-        if (enrollment.kind === 'restart_required') {
+        if (enrollment.kind === 'resume') {
+          setFactorId(enrollment.id)
           setRestartRequired(true)
           return
         }
@@ -90,9 +91,11 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
     } catch (cause) {
       if (generation.current === currentGeneration) {
         const detail = cause instanceof Error ? cause.message : 'MFA verification failed.'
-        setError(/invalid|code|expired|factor|challenge/i.test(detail)
-          ? 'The code was not accepted. Use the current MELA Central Admin entry in Google Authenticator, confirm Automatic date & time is enabled on your phone, and enter a fresh six-digit code before it changes. If you scanned an earlier QR code, start a new setup below.'
+        const errorCode = (cause as { code?: string })?.code
+        setError(errorCode === 'mfa_verification_failed' || /invalid.*(totp|code)/i.test(detail)
+          ? 'This code does not match the selected setup. Keep this screen open and use the Google Authenticator entry created with this setup key. If you never added that key, choose Discard this setup and start again, then add the new key before entering its code. Automatic phone time alone does not correct a different setup key.'
           : detail)
+
       }
     } finally {
       verificationPending.current = false
@@ -107,14 +110,14 @@ export function MfaEnrollment({ client, email, onEnrolled, onCancel }: Props) {
   return <div className="center">
     <div className="card login">
       <h1>Set up administrator MFA</h1>
-      {restartRequired && <div className="notice" role="status"><strong>Unfinished authenticator setup found</strong><p>You previously started MFA enrollment, but it was not verified. For security, the original setup key cannot be displayed again. The existing Google Authenticator code might refer to that earlier setup.</p><p>To recover, start a new setup, add its current key to Google Authenticator, and verify the fresh six-digit code. Older authenticator entries will no longer work.</p><button type="button" className="secondary" onClick={beginNewSetup}>Start a new MFA setup</button></div>}
-      {factorId && <><p className="muted">Add a new <strong>MELA Central Admin</strong> entry in Google Authenticator using this QR code. Do not use codes from older MELA entries.</p>
+      {restartRequired && <div className="notice" role="status"><strong>Continue your unfinished setup</strong><p>Your existing authenticator setup has been kept. If you already added its key to Google Authenticator, enter that entry's current code below. You do not need to create another setup just because you returned to this screen.</p><p>If you never saved its key, use Discard this setup and start again below, then add the new key to Google Authenticator.</p></div>}
+      {factorId && <><p className="muted">Setup reference: {factorId.slice(0, 8)}</p>{secret && <><p className="muted">Add a new <strong>MELA Central Admin</strong> entry in Google Authenticator using this QR code. Do not use codes from older MELA entries.</p>
       {qr && <img src={qr} alt="MFA enrollment QR code" style={{ width: 220, maxWidth: '100%', height: 'auto', margin: '12px auto', display: 'block' }} />}
       <p className="muted">Using one Android phone? In Google Authenticator tap + → Enter a setup key, enter account name MELA Central Admin, paste the key below, and choose Time based. Do not share the key or the six-digit code.</p>
       <code style={{ display: 'block', wordBreak: 'break-all', padding: 12 }}>{secret}</code>
       <button className="secondary" type="button" disabled={verifying} onClick={() => { void navigator.clipboard?.writeText(secret).catch(() => setError('Could not copy the setup key. Select it manually.')) }}>Copy setup key</button>
-      <p className="muted">Confirm Android Settings → System → Date & time → Set time automatically. Enter the current code before the timer changes.</p>
-      <label>Authenticator code<input className="mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} disabled={verifying} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></label></>}
+      <p className="muted">After adding this key, return here and enter its current six-digit code. Keep this page open while switching apps.</p>
+      </>}<label>Authenticator code<input className="mfa" inputMode="numeric" autoComplete="one-time-code" maxLength={6} disabled={verifying} value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))} /></label></>}
       {error && <div className="error" role="alert">{error}</div>}
       <button disabled={verifying || !factorId || code.length !== 6} onClick={() => void verify()}>{verifying ? 'Verifying…' : 'Enable MFA and continue'}</button>
       {factorId && <button className="secondary" type="button" disabled={verifying} onClick={beginNewSetup}>Discard this setup and start again</button>}

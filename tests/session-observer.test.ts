@@ -63,3 +63,15 @@ describe('session restoration ordering', () => {
     expect(s.receive).toHaveBeenLastCalledWith(newSession, 'TOKEN_REFRESHED')
   })
 })
+
+it('keeps MFA setup mounted when returning from Google Authenticator emits the same sign-in', async () => {
+  const s = setup()
+  const session = { user: { id: 'admin' }, access_token: 'same-test-token' } as Session
+  s.resolve({data: {session}, error: null}); await flush()
+  s.emit('SIGNED_IN', {...session})
+  expect(s.receive).toHaveBeenCalledTimes(1)
+  s.emit('MFA_CHALLENGE_VERIFIED', {...session, access_token: 'new-test-token'})
+  expect(s.receive).toHaveBeenCalledTimes(2)
+  s.emit('SIGNED_OUT', null)
+  expect(s.receive).toHaveBeenLastCalledWith(null, 'SIGNED_OUT')
+})
