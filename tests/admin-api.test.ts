@@ -189,3 +189,13 @@ it('browses complete audit history with bounded pagination',async()=>{
  const api=server(['audit.read'],{fixtures:{audit_log:{data:[],count:600}}});const response=await api.request({action:'audit.list',offset:50,limit:25,search:'user.update'});
  expect(response.status).toBe(200);expect((await response.json()).total).toBe(600);expect(api.ranges).toContainEqual([50,74]);
 });
+
+it('distinguishes a registry service error from an actual missing admin assignment', async () => {
+  const api=server([], {fixtures:{admin_users:{data:null,error:{code:'PGRST106',message:'Invalid schema: admin'}}}})
+  const response=await api.request({action:'me'})
+  expect(response.status).toBe(503)
+  expect((await response.json()).code).toBe('ADMIN_REGISTRY_UNAVAILABLE')
+  const denied=await server([], {admin:false}).request({action:'me'})
+  expect(denied.status).toBe(403)
+  expect((await denied.json()).code).toBe('ADMIN_MEMBERSHIP_REQUIRED')
+})
