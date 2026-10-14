@@ -10,6 +10,8 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://duizgtmbptmlbyipreqg.supabase.co wss://duizgtmbptmlbyipreqg.supabase.co; worker-src 'self' blob:; manifest-src 'self'"
     />
+    <!-- GitHub Pages and the student app share an origin. Never sign in as admin there. -->
+    <script src="./admin-origin-redirect.js"></script>
     <title>MELA Central Admin</title>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./icons/admin-192.png" />

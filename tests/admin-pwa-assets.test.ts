@@ -15,3 +15,14 @@ it('never caches private admin API or authenticated dashboard data for offline a
  expect(sw).toContain("'Cache-Control': 'no-store'")
  expect(sw).not.toMatch(/cache\.put\(|caches\.open\(|respondWith\(caches/)
 })
+
+it('redirects legacy same-origin admin entry to the isolated administration origin before app startup', () => {
+ const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8')
+ const script = readFileSync(new URL('../public/admin-origin-redirect.js', import.meta.url), 'utf8')
+ expect(html.indexOf('./admin-origin-redirect.js')).toBeGreaterThan(0)
+ expect(html.indexOf('./admin-origin-redirect.js')).toBeLessThan(html.indexOf('/src/main.tsx'))
+ expect(script).toContain("window.location.origin === 'https://melakulms.github.io'")
+ expect(script).toContain("window.location.replace('https://central-dashboard-gamma.vercel.app/Mela-central-dashboard-/')")
+ expect(script).not.toContain('window.location.search')
+ expect(script).not.toContain('window.location.hash')
+})
