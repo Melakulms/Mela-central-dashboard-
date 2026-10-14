@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAdminMe, type AdminMe } from './admin-api'
 
-export type AdminAccess = { kind: 'enroll' } | { kind: 'challenge'; factorId: string } | { kind: 'ready'; admin: AdminMe }
+export type AdminAccess = { kind: 'enroll' } | { kind: 'challenge'; factorId: string; factors: { id: string; label: string }[] } | { kind: 'ready'; admin: AdminMe }
 
 // Network errors must never be interpreted as a missing MFA enrollment.
 export async function resolveAdminAccess(client: SupabaseClient): Promise<AdminAccess> {
@@ -12,8 +12,13 @@ export async function resolveAdminAccess(client: SupabaseClient): Promise<AdminA
     const { data: factors, error: factorsError } = await client.auth.mfa.listFactors()
     if (factorsError) throw factorsError
     if (!factors) throw new Error('Could not load your authenticator. Please retry.')
-    const factor = factors.totp.find(item => item.status === 'verified')
-    return factor ? { kind: 'challenge', factorId: factor.id } : { kind: 'enroll' }
+    const verified = factors.totp.filter(item => item.status === 'verified')
+    return verified.length
+      ? { kind: 'challenge', factorId: verified[0].id,
+          factors: verified.map((item, index) => ({
+            id: item.id, label: item.friendly_name || `Authenticator ${index + 1}`,
+          })) }
+      : { kind: 'enroll' }
   }
   const admin = await getAdminMe(client)
   if (admin.mfa?.currentLevel !== 'aal2') throw new Error('MFA verification is required. Please sign in again.')
