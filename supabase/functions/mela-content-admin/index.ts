@@ -58,6 +58,15 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await caller.auth.getUser()
     if (userError || !user) return json({ error: 'Invalid session' }, 401)
 
+    // Privileged writes must be denied for suspended, deleted or missing accounts,
+    // even if an older valid JWT is still being presented.
+    const { data: actorProfile, error: actorError } = await adminDb.from('profiles')
+      .select('account_status,deleted_at').eq('id', user.id).maybeSingle()
+    if (actorError) return json({ error: 'Account access lookup is unavailable', code: 'ACCOUNT_LOOKUP_UNAVAILABLE' }, 503)
+    if (!actorProfile || actorProfile.account_status !== 'active' || actorProfile.deleted_at) {
+      return json({ error: 'Active account required', code: 'ACCOUNT_DISABLED' }, 403)
+    }
+
     const { data: adminUser, error: adminError } = await adminDb.schema('admin').from('admin_users')
       .select('user_id, role_id, active, mfa_required')
       .eq('user_id', user.id).eq('active', true).maybeSingle()
@@ -69,7 +78,9 @@ Deno.serve(async (req) => {
 
     const { data: assurance, error: assuranceError } = await caller.auth.mfa.getAuthenticatorAssuranceLevel(authHeader.slice(7))
     if (assuranceError) return json({ error: 'Unable to verify session assurance' }, 401)
-    if (adminUser.mfa_required && assurance?.currentLevel !== 'aal2') {
+    // All administrative content reads and mutations require AAL2; a legacy
+    // mfa_required=false registry value must never lower this boundary.
+    if (assurance?.currentLevel !== 'aal2') {
       return json({ error: 'MFA required', code: 'MFA_REQUIRED' }, 403)
     }
 
