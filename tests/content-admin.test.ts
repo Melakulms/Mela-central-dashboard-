@@ -13,6 +13,10 @@ describe('Phase 8 content admin safety contract', () => {
     expect(source).toContain("authHeader?.startsWith('Bearer ')")
     expect(source).toContain("assurance?.currentLevel !== 'aal2'")
     expect(source).toContain("permissions.includes('content.manage')")
+    expect(source).not.toContain("adminUser.mfa_required && assurance?.currentLevel !== 'aal2'")
+    expect(source).toContain("actorProfile.account_status !== 'active'")
+    expect(source).toContain("actorProfile.deleted_at")
+    expect(source).toContain("code: 'ACCOUNT_LOOKUP_UNAVAILABLE'")
     expect(source).toContain(".eq('active', true).maybeSingle()")
   })
 
