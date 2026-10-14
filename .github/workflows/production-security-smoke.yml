@@ -1,0 +1,51 @@
+name: MELA live unauthenticated smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify separated frontends, headers, auth service, and releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          learner='https://melakulms.github.io/mela-app/'
+          admin='https://central-dashboard-gamma.vercel.app/Mela-central-dashboard-/'
+          backend='https://duizgtmbptmlbyipreqg.supabase.co'
+          
+          # Both production CDNs are eventually consistent. Never report a pass
+          # until all public routes and HTTP-level security headers are present.
+          for n in {1..15}; do
+            if curl -fsSL --max-time 12 "$learner" -o /tmp/mela-learner.html &&
+               curl -fsSL --max-time 12 -D /tmp/mela-admin.headers "$admin" -o /tmp/mela-admin.html &&
+               grep -Fq 'MELA Central Admin' /tmp/mela-admin.html &&
+               grep -Eiq "^content-security-policy:.*frame-ancestors 'none'" /tmp/mela-admin.headers &&
+               grep -Eiq '^x-frame-options: *DENY' /tmp/mela-admin.headers; then
+              break
+            fi
+            if [ "$n" = 15 ]; then echo '::error::Admin URL or security headers are not available'; exit 1; fi
+            sleep 12
+          done
+          grep -Fq 'MELA' /tmp/mela-learner.html
+          grep -Fq 'MELA Central Admin' /tmp/mela-admin.html
+          asset="$(grep -oE '/Mela-central-dashboard-/assets/[^" ]+\.js' /tmp/mela-admin.html | head -1)"
+          if [ -z "$asset" ]; then echo '::error::Admin HTML contains no scoped JS bundle'; exit 1; fi
+          curl -fsSL --max-time 20 -D /tmp/mela-js.headers -o /tmp/mela-bundle.js "https://central-dashboard-gamma.vercel.app${asset}"
+          grep -Eiq '^content-type:.*(javascript|ecmascript)' /tmp/mela-js.headers || { echo '::error::Admin bundle is not JavaScript'; exit 1; }
+          curl -fsSL --max-time 20 "${admin}manifest.webmanifest" -o /tmp/mela-admin-manifest.json
+          grep -Fq 'MELA Central Admin' /tmp/mela-admin-manifest.json
+          curl -fsSL --max-time 20 "${admin}sw.js" -o /tmp/mela-admin-sw.js
+          grep -Fq 'Admin-only scope' /tmp/mela-admin-sw.js
+          curl -fsSL --max-time 15 "${learner}mela-release.json" -o /tmp/mela-release.json
+          grep -Eq '"commit"[[:space:]]*:[[:space:]]*"[a-f0-9]{40}"' /tmp/mela-release.json
+          code="$(curl -sS -o /tmp/mela-admin-unauth.json -w '%{http_code}' --max-time 15 -X POST "${backend}/functions/v1/mela-admin-api" -H 'Content-Type: application/json' -d '{"action":"me"}')"
+          if [ "$code" != 401 ] && [ "$code" != 403 ]; then echo "::error::Unauthenticated admin API returned HTTP $code"; exit 1; fi
+          echo 'Public page HTML, admin CSP, JS, PWA manifest, service worker, learner release, and unauthenticated API boundary passed.'
