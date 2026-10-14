@@ -1,4 +1,5 @@
 import AICourseAssignments from './AICourseAssignments'
+import TeacherDocumentReview from './TeacherDocumentReview'
 import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -84,6 +85,7 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
 
   return <section className="panel" aria-label="Teacher reviewer verification">
     <div className="module-head"><div><h2>Teacher reviewer verification</h2><p>Approve qualified educators for subject-limited chapter and question review. This action requires the current MFA-protected admin session and is audited.</p></div><button className="refresh" onClick={() => setRevision(value => value + 1)} disabled={busy}>Refresh</button></div>
+    <p className="muted">Document verification must be completed before approving a teacher. Uploaded evidence is private and requires MFA to inspect.</p>
     <p className="muted">Approval requires a qualification, institution, at least one teaching subject, and at least one grade level. Approved qualification fields are then locked against self-service edits.</p>
     <p className="muted">An email-confirmed teacher can appear in <strong>Users</strong> before completing the teaching profile. Only submitted teacher profiles appear here. If a teacher is missing from this queue, open <strong>Users → filter Teacher</strong>, check their profile percentage, and ask them to sign in to the MELA Users app and finish the qualifications form. Account creation and email verification are not educator approval.</p>
     <div className="toolbar"><label>Status <select value={status} onChange={event => setStatus(event.target.value)} disabled={busy}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="suspended">Suspended</option><option value="">All</option></select></label></div>
@@ -103,6 +105,8 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
         <dt>Reviewer access</dt><dd>{selected.review_authorized ? `Active · ${list(selected.review_subject_areas)}` : 'Not active'}</dd>
         <dt>Previous verification note</dt><dd>{selected.verification_notes || '—'}</dd>
       </dl>
+      <TeacherDocumentReview client={client} teacherId={selected.user_id} />
+      <p className="muted"><strong>Security:</strong> Teacher approval is blocked by the database until an administrator has independently approved at least one uploaded qualification document. Review permissions are limited to the verified subjects and grades.</p>
       {selected.verification_status === 'approved' && <AICourseAssignments client={client} userId={selected.user_id} />}
       <label>Decision<select value={decision} onChange={event => setDecision(event.target.value as Decision | '')} required disabled={busy}><option value="">Choose a decision</option><option value="approved">Approve teacher + review access</option><option value="rejected">Reject</option><option value="suspended">Suspend</option></select></label>
       <label>Verification note<textarea value={note} onChange={event => setNote(event.target.value)} minLength={5} maxLength={4000} required disabled={busy} placeholder="Record the qualification evidence you checked and the reason for this decision." /></label>
