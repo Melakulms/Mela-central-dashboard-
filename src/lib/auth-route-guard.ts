@@ -9,6 +9,7 @@ export type ProtectedSection =
   | 'payments'
   | 'disputes'
   | 'moderation'
+  | 'education'
   | 'access'
   | 'audit'
   | 'settings'
@@ -21,6 +22,7 @@ const SECTION_PERMISSIONS: Record<Exclude<ProtectedSection, 'overview'>, string>
   payments: 'finance.manage',
   disputes: 'support.manage',
   moderation: 'moderation.manage',
+  education: 'content.manage',
   access: 'authorization.manage',
   audit: 'audit.read',
   settings: 'system.manage',

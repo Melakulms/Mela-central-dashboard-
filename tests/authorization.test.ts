@@ -26,3 +26,11 @@ it('protects AI Workforce with system management permission',()=>{
  expect(authorizeSection(session,true,['users.read'],'ai')).toEqual({allowed:false,reason:'PERMISSION_DENIED'});
  expect(visibleSections(['system.manage'])).toContain('ai');
 });
+
+it('shows Education Review only to administrators with content management permission',()=>{
+ const session={user:{id:'reviewer-admin'}} as Session
+ expect(visibleSections(['users.read'])).not.toContain('education')
+ expect(authorizeSection(session,true,['users.read'],'education')).toEqual({allowed:false,reason:'PERMISSION_DENIED'})
+ expect(visibleSections(['content.manage'])).toContain('education')
+ expect(authorizeSection(session,true,['content.manage'],'education')).toEqual({allowed:true,section:'education'})
+})
