@@ -182,7 +182,7 @@ begin
 
   return jsonb_build_object('user_id',p_user_id,'verification_status',p_decision,'review_authorized',p_decision='approved','subject_areas',v_after.subjects_taught,'verified_at',v_after.verified_at);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.question_reviewer_allowed_v18(p_uid uuid, p_program_key text)
@@ -237,5 +237,4 @@ AS $function$
         )
     )
   );
-$function$
-
+$function$;
