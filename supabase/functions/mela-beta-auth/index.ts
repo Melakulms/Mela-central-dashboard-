@@ -42,7 +42,7 @@ function validUsername(username: string) {
 }
 
 function validPassword(password: string) {
-  return password.length >= 12 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
+  return password.length >= 12 && password.length <= 128 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
 }
 
 async function sha256Hex(value: string) {
@@ -76,7 +76,8 @@ async function consumeRateLimit(admin: any, keyHash: string, limit: number, wind
 async function enforceRateLimits(admin: any, req: Request, action: string, username: string) {
   const address = clientAddress(req)
   const ipKey = await sha256Hex(`beta-auth|${action}|ip|${address}`)
-  const subjectKey = await sha256Hex(`beta-auth|${action}|subject|${address}|${username}`)
+  // Account limits must survive changes of IP address or forwarding headers.
+  const subjectKey = await sha256Hex(`beta-auth|${action}|subject|${username}`)
   const [ipAllowed, subjectAllowed] = await Promise.all([
     consumeRateLimit(admin, ipKey, action === 'signup' ? 30 : 20, 600),
     consumeRateLimit(admin, subjectKey, action === 'signup' ? 8 : 6, 600),
@@ -203,7 +204,7 @@ Deno.serve(async (req) => {
       const username = normalizeUsername((body as any).username)
       const recoveryCode = String((body as any).recovery_code ?? '').trim()
       const newPassword = String((body as any).new_password ?? '')
-      if (!validUsername(username) || recoveryCode.length < 20 || !validPassword(newPassword)) {
+      if (!validUsername(username) || recoveryCode.length < 20 || recoveryCode.length > 200 || !validPassword(newPassword)) {
         return json(req, { error: 'The recovery details are invalid.' }, 400)
       }
       if (!(await enforceRateLimits(admin, req, action, username))) {
@@ -218,13 +219,23 @@ Deno.serve(async (req) => {
       const suppliedHash = await sha256Hex(recoveryCode)
       if (suppliedHash !== recovery.recovery_hash) return json(req, { error: 'The recovery details are invalid.' }, 400)
 
-      const { error: passwordError } = await admin.auth.admin.updateUserById(profile.id, { password: newPassword })
-      if (passwordError) return json(req, { error: 'Could not reset the beta password.' }, 500)
-
       const nextRecoveryCode = `MELA-R-${randomCode(24)}`
       const nextHash = await sha256Hex(nextRecoveryCode)
-      const { error: rotateError } = await admin.from('beta_auth_recovery').update({ recovery_hash: nextHash, rotated_at: new Date().toISOString() }).eq('user_id', profile.id)
-      if (rotateError) return json(req, { error: 'Password changed, but the recovery code could not be rotated. Contact the platform administrator.' }, 500)
+      // Atomically consume the one-time code before changing the password.
+      // Two requests may both read the old hash, but only one may claim it.
+      const { data: claimed, error: rotateError } = await admin.from('beta_auth_recovery')
+        .update({ recovery_hash: nextHash, rotated_at: new Date().toISOString() })
+        .eq('user_id', profile.id).eq('recovery_hash', suppliedHash).select('user_id').maybeSingle()
+      if (rotateError) return json(req, { error: 'Could not reset the beta password.' }, 500)
+      if (!claimed) return json(req, { error: 'The recovery details are invalid.' }, 400)
+
+      const { error: passwordError } = await admin.auth.admin.updateUserById(profile.id, { password: newPassword })
+      if (passwordError) {
+        // Restore only our own claim; never overwrite a subsequent code change.
+        await admin.from('beta_auth_recovery').update({ recovery_hash: suppliedHash })
+          .eq('user_id', profile.id).eq('recovery_hash', nextHash)
+        return json(req, { error: 'Could not reset the beta password.' }, 500)
+      }
 
       return json(req, {
         reset: true,

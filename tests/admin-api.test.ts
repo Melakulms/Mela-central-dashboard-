@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 const source = readFileSync(new URL('../supabase/functions/mela-admin-api/index.ts', import.meta.url), 'utf8').replace(/^import .*\n/gm, '')
 const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
 
-function server(permissions: string[], options: { user?: boolean; admin?: boolean; aal?: string; fixtures?: Record<string, object>; rpcError?: object } = {}) {
+function server(permissions: string[], options: { user?: boolean; admin?: boolean; aal?: string; fixtures?: Record<string, object>; rpcError?: object; actorProfile?: object | null; actorError?: object; mfaRequired?: boolean } = {}) {
   let handler: (request: Request) => Promise<Response>
   const queried: string[] = []
   const ranges: unknown[][] = []
@@ -26,13 +26,15 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
     mfa: { getAuthenticatorAssuranceLevel: vi.fn().mockResolvedValue({ data: { currentLevel: options.aal ?? 'aal2' } }) },
   } }
   const rpc = vi.fn().mockResolvedValue({data: {id: "updated-id"}, error: options.rpcError ?? null})
+  let profileReads = 0
   const database: any = {
     rpc,
     schema: () => database,
     from: (table: string) => {
       queried.push(table)
+      if (table === 'profiles' && profileReads++ === 0) return query({data: options.actorProfile === undefined ? {account_status: 'active', deleted_at: null} : options.actorProfile, error: options.actorError ?? null})
       const results: Record<string, object> = {
-        admin_users: { data: options.admin === false ? null : { role_id: 'role-id', mfa_required: true } },
+        admin_users: { data: options.admin === false ? null : { role_id: 'role-id', mfa_required: options.mfaRequired ?? true } },
         roles: { data: { key: 'limited-admin', name: 'Limited administrator' } },
         role_permissions: { data: [{ permission_id: 'permission-id' }] },
         permissions: { data: permissions.map(key => ({ key })) },
@@ -45,9 +47,9 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
     { env: { get: () => 'test-config' }, serve: (callback: typeof handler) => { handler = callback } },
     () => calls++ % 2 === 0 ? caller : database,
   )
-  const request = (body: unknown, authenticated = true, origin?:string) => handler!(new Request('https://example.invalid/admin', {
+  const request = (body: unknown, authenticated = true, origin?:string) => { profileReads = 0; return handler!(new Request('https://example.invalid/admin', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(origin?{Origin:origin}:{}), ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) }, body: JSON.stringify(body),
-  }))
+  })) }
   return { request, queried, ranges, filters, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
 }
 
@@ -199,3 +201,19 @@ it('distinguishes a registry service error from an actual missing admin assignme
   expect(denied.status).toBe(403)
   expect((await denied.json()).code).toBe('ADMIN_MEMBERSHIP_REQUIRED')
 })
+
+
+describe('administrator account revocation', () => {
+  it.each([null, {account_status:'suspended'}, {account_status:'banned'}, {account_status:'deleted'}, {account_status:'active',deleted_at:'2026-10-13'}])('rejects disabled or missing actor %j', async actorProfile => {
+    const api=server(['users.read'], {actorProfile});
+    expect((await api.request({action:'users.list'})).status).toBe(403);
+    expect(api.queried).not.toContain('admin_users');
+    expect(api.rpc).not.toHaveBeenCalled();
+  });
+  it('fails closed when account lookup fails', async () => {
+    expect((await server([], {actorError:{message:'unavailable'}}).request({action:'me'})).status).toBe(503);
+  });
+  it('requires MFA even if the legacy registry flag is false', async () => {
+    expect((await server(['users.read'], {aal:'aal1',mfaRequired:false}).request({action:'users.list'})).status).toBe(403);
+  });
+});
