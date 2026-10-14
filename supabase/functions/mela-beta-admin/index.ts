@@ -63,6 +63,10 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await caller.auth.getUser()
     if (userError || !user) return json(req, { error: 'Invalid session.' }, 401)
 
+    const { data: actorProfile, error: actorError } = await admin.from('profiles').select('account_status,deleted_at').eq('id', user.id).maybeSingle()
+    if (actorError) return json(req, { error: 'Account access lookup is unavailable.', code: 'ACCOUNT_LOOKUP_UNAVAILABLE' }, 503)
+    if (!actorProfile || actorProfile.account_status !== 'active' || actorProfile.deleted_at) return json(req, { error: 'Active account required.', code: 'ACCOUNT_DISABLED' }, 403)
+
     const { data: adminUser, error: adminError } = await admin.schema('admin').from('admin_users')
       .select('user_id,role_id,active,mfa_required')
       .eq('user_id', user.id).eq('active', true).maybeSingle()
@@ -73,7 +77,7 @@ Deno.serve(async (req) => {
 
     const { data: assurance, error: assuranceError } = await caller.auth.mfa.getAuthenticatorAssuranceLevel(authHeader.slice(7))
     if (assuranceError) return json(req, { error: 'Unable to verify session assurance.' }, 401)
-    if (adminUser.mfa_required && assurance?.currentLevel !== 'aal2') return json(req, { error: 'MFA required.', code: 'MFA_REQUIRED' }, 403)
+    if (assurance?.currentLevel !== 'aal2') return json(req, { error: 'MFA required.', code: 'MFA_REQUIRED' }, 403)
 
     const { data: mappings, error: mappingError } = await admin.schema('admin').from('role_permissions').select('permission_id').eq('role_id', adminUser.role_id)
     if (mappingError) return json(req, { error: 'Permission resolution failed.' }, 500)
