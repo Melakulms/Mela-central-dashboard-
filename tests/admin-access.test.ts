@@ -15,7 +15,7 @@ it('does not treat failed factor retrieval as a missing authenticator',async()=>
 })
 it('uses a verified authenticator and ignores unfinished enrollment',async()=>{
  factors.mockResolvedValue({data:{totp:[{id:'pending',status:'unverified'},{id:'verified',status:'verified'}]},error:null})
- await expect(resolveAdminAccess(client)).resolves.toEqual({kind:'challenge',factorId:'verified'})
+ await expect(resolveAdminAccess(client)).resolves.toEqual({kind:'challenge',factorId:'verified',factors:[{id:'verified',label:'Authenticator 1'}]})
  expect(mock.getAdminMe).not.toHaveBeenCalled()
 })
 it('offers enrollment only after a successful check finds no verified factor',async()=>{
@@ -26,4 +26,17 @@ it('requires the backend to confirm MFA before granting access',async()=>{
  await expect(resolveAdminAccess(client)).rejects.toThrow('MFA verification is required')
  mock.getAdminMe.mockResolvedValue({role:{key:'support'},permissions:['support.read'],mfa:{currentLevel:'aal2'}})
  await expect(resolveAdminAccess(client)).resolves.toMatchObject({kind:'ready',admin:{permissions:['support.read']}})
+})
+
+it('offers all verified backup authenticators without using pending enrollments',async()=>{
+ factors.mockResolvedValue({data:{totp:[
+  {id:'primary',status:'verified',friendly_name:'MELA Admin primary'},
+  {id:'unverified',status:'unverified',friendly_name:'Not ready'},
+  {id:'backup',status:'verified',friendly_name:'MELA Admin backup'},
+ ]},error:null})
+ await expect(resolveAdminAccess(client)).resolves.toEqual({
+  kind:'challenge',factorId:'primary',
+  factors:[{id:'primary',label:'MELA Admin primary'},{id:'backup',label:'MELA Admin backup'}],
+ })
+ expect(mock.getAdminMe).not.toHaveBeenCalled()
 })
