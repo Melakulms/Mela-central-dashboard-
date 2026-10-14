@@ -34,6 +34,7 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
   const [selected, setSelected] = useState<TeacherReview | null>(null)
   const [decision, setDecision] = useState<Decision | ''>('')
   const [note, setNote] = useState('')
+  const [authorizedSubjects, setAuthorizedSubjects] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -43,7 +44,7 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
     let active = true
     const load = async () => {
       setBusy(true); setError('')
-      setRows([]); setSelected(null); setDecision(''); setNote('')
+      setRows([]); setSelected(null); setDecision(''); setNote(''); setAuthorizedSubjects([])
       try {
         const { data, error } = await client.rpc('get_teacher_verification_queue', {
           p_status: status || null,
@@ -60,25 +61,27 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
   }, [client, status, revision])
 
   const begin = (row: TeacherReview) => {
-    setSelected(row); setDecision(row.verification_status === 'pending' ? '' : row.verification_status); setNote(''); setError(''); setSuccess('')
+    setSelected(row); setDecision(row.verification_status === 'pending' ? '' : row.verification_status); setAuthorizedSubjects(row.review_subject_areas ?? []); setNote(''); setError(''); setSuccess('')
   }
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (saving.current || busy || !selected || !decision || note.trim().length < 5) return
+    if (decision === 'approved' && authorizedSubjects.length === 0) { setError('Select the teaching subjects proven by the documents before approving this teacher.'); return }
     saving.current = true
     setBusy(true); setError(''); setSuccess('')
     try {
-      const { error } = await client.rpc('review_teacher_profile', {
+      const { error } = await client.rpc(decision === 'approved' ? 'review_teacher_profile_scoped' : 'review_teacher_profile', {
         p_user_id: selected.user_id,
         p_decision: decision,
         p_note: note.trim(),
+        ...(decision === 'approved' ? {p_subjects: authorizedSubjects} : {}),
       })
       if (error) throw error
       setSuccess(decision === 'approved'
-        ? 'Teacher approved. Subject-limited educator content-review access is now active.'
+        ? 'Teacher approved for verified subjects: '+authorizedSubjects.join(', ')+'. Content-review access is subject- and grade-limited.'
         : `Teacher verification changed to ${decision}. Content-review access is disabled.`)
-      setSelected(null); setDecision(''); setNote(''); setRevision(value => value + 1)
+      setSelected(null); setDecision(''); setNote(''); setAuthorizedSubjects([]); setRevision(value => value + 1)
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Teacher verification decision could not be saved.') }
     finally { saving.current = false; setBusy(false) }
   }
@@ -109,8 +112,9 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
       <p className="muted"><strong>Security:</strong> Teacher approval is blocked by the database until an administrator has independently approved at least one uploaded qualification document. Review permissions are limited to the verified subjects and grades.</p>
       {selected.verification_status === 'approved' && <AICourseAssignments client={client} userId={selected.user_id} />}
       <label>Decision<select value={decision} onChange={event => setDecision(event.target.value as Decision | '')} required disabled={busy}><option value="">Choose a decision</option><option value="approved">Approve teacher + review access</option><option value="rejected">Reject</option><option value="suspended">Suspend</option></select></label>
+      {decision === 'approved' && <fieldset className="detail-card" aria-label="Authorized teaching subjects"><legend>Choose ONLY subjects supported by verified certificates</legend><p>Admin-selected subjects determine what questions the teacher may review. Unchecked subjects receive no question-review permission.</p>{(selected.subjects_taught ?? []).map(subject=><label key={subject} style={{display:'block'}}><input type="checkbox" checked={authorizedSubjects.includes(subject)} disabled={busy} onChange={event=>setAuthorizedSubjects(current=>event.target.checked?[...current,subject]:current.filter(x=>x!==subject))}/> {subject}</label>)}{authorizedSubjects.length===0&&<p role="status">No subjects authorized yet.</p>}</fieldset>}
       <label>Verification note<textarea value={note} onChange={event => setNote(event.target.value)} minLength={5} maxLength={4000} required disabled={busy} placeholder="Record the qualification evidence you checked and the reason for this decision." /></label>
-      <div className="toolbar"><button type="button" className="refresh" onClick={() => setSelected(null)} disabled={busy}>Cancel</button><button type="submit" disabled={busy || !decision || note.trim().length < 5}>{busy ? 'Saving…' : 'Save audited decision'}</button></div>
+      <div className="toolbar"><button type="button" className="refresh" onClick={() => setSelected(null)} disabled={busy}>Cancel</button><button type="submit" disabled={busy || !decision || note.trim().length < 5 || (decision === 'approved' && authorizedSubjects.length === 0)}>{busy ? 'Saving…' : 'Save audited decision'}</button></div>
     </form>}
     <div className="table-wrap"><table><thead><tr><th>Teacher</th><th>Qualification</th><th>Subjects</th><th>Grades</th><th>Status</th><th>Review access</th><th/></tr></thead><tbody>
       {rows.map(row => <tr key={row.user_id}><td><strong>{row.full_name || 'Unnamed teacher'}</strong><small>{row.email || row.user_id}</small></td><td>{row.qualification || '—'}<small>{row.institution || 'No institution'}</small></td><td>{list(row.subjects_taught)}</td><td>{list(row.grade_levels)}</td><td><span className={`status-pill ${row.verification_status}`}>{row.verification_status}</span></td><td>{row.review_authorized ? 'Active' : '—'}</td><td><button className="refresh" onClick={() => begin(row)} disabled={busy}>Review</button></td></tr>)}
