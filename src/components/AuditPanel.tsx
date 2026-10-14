@@ -1,6 +1,7 @@
 import { useEffect,useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { adminApi } from '../lib/admin-api'
+import UserWorkflowAudit from './UserWorkflowAudit'
 type Entry={id:string;created_at:string;actor_role?:string;actor_user_id?:string;action?:string;target_schema?:string;target_table?:string;target_id?:string;request_id?:string;before_data?:unknown;after_data?:unknown;metadata?:unknown}
 export default function AuditPanel({client}:{client:SupabaseClient}) {
  const [rows,setRows]=useState<Entry[]>([]),[total,setTotal]=useState(0),[page,setPage]=useState(0),[search,setSearch]=useState(''),[applied,setApplied]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState<Entry|null>(null)
@@ -11,5 +12,6 @@ export default function AuditPanel({client}:{client:SupabaseClient}) {
  {!loading&&!error&&<><div className="table-wrap"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Details</th></tr></thead><tbody>{rows.map(row=><tr key={row.id}><td>{new Date(row.created_at).toLocaleString()}</td><td>{row.actor_role??row.actor_user_id??'—'}</td><td>{row.action}</td><td>{[row.target_schema,row.target_table,row.target_id].filter(Boolean).join('/')}</td><td><button onClick={()=>setSelected(row)}>Inspect audit {row.id}</button></td></tr>)}</tbody></table></div>{!rows.length&&<p>No audit records match this filter.</p>}</>}
  <div className="toolbar"><button disabled={loading||page===0} onClick={()=>setPage(v=>v-1)}>Previous audit records</button><span>Page {page+1} · {total} records</span><button disabled={loading||(page+1)*25>=total} onClick={()=>setPage(v=>v+1)}>Next audit records</button></div>
  {selected&&<section className="detail-card" aria-label="Audit details"><h3>{selected.action}</h3><p>Actor: {selected.actor_user_id??'—'}</p><p>Request: {selected.request_id??'—'}</p><h4>Before</h4><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(selected.before_data,null,2)}</pre><h4>After</h4><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(selected.after_data,null,2)}</pre><h4>Audit context</h4><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(selected.metadata,null,2)}</pre><button onClick={()=>setSelected(null)}>Close audit details</button></section>}
+ <UserWorkflowAudit client={client}/>
  </section>
 }
