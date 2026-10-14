@@ -14,7 +14,7 @@ function server(options: { permissions?: string[]; aal?: string; error?: boolean
   return b
  }
  const caller={auth:{getUser:vi.fn().mockResolvedValue({data:{user:{id:'admin'}}}),mfa:{getAuthenticatorAssuranceLevel:vi.fn().mockResolvedValue({data:{currentLevel:options.aal??'aal2'}})}}}
- const db: any={schema:()=>db,from:(table: string)=>{queries.push(table);const fixtures:Record<string,object>={admin_users:{data:{role_id:'role',mfa_required:true}},roles:{data:{key:'content_editor'}},role_permissions:{data:[{permission_id:'permission'}]},permissions:{data:(options.permissions??['content.manage']).map(key=>({key}))}};return query(options.fixtures?.[table]??fixtures[table]??{data:[{title:'Course'}],count:53,error:options.error?{message:'failure'}:null})}}
+ const db: any={schema:()=>db,from:(table: string)=>{queries.push(table);const fixtures:Record<string,object>={profiles:{data:{account_status:'active',deleted_at:null}},admin_users:{data:{role_id:'role',mfa_required:true}},roles:{data:{key:'content_editor'}},role_permissions:{data:[{permission_id:'permission'}]},permissions:{data:(options.permissions??['content.manage']).map(key=>({key}))}};return query(options.fixtures?.[table]??fixtures[table]??{data:[{title:'Course'}],count:53,error:options.error?{message:'failure'}:null})}}
  let calls=0
  new Function('Deno','createClient',code)({env:{get:()=> 'config'},serve:(h:typeof handler)=>{handler=h}},()=>calls++%2===0?caller:db)
  return {queries,filters,ranges,request:(body:object,auth=true)=>handler!(new Request('https://example.invalid',{method:'POST',headers:{'Content-Type':'application/json',...(auth?{Authorization:'Bearer token'}:{})},body:JSON.stringify(body)}))}
@@ -56,4 +56,18 @@ it('rejects a complete-looking lesson draft for a missing course',async()=>{
  const api=server({fixtures:{content_drafts:{data:{id,status:'draft',entity_type:'material',payload:{course_id:id,title:'Lesson',module_title:'Module',content_text:'Content '.repeat(20),objectives:['Learn a skill'],module_position:1,lesson_position:1,duration_minutes:10}}},courses:{data:null}}})
  const response=await api.request({action:'draft.submit',draft_id:id})
  expect(response.status).toBe(400);expect((await response.json()).error).toContain('no longer exists')
+})
+
+it('denies inactive or deleted administrator profiles and fails closed on lookup errors',async()=>{
+ for (const profile of [null,{account_status:'suspended',deleted_at:null},{account_status:'active',deleted_at:'2026-10-01T00:00:00Z'}]) {
+  const api=server({fixtures:{profiles:{data:profile}}})
+  expect((await api.request({action:'courses.list'})).status).toBe(403)
+  expect(api.queries).not.toContain('content_drafts')
+ }
+ const failed=server({fixtures:{profiles:{data:null,error:{message:'lookup unavailable'}}}})
+ expect((await failed.request({action:'courses.list'})).status).toBe(503)
+})
+it('requires AAL2 even for a legacy admin registry with mfa_required=false',async()=>{
+ const api=server({aal:'aal1',fixtures:{admin_users:{data:{role_id:'role',mfa_required:false}}}})
+ expect((await api.request({action:'courses.list'})).status).toBe(403)
 })
