@@ -1,6 +1,7 @@
 import AICourseAssignments from './AICourseAssignments'
 import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import ProfessionalQuestionReviewPanel from './ProfessionalQuestionReviewPanel'
 
 type TeacherReview = {
   user_id: string
@@ -112,5 +113,6 @@ export default function TeacherVerificationPanel({ client }: { client: SupabaseC
       {rows.map(row => <tr key={row.user_id}><td><strong>{row.full_name || 'Unnamed teacher'}</strong><small>{row.email || row.user_id}</small></td><td>{row.qualification || '—'}<small>{row.institution || 'No institution'}</small></td><td>{list(row.subjects_taught)}</td><td>{list(row.grade_levels)}</td><td><span className={`status-pill ${row.verification_status}`}>{row.verification_status}</span></td><td>{row.review_authorized ? 'Active' : '—'}</td><td><button className="refresh" onClick={() => begin(row)} disabled={busy}>Review</button></td></tr>)}
       {!rows.length && !busy && <tr><td colSpan={7} className="empty">No teacher profiles match this status.</td></tr>}
     </tbody></table></div>
+    <ProfessionalQuestionReviewPanel client={client} />
   </section>
 }
