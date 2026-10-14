@@ -23,3 +23,13 @@ it('preserves failed status decisions and submits a guarded, audited change once
 it('shows a retryable load error rather than an empty account list',async()=>{
  mock.api.mockRejectedValueOnce(new Error('Network unavailable'));render(<UsersPanel client={client} permissions={['users.read']}/>);await screen.findByRole('alert');expect(screen.queryByText('No users match these filters.')).toBeNull();fireEvent.click(screen.getByRole('button',{name:'Retry users'}));await screen.findByText('Learner One')
 })
+
+it('distinguishes a confirmed teacher email from a submitted professional profile',async()=>{
+ const teacher={...profile,id:'teacher-a',role:'teacher',full_name:'Verified Teacher',profile_completion:0}
+ mock.api.mockImplementation(async(_client,action)=>action==='users.list'?{data:[teacher],total:1}:action==='user.inspect'?{data:{profile:teacher,auth:{id:'teacher-a',email_confirmed_at:'2026-10-13T20:02:31Z'}}}:{})
+ render(<UsersPanel client={client} permissions={['users.read']}/>)
+ fireEvent.click(await screen.findByRole('button',{name:'Inspect Verified Teacher'}))
+ expect(await screen.findByText(/teacher has not completed the required qualifications/)).toBeTruthy()
+ expect(screen.getByText(/Email confirmation and teacher registration are separate/)).toBeTruthy()
+ expect(screen.queryByLabelText('New account status')).toBeNull()
+})
