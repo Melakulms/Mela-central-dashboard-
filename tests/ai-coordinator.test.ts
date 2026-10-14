@@ -8,7 +8,7 @@ it('creates an ordinary task at a valid approval level before execution',async()
  const fetch=async(url:string,init:any={})=>{
  let data:any=[];
  if(url.includes('/auth/v1/user'))data={id:'user-a'};
- else if(url.includes('/profiles?'))data=[{id:'user-a',role:'student'}];
+ else if(url.includes('/profiles?'))data=[{id:'user-a',role:'student',account_status:'active',deleted_at:null}];
  else if(url.includes('/mela_ai_agents?'))data=[{id:'agent-a',agent_key:'student',name:'Tutor'}];
  else if(url.endsWith('/mela_ai_tasks')){task=JSON.parse(init.body);if(task.approval_level<1||task.approval_level>3)return new Response('{}',{status:400});data=[{id:'task-a'}]}
  else if(url.includes('/functions/v1/')){executions++;data={ok:true,response:'A fraction is part of a whole.'}}
@@ -17,4 +17,17 @@ it('creates an ordinary task at a valid approval level before execution',async()
  new Function('Deno','fetch','crypto',code)({env:{get:(k:string)=>k==='SUPABASE_URL'?'https://local.invalid':'fixture'},serve:(h:any)=>handler=h},fetch,webcrypto);
  const response=await handler(new Request('https://local.invalid',{method:'POST',headers:{Authorization:'Bearer fixture'},body:JSON.stringify({message:'Explain fractions'})}));
  expect(response.status).toBe(200);expect(task.approval_level).toBe(1);expect(task.approval_status).toBe('not_required');expect(executions).toBe(1);
+});
+
+it('rejects suspended accounts before creating a task or executing AI',async()=>{
+ let handler:any; let writes=0;
+ const fetch=async(url:string,init:any={})=>{
+  if(url.includes('/auth/v1/user'))return new Response(JSON.stringify({id:'user-a'}));
+  if(url.includes('/profiles?'))return new Response(JSON.stringify([{id:'user-a',role:'student',account_status:'suspended',deleted_at:null}]));
+  if(init.method==='POST')writes++;
+  return new Response('[]');
+ };
+ new Function('Deno','fetch','crypto',code)({env:{get:(k:string)=>k==='SUPABASE_URL'?'https://local.invalid':'fixture'},serve:(h:any)=>handler=h},fetch,webcrypto);
+ const response=await handler(new Request('https://local.invalid',{method:'POST',headers:{Authorization:'Bearer fixture'},body:JSON.stringify({message:'Create a new AI agent'})}));
+ expect(response.status).toBe(403);expect(writes).toBe(0);
 });
