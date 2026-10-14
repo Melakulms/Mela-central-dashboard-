@@ -21,7 +21,7 @@ begin
   update auth.users set email_confirmed_at=now() where id in (learner,parent_id,teacher_id,company_id);
   execute 'reset role';
   update public.profiles set account_status='active' where id in (learner,parent_id);
-  select t.id into topic_id from public.practice_topics t where t.is_published and exists (select 1 from public.practice_questions q where q.topic_id=t.id and q.is_published) limit 1;
+  select t.id into topic_id from public.practice_topics t where t.is_published and t.grade_level='9' and exists (select 1 from public.practice_questions q where q.topic_id=t.id and q.is_published) limit 1;
   perform set_config('request.jwt.claims', jsonb_build_object('sub',learner,'role','authenticated')::text, true);
   execute 'set local role authenticated';
   if private.is_admin_user() then raise exception 'ordinary learner was treated as admin'; end if;
@@ -31,6 +31,8 @@ begin
   exception when others then blocked := true;
   end;
   if not blocked then raise exception 'self-promotion was permitted'; end if;
+  perform public.set_my_education_stage_v36('school_9_10',9,'QA school');
+  perform public.complete_my_profile_v37('Transactional test learner','en',null,null,'QA school','{"subjects":["mathematics"]}'::jsonb);
   link_code := public.create_parent_link_invite_v35();
   if link_code is null then raise exception 'student invitation was not generated'; end if;
   if topic_id is not null then
