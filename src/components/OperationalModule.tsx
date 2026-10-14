@@ -53,6 +53,8 @@ export default function OperationalModule({ client, section, permissions }: { cl
             { title: 'Arena integrity events', rows: result.integrity_events },
             { title: 'Flagged opportunities', rows: result.flagged_opportunities },
           ]
+        } else if (section === 'education') {
+          next = []
         } else if (section === 'settings') {
           const result = await adminApi(client, 'settings.flags')
           next = [{ title: 'Platform feature flags', rows: result.data }]
@@ -94,8 +96,9 @@ export default function OperationalModule({ client, section, permissions }: { cl
   return <section className="panel">
     {section === 'disputes' && <p>Disputed contracts remain on hold. Reviewing a report does not release escrow, pay out funds, or issue a refund. Settlement requires provider reconciliation.</p>}
     {section === 'moderation' && <p>Proctored assessment decisions are MFA-protected and audited. Clear only when the integrity evidence supports verification; void prevents credential issuance.</p>}
-    {section === 'moderation' && <TeacherVerificationPanel client={client}/>} 
-    {section === 'moderation' && canManageContent && <ContentStudioPanel client={client}/>} 
+    {section === 'education' && <div className="panel" role="note"><h2>Qualified teacher and educational content workflow</h2><p>Teachers submit professional profiles and private credentials in MELA Users. Independently verify each document before approving the teacher for their documented subjects and grade levels. After teacher approval, use the assignments panel and the Content Studio below to manage the 142,396-question teacher-review work and AI lessons. Unreviewed questions and draft lessons must not be labeled professionally approved.</p></div>}
+    {(section === 'moderation' || section === 'education') && <TeacherVerificationPanel client={client}/>} 
+    {(section === 'moderation' || section === 'education') && canManageContent && <ContentStudioPanel client={client}/>} 
     {section === 'settings' && <MfaBackupSetup client={client}/>}
     {section === 'settings' && <BetaInvitesPanel client={client}/>} 
     <p>Live operational records. Results are limited to the latest records returned by the server.</p>
