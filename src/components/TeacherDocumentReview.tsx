@@ -29,16 +29,17 @@ export default function TeacherDocumentReview({client,teacherId}:{client:Supabas
  useEffect(()=>{
   let active=true
   setLoading(true);setError('');setSelected(null)
-  void client.from('teacher_credential_documents')
-    .select('id,teacher_id,document_kind,original_name,storage_path,review_status,review_note,uploaded_at,reviewed_at')
-    .eq('teacher_id',teacherId).order('uploaded_at',{ascending:false})
-    .then(({data,error})=>{
-      if(!active)return
+  void (async()=>{
+    try{
+      const {data,error}=await client.from('teacher_credential_documents')
+        .select('id,teacher_id,document_kind,original_name,storage_path,review_status,review_note,uploaded_at,reviewed_at')
+        .eq('teacher_id',teacherId).order('uploaded_at',{ascending:false})
       if(error)throw error
-      setDocuments((data??[]) as CredentialDocument[])
-    }).catch((cause:unknown)=>{
+      if(active)setDocuments((data??[]) as CredentialDocument[])
+    }catch(cause){
       if(active)setError(cause instanceof Error?cause.message:'Could not load the teacher documents.')
-    }).finally(()=>{if(active)setLoading(false)})
+    }finally{if(active)setLoading(false)}
+  })()
   return()=>{active=false}
  },[client,teacherId,revision])
 
