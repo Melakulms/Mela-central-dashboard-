@@ -121,6 +121,7 @@ export default function BetaInvitesPanel({ client }: { client: SupabaseClient })
       <div className="module-head">
         <div>
           <h2>Beta invites</h2>
+          <p><a href="https://melakulms.github.io/mela-app/?signup=invite" target="_blank" rel="noopener noreferrer">Open the MELA invitation registration page</a> · Share this page with a tester and privately provide their one-time code.</p>
           <p>Create one-time access codes for the zero-budget closed beta. New users choose Student, Family, Teacher, or Employer in the registration screen. Their selection must match this one-time invitation. Account type is never granted by changing a browser field; teachers and employers still need verification.</p>
         </div>
         <button className="refresh" type="button" onClick={() => void load()} disabled={busy}>
