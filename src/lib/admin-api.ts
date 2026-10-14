@@ -28,6 +28,7 @@ export function createAdminClient() {
 
   return createClient(url, key, {
     auth: {
+      storageKey: 'mela-central-supabase-auth-v1',
       // Administrative bearer tokens must not be left in origin-wide localStorage.
       // Until the admin UI is isolated on its own origin, keep the session in memory
       // so another application served from the same origin cannot read a persisted token.

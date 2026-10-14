@@ -7,6 +7,7 @@ describe('admin browser session hardening', () => {
   it('does not persist the privileged session in origin-wide browser storage', () => {
     expect(source).toMatch(/persistSession:\s*false/)
     expect(source).toMatch(/detectSessionInUrl:\s*false/)
+    expect(source).toContain("storageKey: 'mela-central-supabase-auth-v1'")
     expect(source).not.toContain("storageKey: 'mela-central-admin-auth'")
   })
 
