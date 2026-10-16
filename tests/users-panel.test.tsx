@@ -33,3 +33,15 @@ it('distinguishes a confirmed teacher email from a submitted professional profil
  expect(screen.getByText(/Email confirmation and teacher registration are separate/)).toBeTruthy()
  expect(screen.queryByLabelText('New account status')).toBeNull()
 })
+
+it.each(['student','parent','teacher','employer','company','mentor','partner'])('prepares approval for a pending %s without submitting until confirmed',async(role)=>{
+ const pending={...profile,role,account_status:'pending_verification'}
+ mock.api.mockImplementation(async(_client,action)=>action==='users.list'?{data:[pending],total:1}:action==='user.inspect'?{data:{profile:pending,auth:null}}:{data:{...pending,account_status:'active'}})
+ render(<UsersPanel client={client} permissions={['users.read','users.manage']}/>)
+ fireEvent.click(await screen.findByRole('button',{name:'Inspect Learner One'}))
+ fireEvent.click(await screen.findByRole('button',{name:'Approve app access'}))
+ expect(mock.api.mock.calls.filter(call=>call[1]==='user.update')).toHaveLength(0)
+ fireEvent.click(screen.getByRole('button',{name:'Confirm account status change'}))
+ await screen.findByText('App access is already active. No additional account approval is needed.')
+ expect(mock.api).toHaveBeenLastCalledWith(client,'user.update',{user_id:profile.id,account_status:'active',reason:'Reviewed account and approved app access.',expected_updated_at:profile.updated_at})
+})
