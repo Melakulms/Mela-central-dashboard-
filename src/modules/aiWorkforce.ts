@@ -33,3 +33,8 @@ export type AIHealth = {
 export async function getAIHealth(client:SupabaseClient):Promise<AIHealth> {
  return invokeAdminFunction(client,'mela-ai-admin','health')
 }
+
+export type AIWorkerReply = { ok:true;response:string;task_id:string;run_id:string;agent:{key:string;name:string;domain:string};advisory_only:true }
+export async function consultAIWorker(client:SupabaseClient,agentId:string,message:string):Promise<AIWorkerReply> {
+ return invokeAdminFunction(client,'mela-ai-admin','agent.reply',{agent_id:agentId,message})
+}
