@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getAIAgents, getAIApprovals, getAIRuns, reviewAIApproval, setAgentEnabled, type Agent, type Approval, type AIRun, type AIPage } from './aiWorkforce'
+import { getAIAgents, getAIApprovals, getAIRuns, getAIHealth, reviewAIApproval, setAgentEnabled, type Agent, type Approval, type AIRun, type AIPage, type AIHealth } from './aiWorkforce'
 const emptyPage={data:[],total:0}
 function Pagination({name,page,total,disabled,onPage}:{name:string;page:number;total:number;disabled:boolean;onPage:(page:number)=>void}) {
  return <div className="toolbar" aria-label={`${name} pagination`}><button disabled={disabled||page===0} onClick={()=>onPage(page-1)}>Previous {name}</button><span>{total===0?'0 records':`${page*25+1}–${Math.min((page+1)*25,total)} of ${total}`}</span><button disabled={disabled||(page+1)*25>=total} onClick={()=>onPage(page+1)}>Next {name}</button></div>
@@ -11,9 +11,12 @@ export default function AIWorkforcePanel({client}:{client:SupabaseClient}) {
  const [approvalPage,setApprovalPage]=useState(0),[runPage,setRunPage]=useState(0),[approvalStatus,setApprovalStatus]=useState('pending'),[runStatus,setRunStatus]=useState('')
  const [selected,setSelected]=useState<Approval|null>(null),[note,setNote]=useState(''),[runDetail,setRunDetail]=useState<AIRun|null>(null)
  const [message,setMessage]=useState(''),[answer,setAnswer]=useState('')
+ const [health,setHealth]=useState<AIHealth|null>(null),[healthError,setHealthError]=useState('')
  const actionLock=useRef(false)
  useEffect(()=>{
-  let active=true;setLoading(true);setError('');setReady(false)
+  let active=true;setLoading(true);setError('');setReady(false);setHealthError('')
+  getAIHealth(client).then(status=>{if(active)setHealth(status)})
+   .catch(()=>{if(active){setHealth(null);setHealthError('Could not verify AI provider configuration. Check administrator MFA, permissions and AI service logs.')}})
   Promise.all([getAIAgents(client),getAIApprovals(client,approvalPage*25,approvalStatus),getAIRuns(client,runPage*25,runStatus)])
    .then(([a,p,r])=>{if(active){setAgents(a);setApprovals(p);setRuns(r);setReady(true)}})
    .catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'Unable to load AI workforce. Please retry.')})
@@ -28,7 +31,7 @@ export default function AIWorkforcePanel({client}:{client:SupabaseClient}) {
  const execute=()=>run(async()=>{
   const text=message.trim();if(!text||text.length>6000)return
   const {data,error:invokeError}=await client.functions.invoke('mela-ai-execution-v2',{body:{message:text}})
-  if(invokeError){const detail=invokeError.context instanceof Response?await invokeError.context.clone().json().catch(()=>null):null;throw new Error(detail?.error||invokeError.message)}
+  if(invokeError){const detail=invokeError.context instanceof Response?await invokeError.context.clone().json().catch(()=>null):null;throw new Error(detail?.code==='AI_LIMIT_REACHED'?'AI usage limit reached. Your task text is preserved.':detail?.error||invokeError.message)}
   if(data?.mode==='approval_required'){setSuccess(data.task_id?`Approval required for task ${data.task_id}.`:'This request requires approval. No action has been executed.');return}
   if(!data?.ok||typeof data.response!=='string'||!data.response.trim())throw new Error(data?.error||'AI returned no usable response. Your request is preserved.')
   setAnswer(data.response);setMessage('');setSuccess('AI response received.');setRevision(v=>v+1)
@@ -39,10 +42,18 @@ export default function AIWorkforcePanel({client}:{client:SupabaseClient}) {
  })
  return <section className="panel">
   <div className="module-head"><div><h2>AI Workforce</h2><p>Agent controls, approval decisions and execution history.</p></div><button disabled={loading||busy} onClick={()=>setRevision(v=>v+1)}>Refresh AI workforce</button></div>
+  <section className="detail-card" aria-label="AI worker service health"><h3>AI service readiness</h3>
+   {health ? <>
+    <p><strong>Provider configuration:</strong> {health.provider_configured?'Configured':'Missing MELA_AI_API_KEY in Supabase Edge Function secrets'}</p>
+    <p><strong>Enabled workers:</strong> {health.enabled_agents} · <strong>Tool assignments:</strong> {health.tool_assignments}</p>
+    <p><strong>Recorded tasks:</strong> {health.task_count} · <strong>Recorded runs:</strong> {health.run_count}</p>
+    <p role="status">{health.configuration_ready?'Configuration present; a successful real AI response is still required to certify worker execution.':'AI service is not ready. Check the provider secret, agent settings and tool assignments.'}</p>
+   </> : <p role="status">{healthError || 'Checking AI service configuration…'}</p>}
+  </section>
   {loading&&<p role="status">Loading AI workforce…</p>}
   {error&&<div className="error" role="alert">{error}<button disabled={loading||busy} onClick={()=>setRevision(v=>v+1)}>Retry AI workforce</button></div>}
   {success&&<p role="status">{success}</p>}
-  <form onSubmit={e=>{e.preventDefault();void execute()}} className="detail-card"><h3>Run an AI task</h3><label>AI task<textarea value={message} onChange={e=>setMessage(e.target.value)} maxLength={6000} disabled={busy} rows={3}/></label><button disabled={busy||!message.trim()}>{busy?'Saving…':'Run AI'}</button>{answer&&<div style={{whiteSpace:'pre-wrap'}}>{answer}</div>}</form>
+  <form onSubmit={e=>{e.preventDefault();void execute()}} className="detail-card"><h3>Run an AI task</h3><p className="muted">This sends a prompt to the default orchestration worker. It does not prove that every enabled worker has executed successfully.</p><label>AI task<textarea value={message} onChange={e=>setMessage(e.target.value)} maxLength={6000} disabled={busy} rows={3}/></label><button disabled={busy||!message.trim()}>{busy?'Saving…':'Run AI'}</button>{answer&&<div style={{whiteSpace:'pre-wrap'}}>{answer}</div>}</form>
   {ready&&<>
    <h3>Agents ({agents.length})</h3>
    {!agents.length&&<p>No agents are configured.</p>}
