@@ -66,6 +66,6 @@ it('routes a selected AI worker task only through the admin-authorized endpoint'
 it('shows Groq free-tier provider selection without claiming completed AI responses',async()=>{
  mocks.health.mockResolvedValueOnce({provider_configured:true,provider:'groq',enabled_agents:26,tool_assignments:97,run_count:0,task_count:0,configuration_ready:true,execution_verified:false,note:'Not verified'})
  render(<AIWorkforcePanel client={client}/>)
- await screen.findByText(/Configured \\(Groq free API\\)/)
+ await screen.findByText(/Groq free API/)
  expect(screen.getByText(/successful real AI response is still required/)).toBeTruthy()
 })
