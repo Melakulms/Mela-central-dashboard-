@@ -1,5 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-const SB=Deno.env.get('SUPABASE_URL')!;const SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;const ANON=Deno.env.get('SUPABASE_ANON_KEY')||'';const MODEL=Deno.env.get('MELA_AI_MODEL')||Deno.env.get('OPENAI_MODEL')||'gpt-4o-mini';
+const SB=Deno.env.get('SUPABASE_URL')!;const SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;const ANON=Deno.env.get('SUPABASE_ANON_KEY')||'';const groqReady=Boolean(Deno.env.get('GROQ_API_KEY')?.trim());
+const useGroq=Deno.env.get('MELA_AI_PROVIDER')==='groq'||(Deno.env.get('MELA_AI_PROVIDER')!=='openai'&&groqReady);
+const MODEL=useGroq?'llama-3.3-70b-versatile':Deno.env.get('MELA_AI_MODEL')||Deno.env.get('OPENAI_MODEL')||'gpt-4o-mini';
 const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'};
 const J=(x:unknown,s=200)=>new Response(JSON.stringify(x),{status:s,headers:{...C,'Content-Type':'application/json','Cache-Control':'no-store'}});
 async function db(p:string,i:RequestInit={}){const h=new Headers(i.headers||{});h.set('apikey',SERVICE);h.set('Authorization',`Bearer ${SERVICE}`);h.set('Content-Type','application/json');const r=await fetch(SB+p,{...i,headers:h,signal:AbortSignal.timeout(15000)});const t=await r.text();let d:any=null;try{d=t?JSON.parse(t):null}catch{d=t}if(!r.ok)throw new Error(`DB_${r.status}`);return d}
