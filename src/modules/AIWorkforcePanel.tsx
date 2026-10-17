@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { getAIAgents, getAIApprovals, getAIRuns, getAIHealth, reviewAIApproval, setAgentEnabled, type Agent, type Approval, type AIRun, type AIPage, type AIHealth } from './aiWorkforce'
+import { getAIAgents, getAIApprovals, getAIRuns, getAIHealth, consultAIWorker, reviewAIApproval, setAgentEnabled, type Agent, type Approval, type AIRun, type AIPage, type AIHealth } from './aiWorkforce'
 const emptyPage={data:[],total:0}
 function Pagination({name,page,total,disabled,onPage}:{name:string;page:number;total:number;disabled:boolean;onPage:(page:number)=>void}) {
  return <div className="toolbar" aria-label={`${name} pagination`}><button disabled={disabled||page===0} onClick={()=>onPage(page-1)}>Previous {name}</button><span>{total===0?'0 records':`${page*25+1}–${Math.min((page+1)*25,total)} of ${total}`}</span><button disabled={disabled||(page+1)*25>=total} onClick={()=>onPage(page+1)}>Next {name}</button></div>
@@ -10,7 +10,7 @@ export default function AIWorkforcePanel({client}:{client:SupabaseClient}) {
  const [loading,setLoading]=useState(true),[ready,setReady]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0)
  const [approvalPage,setApprovalPage]=useState(0),[runPage,setRunPage]=useState(0),[approvalStatus,setApprovalStatus]=useState('pending'),[runStatus,setRunStatus]=useState('')
  const [selected,setSelected]=useState<Approval|null>(null),[note,setNote]=useState(''),[runDetail,setRunDetail]=useState<AIRun|null>(null)
- const [message,setMessage]=useState(''),[answer,setAnswer]=useState('')
+ const [message,setMessage]=useState(''),[answer,setAnswer]=useState(''),[selectedAgentId,setSelectedAgentId]=useState('')
  const [health,setHealth]=useState<AIHealth|null>(null),[healthError,setHealthError]=useState('')
  const actionLock=useRef(false)
  useEffect(()=>{
@@ -30,6 +30,12 @@ export default function AIWorkforcePanel({client}:{client:SupabaseClient}) {
  }
  const execute=()=>run(async()=>{
   const text=message.trim();if(!text||text.length>6000)return
+  if(selectedAgentId){
+    const result=await consultAIWorker(client,selectedAgentId,text)
+    if(!result.ok||!result.response?.trim())throw new Error('This worker returned no usable response.')
+    setAnswer(result.response);setMessage('');setSuccess(`Advisory answer recorded for ${result.agent?.name||'the selected worker'}. No administrative action was executed.`);setRevision(v=>v+1)
+    return
+  }
   const {data,error:invokeError}=await client.functions.invoke('mela-ai-execution-v2',{body:{message:text}})
   if(invokeError){const detail=invokeError.context instanceof Response?await invokeError.context.clone().json().catch(()=>null):null;throw new Error(detail?.code==='AI_LIMIT_REACHED'?'AI usage limit reached. Your task text is preserved.':detail?.error||invokeError.message)}
   if(data?.mode==='approval_required'){setSuccess(data.task_id?`Approval required for task ${data.task_id}.`:'This request requires approval. No action has been executed.');return}
@@ -53,7 +59,12 @@ export default function AIWorkforcePanel({client}:{client:SupabaseClient}) {
   {loading&&<p role="status">Loading AI workforce…</p>}
   {error&&<div className="error" role="alert">{error}<button disabled={loading||busy} onClick={()=>setRevision(v=>v+1)}>Retry AI workforce</button></div>}
   {success&&<p role="status">{success}</p>}
-  <form onSubmit={e=>{e.preventDefault();void execute()}} className="detail-card"><h3>Run an AI task</h3><p className="muted">This sends a prompt to the default orchestration worker. It does not prove that every enabled worker has executed successfully.</p><label>AI task<textarea value={message} onChange={e=>setMessage(e.target.value)} maxLength={6000} disabled={busy} rows={3}/></label><button disabled={busy||!message.trim()}>{busy?'Saving…':'Run AI'}</button>{answer&&<div style={{whiteSpace:'pre-wrap'}}>{answer}</div>}</form>
+  <form onSubmit={e=>{e.preventDefault();void execute()}} className="detail-card"><h3>Run an AI task</h3><p className="muted">Choose an enabled worker for advice, or use the default orchestration worker. Responses do not make administrative changes. Every worker must be verified individually before automation is trusted.</p>
+  <label>AI worker<select aria-label="AI worker" value={selectedAgentId} disabled={busy} onChange={e=>{setSelectedAgentId(e.target.value);setAnswer('')}}>
+   <option value="">Default orchestration worker</option>
+   {agents.filter(a=>a.enabled).map(agent=><option key={agent.id} value={agent.id}>{agent.name} ({agent.domain})</option>)}
+  </select></label>
+  <label>AI task<textarea value={message} onChange={e=>setMessage(e.target.value)} maxLength={6000} disabled={busy} rows={3}/></label><button disabled={busy||!message.trim()}>{busy?'Saving…':'Run AI'}</button>{answer&&<div style={{whiteSpace:'pre-wrap'}}>{answer}</div>}</form>
   {ready&&<>
    <h3>Agents ({agents.length})</h3>
    {!agents.length&&<p>No agents are configured.</p>}

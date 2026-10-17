@@ -63,3 +63,11 @@ it('limits AI health details to verified MFA-protected administrators',async()=>
  expect(s.mutations).toHaveLength(0)
  expect((await api({aal:'aal1'}).request(undefined,'POST',{action:'health'})).status).toBe(403)
 })
+
+it('does not allow unauthorized users to select or execute privileged workers',async()=>{
+ const unverified=api({aal:'aal1'})
+ expect((await unverified.request(undefined,'POST',{action:'agent.reply',agent_id:'00000000-0000-4000-8000-000000000001',message:'Inspect education quality'})).status).toBe(403)
+ const verified=api()
+ expect((await verified.request(undefined,'POST',{action:'agent.reply',agent_id:'invalid',message:'Inspect education quality'})).status).toBe(400)
+ expect(verified.mutations).toHaveLength(0)
+})

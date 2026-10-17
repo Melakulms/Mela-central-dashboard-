@@ -23,6 +23,40 @@ Deno.serve(async req=>{
  const allowed=(p:string)=>role.key==='super_admin'||permissions.includes(p); const rid=req.headers.get('x-request-id')??crypto.randomUUID(); const body=await req.json().catch(()=>null); if(!body||typeof body!=='object'||Array.isArray(body))return json({error:'JSON object required'},400,h); const action=String(body.action??'')
  if(!allowed('system.manage'))return json({error:'Permission denied'},403,h)
 
+ if(action==='agent.reply'){
+  // Only an administrator who passed the registry, AAL2 and system.manage
+  // checks above can request an individual worker's advisory response.
+  // Worker execution is delegated with the *same user JWT*; no service key is
+  // forwarded to the worker or exposed to the frontend.
+  const agentId=String(body.agent_id??'');
+  const prompt=typeof body.message==='string'?body.message.trim():'';
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentId))return json({error:'Select a valid AI worker'},400,h);
+  if(!prompt||prompt.length>6000)return json({error:'Enter an AI task of 1–6000 characters'},400,h);
+  if(!Deno.env.get('MELA_AI_API_KEY')?.trim())return json({error:'AI provider is not configured. The task was not submitted.',code:'AI_PROVIDER_UNAVAILABLE'},503,h);
+  const {data:worker,error:workerError}=await db.from('mela_ai_agents').select('id,agent_key,name,enabled').eq('id',agentId).eq('enabled',true).maybeSingle();
+  if(workerError)return json({error:'Could not verify the selected worker'},503,h);
+  if(!worker)return json({error:'Selected AI worker is disabled or not found'},404,h);
+  const {data:task,error:taskError}=await db.from('mela_ai_tasks').insert({
+   created_by:user.id,assigned_agent_id:worker.id,title:prompt.slice(0,140),
+   description:prompt,priority:3,approval_level:1,status:'queued',
+   approval_status:'not_required',retry_count:0,max_retries:2,verification_status:'pending',
+  }).select('id').single();
+  if(taskError||!task?.id)return json({error:'Could not queue the selected worker'},503,h);
+  try{
+   const execution=await fetch(url+'/functions/v1/mela-ai-execution-v2',{
+    method:'POST',headers:{Authorization:ah,apikey:anon,'Content-Type':'application/json','x-request-id':rid.slice(0,200)},
+    body:JSON.stringify({task_id:task.id}),signal:AbortSignal.timeout(55000),
+   });
+   const response=await execution.json().catch(()=>null);
+   if(!execution.ok||response?.ok!==true)return json({
+    error:execution.status===429?'AI daily limit reached. No AI answer was produced.':'AI worker could not complete the task. Check run history and provider configuration.',
+    code:response?.code??'AI_WORKER_FAILED',task_id:task.id,
+   },execution.status===429?429:503,h);
+   return json({ok:true,response:response.response,task_id:task.id,run_id:response.run_id,agent:response.agent,tool:response.tool,advisory_only:true},200,h);
+  }catch{
+   return json({error:'AI worker connection timed out. Check run history before retrying.',code:'AI_WORKER_TIMEOUT',task_id:task.id},503,h);
+  }
+ }
  if(action==='health'){
   // Read-only, permission- and MFA-gated diagnostics. Never return secrets or
   // mark workers healthy merely because their database rows are enabled.
