@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs'
 import ts from 'typescript'
 import {describe,it,expect} from 'vitest'
 const code=ts.transpileModule(readFileSync(new URL('../supabase/functions/mela-ai-admin/index.ts',import.meta.url),'utf8').replace(/^import .*$/gm,''),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText
-function api({aal='aal2',assuranceError=null,permissionError=null,role='super_admin',mfaRequired=true,rpcError=null,active=true}:any={}){
+function api({aal='aal2',assuranceError=null,permissionError=null,role='super_admin',mfaRequired=true,rpcError=null,active=true,groqKey=undefined}:any={}){
  let handler:any;let token:any;let reads=0;const queries:any[]=[];
  const mutations:any[]=[]; const db:any={rpc:async(name:string,args:any)=>{mutations.push({name,args});return {data:{data:{enabled:true}},error:rpcError}},schema:()=>db,from:(table:string)=>{
  const data:any=table==='profiles'?{account_status:active?'active':'suspended',deleted_at:null}:table==='admin_users'?{user_id:'u',role_id:'r',active:true,mfa_required:mfaRequired}:table==='roles'?{key:role}:table==='role_permissions'?[{permission_id:'p'}]:table==='permissions'?[{key:'system.manage'}]:[];
@@ -14,7 +14,7 @@ function api({aal='aal2',assuranceError=null,permissionError=null,role='super_ad
  }};
  const caller={auth:{getUser:async()=>({data:{user:{id:'u'}},error:null}),mfa:{getAuthenticatorAssuranceLevel:async(t:any)=>{token=t;return {data:{currentLevel:aal},error:assuranceError}}}}};
  let clients=0;
- new Function('Deno','createClient',code)({env:{get:()=>undefined},serve:(h:any)=>handler=h},()=>++clients===1?caller:db);
+ new Function('Deno','createClient',code)({env:{get:(k:string)=>k==='GROQ_API_KEY'?groqKey:undefined},serve:(h:any)=>handler=h},()=>++clients===1?caller:db);
  return {mutations,queries,get token(){return token},get reads(){return reads},request:(origin='https://melakulms.github.io',method='POST',body:any={action:'agents.list'})=>handler(new Request('https://test.invalid',{method,headers:{Origin:origin,Authorization:'Bearer actual-session','x-request-id':'test'},...(method==='POST'?{body:JSON.stringify(body)}:{})}))};
 }
 describe('AI admin access boundary',()=>{
@@ -70,4 +70,16 @@ it('does not allow unauthorized users to select or execute privileged workers',a
  const verified=api()
  expect((await verified.request(undefined,'POST',{action:'agent.reply',agent_id:'invalid',message:'Inspect education quality'})).status).toBe(400)
  expect(verified.mutations).toHaveLength(0)
+})
+
+it('recognizes Groq free-tier configuration without OpenAI key or model calls',async()=>{
+ const s=api({groqKey:'free-provider-key'})
+ const response=await s.request(undefined,'POST',{action:'health'})
+ expect(response.status).toBe(200)
+ const report=await response.json()
+ expect(report.provider).toBe('groq')
+ expect(report.provider_configured).toBe(true)
+ expect(report.configuration_ready).toBe(true)
+ expect(report.execution_verified).toBe(false)
+ expect(s.mutations).toHaveLength(0)
 })
