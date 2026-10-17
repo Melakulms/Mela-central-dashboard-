@@ -22,6 +22,7 @@ export async function reviewAIApproval(client:SupabaseClient,id:string,status:'a
 
 export type AIHealth = {
  provider_configured: boolean
+ provider?: 'groq'|'openai'|'none'
  enabled_agents: number
  tool_assignments: number
  run_count: number
