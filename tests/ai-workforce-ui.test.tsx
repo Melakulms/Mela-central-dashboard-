@@ -2,12 +2,12 @@
 import { afterEach,beforeEach,it,expect,vi } from 'vitest'
 import { cleanup,render,screen,fireEvent,waitFor } from '@testing-library/react'
 import AIWorkforcePanel from '../src/modules/AIWorkforcePanel'
-const mocks=vi.hoisted(()=>({agents:vi.fn(),approvals:vi.fn(),runs:vi.fn(),review:vi.fn(),toggle:vi.fn()}))
-vi.mock('../src/modules/aiWorkforce',()=>({getAIAgents:mocks.agents,getAIApprovals:mocks.approvals,getAIRuns:mocks.runs,reviewAIApproval:mocks.review,setAgentEnabled:mocks.toggle}))
+const mocks=vi.hoisted(()=>({agents:vi.fn(),approvals:vi.fn(),runs:vi.fn(),health:vi.fn(),review:vi.fn(),toggle:vi.fn()}))
+vi.mock('../src/modules/aiWorkforce',()=>({getAIAgents:mocks.agents,getAIApprovals:mocks.approvals,getAIRuns:mocks.runs,getAIHealth:mocks.health,reviewAIApproval:mocks.review,setAgentEnabled:mocks.toggle}))
 const agent={id:'agent-a',name:'Student tutor',description:'Educational support',domain:'education',enabled:true,autonomy_level:1,max_steps:2,timeout_seconds:30}
 const approval={id:'approval-a',task_id:'task-a',requested_by:'requester-a',level:2,action_type:'content.draft',action_payload:{request:'Prepare a mathematics lesson'},status:'pending',created_at:'2026-10-10T03:00:00Z'}
 const client:any={functions:{invoke:vi.fn()}}
-beforeEach(()=>{vi.resetAllMocks();mocks.agents.mockResolvedValue([agent]);mocks.approvals.mockResolvedValue({data:[approval],total:51});mocks.runs.mockResolvedValue({data:[],total:60});mocks.review.mockResolvedValue({});mocks.toggle.mockResolvedValue({})})
+beforeEach(()=>{vi.resetAllMocks();mocks.agents.mockResolvedValue([agent]);mocks.approvals.mockResolvedValue({data:[approval],total:51});mocks.runs.mockResolvedValue({data:[],total:60});mocks.health.mockResolvedValue({provider_configured:true,enabled_agents:26,tool_assignments:97,run_count:0,task_count:0,configuration_ready:true,execution_verified:false,note:'Requires live check'});mocks.review.mockResolvedValue({});mocks.toggle.mockResolvedValue({})})
 afterEach(cleanup)
 it('passes the verified client and browses beyond the first run page',async()=>{
  render(<AIWorkforcePanel client={client}/>);await screen.findByText('Student tutor');
@@ -36,4 +36,17 @@ it('does not clear a failed AI task and does not execute twice',async()=>{
  client.functions.invoke.mockResolvedValueOnce({data:{error:'Provider unavailable'},error:null}).mockResolvedValueOnce({data:{ok:true,response:'Start with algebra.'},error:null});
  render(<AIWorkforcePanel client={client}/>);await screen.findByText('Student tutor');fireEvent.change(screen.getByLabelText('AI task'),{target:{value:'Explain algebra'}});fireEvent.click(screen.getByRole('button',{name:'Run AI'}));await screen.findByRole('alert');expect((screen.getByLabelText('AI task') as HTMLTextAreaElement).value).toBe('Explain algebra');
  const retry=screen.getByRole('button',{name:'Run AI'});fireEvent.click(retry);fireEvent.click(retry);await screen.findByText('Start with algebra.');expect(client.functions.invoke).toHaveBeenCalledTimes(2)
+})
+
+it('does not confuse configured agents with successfully executed runs',async()=>{
+ render(<AIWorkforcePanel client={client}/>)
+ await screen.findByText('Student tutor')
+ expect(screen.getByText(/Configuration present; a successful real AI response is still required/)).toBeTruthy()
+ expect(screen.getByText(/This sends a prompt to the default orchestration worker/)).toBeTruthy()
+})
+it('warns the administrator if the AI provider secret is not configured',async()=>{
+ mocks.health.mockResolvedValueOnce({provider_configured:false,enabled_agents:26,tool_assignments:97,run_count:0,task_count:0,configuration_ready:false,execution_verified:false,note:'Missing secret'})
+ render(<AIWorkforcePanel client={client}/>)
+ await screen.findByText(/Missing MELA_AI_API_KEY/)
+ expect(screen.getByText(/AI service is not ready/)).toBeTruthy()
 })

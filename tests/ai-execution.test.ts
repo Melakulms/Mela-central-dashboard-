@@ -3,7 +3,7 @@ import ts from 'typescript'
 import {webcrypto} from 'node:crypto'
 import {describe,it,expect} from 'vitest'
 const code=ts.transpileModule(readFileSync(new URL('../supabase/functions/mela-ai-execution-v2/index.ts',import.meta.url),'utf8').replace(/^import .*;$/gm,''),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.None}}).outputText
-function api(owner='user-a',active=true,risk=1){
+function api(owner='user-a',active=true,risk=1,proxyStatus=200){
  let handler:any;const calls:{url:string,body:any,headers:any}[]=[];
  const fetch=async(url:string,init:any={})=>{
   const body=init.body?JSON.parse(init.body):null;calls.push({url,body,headers:init.headers});let data:any=[];
@@ -14,7 +14,7 @@ function api(owner='user-a',active=true,risk=1){
   else if(url.includes('/mela_ai_tools?'))data=[{id:'tool-a',enabled:true,risk_level:risk,required_roles:['student']}];
   else if(url.includes('/mela_ai_agent_tools?'))data=[{agent_id:'agent-a',tool_id:'tool-a'}];
   else if(url.endsWith('/mela_ai_runs'))data=[{id:'run-a'}];
-  else if(url.includes('/functions/v1/mela-openai-proxy'))data={message:{content:'A fraction represents part of a whole.'}};
+  else if(url.includes('/functions/v1/mela-openai-proxy'))return new Response(JSON.stringify(proxyStatus===200?{message:{content:'A fraction represents part of a whole.'}}:{error:'AI service is not configured'}),{status:proxyStatus});
   return new Response(JSON.stringify(data));
  };
  const env:any={SUPABASE_URL:'https://local.invalid',SUPABASE_ANON_KEY:'public',SUPABASE_SERVICE_ROLE_KEY:'server'};
@@ -49,3 +49,26 @@ it('runs personal and catalog tool reads with caller RLS, not service credential
 it('does not start an orphaned run or claim a queued approval for an unapproved tool',async()=>{
  const s=api('user-a',true,2);expect((await s.request({message:'show my profile'})).status).toBe(409);expect(s.calls.some(x=>x.body)).toBe(false);
 });
+
+it('routes Career Coach to the career worker without permitting arbitrary agent selection',async()=>{
+ const s=api()
+ expect((await s.request({purpose:'career_coach',message:'Which career suits me?'})).status).toBe(200)
+ expect(s.calls.some(x=>x.url.includes('agent_key=eq.career'))).toBe(true)
+ expect(s.calls.some(x=>x.url.includes('agent_key=eq.admin'))).toBe(false)
+})
+it('routes Career Coach course searches to the student worker with the assigned course tool',async()=>{
+ const s=api()
+ expect((await s.request({purpose:'career_coach',message:'Find AI courses'})).status).toBe(200)
+ expect(s.calls.some(x=>x.url.includes('agent_key=eq.student'))).toBe(true)
+})
+it('rejects arbitrary AI execution purposes before creating a run',async()=>{
+ const s=api()
+ expect((await s.request({purpose:'admin',message:'Try a privileged worker'})).status).toBe(400)
+ expect(s.calls.some(x=>x.url.endsWith('/mela_ai_runs'))).toBe(false)
+})
+it('surfaces a temporary provider failure as unavailable rather than success',async()=>{
+ const s=api('user-a',true,1,503)
+ const response=await s.request({purpose:'career_coach',message:'Explain fractions'})
+ expect(response.status).toBe(503)
+ expect((await response.json()).code).toBe('AI_PROVIDER_UNAVAILABLE')
+})

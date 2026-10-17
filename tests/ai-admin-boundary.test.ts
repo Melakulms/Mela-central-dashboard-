@@ -51,3 +51,15 @@ it.each([{offset:-1},{offset:1.5},{status:'unknown'}])('rejects invalid AI histo
 });
 
 it('denies suspended administrators before AI inventory reads or mutations',async()=>{const s=api({active:false});expect((await s.request()).status).toBe(403);expect(s.reads).toBe(0);expect(s.mutations).toHaveLength(0)});
+
+it('limits AI health details to verified MFA-protected administrators',async()=>{
+ const s=api()
+ const response=await s.request(undefined,'POST',{action:'health'})
+ expect(response.status).toBe(200)
+ const health=await response.json()
+ expect(health.provider_configured).toBe(false)
+ expect(health.execution_verified).toBe(false)
+ expect(health.enabled_agents).toBe(76)
+ expect(s.mutations).toHaveLength(0)
+ expect((await api({aal:'aal1'}).request(undefined,'POST',{action:'health'})).status).toBe(403)
+})
