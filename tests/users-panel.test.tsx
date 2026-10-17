@@ -18,7 +18,7 @@ it('preserves failed status decisions and submits a guarded, audited change once
  let writes=0;mock.api.mockImplementation(async(_client,action)=>{if(action==='users.list')return {data:[profile],total:1};if(action==='user.inspect')return {data:{profile,auth:null}};if(++writes===1)throw new Error('Record changed; refresh before retrying');return {data:{...profile,account_status:'suspended'}}});
  render(<UsersPanel client={client} permissions={['users.read','users.manage']}/>);fireEvent.click(await screen.findByRole('button',{name:'Inspect Learner One'}));await screen.findByLabelText('New account status');fireEvent.change(screen.getByLabelText('New account status'),{target:{value:'suspended'}});fireEvent.change(screen.getByLabelText('Status change reason'),{target:{value:'Confirmed moderation decision'}});
  fireEvent.click(screen.getByRole('button',{name:'Confirm account status change'}));await screen.findByRole('alert');expect((screen.getByLabelText('Status change reason') as HTMLTextAreaElement).value).toBe('Confirmed moderation decision');
- const retry=screen.getByRole('button',{name:'Confirm account status change'});fireEvent.click(retry);fireEvent.click(retry);await screen.findByText('Account status saved and audited.');expect(writes).toBe(2);expect(mock.api).toHaveBeenLastCalledWith(client,'user.update',{user_id:'user-a',account_status:'suspended',reason:'Confirmed moderation decision',expected_updated_at:profile.updated_at});expect((screen.getByRole('button',{name:'Confirm account status change'}) as HTMLButtonElement).disabled).toBe(true)
+ const retry=screen.getByRole('button',{name:'Confirm account status change'});fireEvent.click(retry);fireEvent.click(retry);await screen.findByText('Account status saved and audited.');expect(writes).toBe(2);expect(mock.api).toHaveBeenLastCalledWith(client,'user.update',{user_id:'user-a',account_status:'suspended',reason:'Confirmed moderation decision',expected_updated_at:profile.updated_at});expect((screen.getByRole('button',{name:'Confirm account status change'}) as HTMLButtonElement).disabled).toBe(false)
 })
 it('shows a retryable load error rather than an empty account list',async()=>{
  mock.api.mockRejectedValueOnce(new Error('Network unavailable'));render(<UsersPanel client={client} permissions={['users.read']}/>);await screen.findByRole('alert');expect(screen.queryByText('No users match these filters.')).toBeNull();fireEvent.click(screen.getByRole('button',{name:'Retry users'}));await screen.findByText('Learner One')
@@ -44,4 +44,17 @@ it.each(['student','parent','teacher','employer','company','mentor','partner'])(
  fireEvent.click(screen.getByRole('button',{name:'Confirm account status change'}))
  await screen.findByText('App access is already active. No additional account approval is needed.')
  expect(mock.api).toHaveBeenLastCalledWith(client,'user.update',{user_id:profile.id,account_status:'active',reason:'Reviewed account and approved app access.',expected_updated_at:profile.updated_at})
+})
+
+it('explains missing reasons and unchanged active status instead of silently disabling confirmation',async()=>{
+ render(<UsersPanel client={client} permissions={['users.manage']}/>)
+ fireEvent.click(await screen.findByRole('button',{name:'Inspect Learner One'}))
+ const confirm=await screen.findByRole('button',{name:'Confirm account status change'})
+ expect((confirm as HTMLButtonElement).disabled).toBe(false)
+ fireEvent.click(confirm)
+ expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringContaining('App access is already active'))
+ fireEvent.change(screen.getByLabelText('New account status'),{target:{value:'suspended'}})
+ fireEvent.click(confirm)
+ expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringContaining('at least 5 characters'))
+ expect(mock.api.mock.calls.filter(call=>call[1]==='user.update')).toHaveLength(0)
 })
