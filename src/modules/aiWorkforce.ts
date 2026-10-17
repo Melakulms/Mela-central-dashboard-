@@ -19,3 +19,17 @@ export async function setAgentEnabled(client:SupabaseClient,id:string,enabled:bo
 export async function reviewAIApproval(client:SupabaseClient,id:string,status:'approved'|'rejected',review_note:string) {
  return invokeAdminFunction(client,'mela-ai-admin','approval.review',{approval_id:id,status,review_note})
 }
+
+export type AIHealth = {
+ provider_configured: boolean
+ enabled_agents: number
+ tool_assignments: number
+ run_count: number
+ task_count: number
+ configuration_ready: boolean
+ execution_verified: boolean
+ note: string
+}
+export async function getAIHealth(client:SupabaseClient):Promise<AIHealth> {
+ return invokeAdminFunction(client,'mela-ai-admin','health')
+}
