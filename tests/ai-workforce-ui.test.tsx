@@ -47,7 +47,7 @@ it('does not confuse configured agents with successfully executed runs',async()=
 it('warns the administrator if the AI provider secret is not configured',async()=>{
  mocks.health.mockResolvedValueOnce({provider_configured:false,enabled_agents:26,tool_assignments:97,run_count:0,task_count:0,configuration_ready:false,execution_verified:false,note:'Missing secret'})
  render(<AIWorkforcePanel client={client}/>)
- await screen.findByText(/Missing MELA_AI_API_KEY/)
+ await screen.findByText(/add GROQ_API_KEY/)
  expect(screen.getByText(/AI service is not ready/)).toBeTruthy()
 })
 
@@ -61,4 +61,11 @@ it('routes a selected AI worker task only through the admin-authorized endpoint'
  expect(mocks.consult).toHaveBeenCalledWith(client,'agent-a','Review the question bank process')
  expect(client.functions.invoke).not.toHaveBeenCalled()
  expect(screen.getByText(/No administrative action was executed/)).toBeTruthy()
+})
+
+it('shows Groq free-tier provider selection without claiming completed AI responses',async()=>{
+ mocks.health.mockResolvedValueOnce({provider_configured:true,provider:'groq',enabled_agents:26,tool_assignments:97,run_count:0,task_count:0,configuration_ready:true,execution_verified:false,note:'Not verified'})
+ render(<AIWorkforcePanel client={client}/>)
+ await screen.findByText(/Groq free API/)
+ expect(screen.getByText(/successful real AI response is still required/)).toBeTruthy()
 })

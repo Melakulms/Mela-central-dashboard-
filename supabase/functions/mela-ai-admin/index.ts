@@ -32,7 +32,7 @@ Deno.serve(async req=>{
   const prompt=typeof body.message==='string'?body.message.trim():'';
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentId))return json({error:'Select a valid AI worker'},400,h);
   if(!prompt||prompt.length>6000)return json({error:'Enter an AI task of 1–6000 characters'},400,h);
-  if(!Deno.env.get('MELA_AI_API_KEY')?.trim())return json({error:'AI provider is not configured. The task was not submitted.',code:'AI_PROVIDER_UNAVAILABLE'},503,h);
+  if(!Deno.env.get('GROQ_API_KEY')?.trim()&&!Deno.env.get('MELA_AI_API_KEY')?.trim())return json({error:'AI provider is not configured. Add a free Groq API key in the Supabase GROQ_API_KEY secret. The task was not submitted.',code:'AI_PROVIDER_UNAVAILABLE'},503,h);
   const {data:worker,error:workerError}=await db.from('mela_ai_agents').select('id,agent_key,name,enabled').eq('id',agentId).eq('enabled',true).maybeSingle();
   if(workerError)return json({error:'Could not verify the selected worker'},503,h);
   if(!worker)return json({error:'Selected AI worker is disabled or not found'},404,h);
@@ -68,9 +68,13 @@ Deno.serve(async req=>{
   ]);
   if(checks.some(check=>check.error))return json({error:'AI health checks could not be completed'},503,h);
   const enabled_agents=checks[0].count??0,tool_assignments=checks[1].count??0,run_count=checks[2].count??0,task_count=checks[3].count??0;
-  const provider_configured=Boolean(Deno.env.get('MELA_AI_API_KEY')?.trim());
+  const groqReady=Boolean(Deno.env.get('GROQ_API_KEY')?.trim());
+  const openaiReady=Boolean(Deno.env.get('MELA_AI_API_KEY')?.trim());
+  const preference=Deno.env.get('MELA_AI_PROVIDER')?.toLowerCase();
+  const provider=preference==='openai'?'openai':preference==='groq'?'groq':groqReady?'groq':openaiReady?'openai':'none';
+  const provider_configured=provider==='groq'?groqReady:provider==='openai'?openaiReady:false;
   return json({
-   provider_configured,enabled_agents,tool_assignments,run_count,task_count,
+   provider_configured,provider,enabled_agents,tool_assignments,run_count,task_count,
    configuration_ready:provider_configured&&enabled_agents>0&&tool_assignments>0,
    execution_verified:false,
    note:'This checks configuration only; a successful authenticated, quota-allowed real AI response is required to verify execution.',

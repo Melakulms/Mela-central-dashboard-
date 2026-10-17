@@ -50,7 +50,7 @@ export default function AIWorkforcePanel({client}:{client:SupabaseClient}) {
   <div className="module-head"><div><h2>AI Workforce</h2><p>Agent controls, approval decisions and execution history.</p></div><button disabled={loading||busy} onClick={()=>setRevision(v=>v+1)}>Refresh AI workforce</button></div>
   <section className="detail-card" aria-label="AI worker service health"><h3>AI service readiness</h3>
    {health ? <>
-    <p><strong>Provider configuration:</strong> {health.provider_configured?'Configured':'Missing MELA_AI_API_KEY in Supabase Edge Function secrets'}</p>
+    <p><strong>Provider configuration:</strong> {health.provider_configured?`Configured (${health.provider==='groq'?'Groq free API':health.provider==='openai'?'OpenAI API':'AI provider'})`:'Missing provider key. For a no-card option, add GROQ_API_KEY to Supabase Edge Function secrets.'}</p>
     <p><strong>Enabled workers:</strong> {health.enabled_agents} · <strong>Tool assignments:</strong> {health.tool_assignments}</p>
     <p><strong>Recorded tasks:</strong> {health.task_count} · <strong>Recorded runs:</strong> {health.run_count}</p>
     <p role="status">{health.configuration_ready?'Configuration present; a successful real AI response is still required to certify worker execution.':'AI service is not ready. Check the provider secret, agent settings and tool assignments.'}</p>
