@@ -54,8 +54,14 @@ export function subscribeToAuth(
 }
 
 export async function signOutAdmin(client: SupabaseClient) {
-  const { error } = await client.auth.signOut({ scope: 'local' })
-  if (error) throw error
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    await Promise.race([client.auth.signOut({ scope: 'local' }), new Promise<void>(resolve => { timer = setTimeout(resolve, 4000) })])
+  } catch { /* Admin sessions are memory-only; navigation destroys them. */ }
+  finally {
+    clearTimeout(timer)
+    window.location.replace(import.meta.env.BASE_URL)
+  }
 }
 
 export async function invokeAdminFunction(
@@ -124,3 +130,4 @@ export async function betaAdminApi(
 export async function getAdminMe(client: SupabaseClient): Promise<AdminMe> {
   return adminApi(client, 'me')
 }
+
