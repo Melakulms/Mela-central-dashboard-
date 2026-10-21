@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/staging-scholarship-real-mfa.yml"
       - "scripts/staging-scholarship-real-mfa.mjs"
+      - "scripts/staging-scholarship-anon-smoke.mjs"
 
 permissions:
   contents: read
@@ -25,3 +26,19 @@ jobs:
       - run: npm ci
       - name: Real staging Supabase Auth and MFA acceptance
         run: node scripts/staging-scholarship-real-mfa.mjs
+
+  live-anonymous-boundary:
+    if: github.head_ref == 'staging/scholarship-access-20261021' && github.event.pull_request.head.repo.full_name == 'Melakulms/Mela-central-dashboard-'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Real staging HTTP denial tests without logins
+        run: node scripts/staging-scholarship-anon-smoke.mjs
