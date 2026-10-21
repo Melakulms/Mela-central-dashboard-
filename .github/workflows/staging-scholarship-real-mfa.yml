@@ -15,6 +15,7 @@ jobs:
     timeout-minutes: 13
     env:
       SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MELA_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
     steps:
       - uses: actions/checkout@v4
