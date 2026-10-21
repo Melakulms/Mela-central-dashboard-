@@ -1,4 +1,5 @@
 /**
+ * Run #2: staging test-only registration window enabled temporarily.
  * STAGING ONLY real Supabase Auth/MFA scholarship integration tests.
  * Credentials and TOTP seed exist solely in this test process memory.
  * No secrets, sessions, codes, receipt data or password hashes are printed.
