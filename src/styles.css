@@ -27,3 +27,9 @@
 .scholarship-revoke{padding:13px;border:1px solid #9c4455;border-radius:10px;margin-top:16px}
 .scholarship-success{background:#13362f;border:1px solid #276b56;padding:12px;border-radius:9px}
 @media(max-width:560px){.scholarship-search-row{flex-direction:column;align-items:stretch}.scholarship-history-row{flex-direction:column}.scholarship-history-row button{width:100%}.scholarship-panel .module-head{flex-direction:column}}
+
+.staging-scholarship-shell{min-height:100vh;background:#080c18}
+.staging-scholarship-header{display:flex;justify-content:space-between;align-items:center;padding:16px max(16px,calc((100vw - 1000px)/2));border-bottom:1px solid #23324f;gap:12px}
+.staging-scholarship-header button{border:1px solid #47649c;border-radius:10px;padding:10px 14px;background:#172342;color:#eef2ff;min-height:44px}
+.staging-scholarship-shell main{max-width:1020px;margin:0 auto;padding:15px}
+@media(max-width:500px){.staging-scholarship-header{flex-wrap:wrap}.staging-scholarship-shell main{padding:9px}}
