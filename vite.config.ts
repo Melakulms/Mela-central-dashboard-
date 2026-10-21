@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => {
   // No staging endpoint is silently selected; CI's normal build remains production.
   const selected = (loadEnv(mode, '.', 'VITE_').VITE_SUPABASE_URL || '').replace(/\/$/, '')
   return {
-    base: '/Mela-central-dashboard-/',
+    base: selected === STAGING ? '/' : '/Mela-central-dashboard-/',
     plugins: [
       react(),
       {
@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
           if (selected !== STAGING) return html
           const live = PRODUCTION + ' ' + PRODUCTION.replace('https:', 'wss:')
           const stage = STAGING + ' ' + STAGING.replace('https:', 'wss:')
-          return html.replace(live, stage)
+          return html.replace(live, stage).replace('<title>MELA Central Admin</title>', '<title>MELA Staging Scholarship Admin</title>').replace(/<link rel="manifest" href="\.\/manifest\.webmanifest" \/>/, '')
         },
       },
     ],
