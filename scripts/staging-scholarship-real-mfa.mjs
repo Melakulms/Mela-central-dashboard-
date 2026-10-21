@@ -1,5 +1,5 @@
 /**
- * Run #3: staged Auth tests with random, almost certainly nonexistent addresses on a deliverable TLD.
+ * Staging-only administrative provisioning does not send registration email.
  * STAGING ONLY real Supabase Auth/MFA scholarship integration tests.
  * Credentials and TOTP seed exist solely in this test process memory.
  * No secrets, sessions, codes, receipt data or password hashes are printed.
@@ -13,6 +13,9 @@ const URL = 'https://' + PROJECT + '.supabase.co'
 if (process.env.SUPABASE_URL !== URL) throw new Error('Refusing to run against a non-staging Supabase URL')
 const KEY = process.env.SUPABASE_PUBLISHABLE_KEY
 if (!KEY?.startsWith('sb_publishable_')) throw new Error('Staging publishable key missing')
+const SERVICE_KEY = process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY
+if (!SERVICE_KEY) throw new Error('Secure staging service-role key unavailable in GitHub Actions secrets; no test users created')
+const admin = createClient(URL, SERVICE_KEY, {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})
 const marker = String(process.env.GITHUB_RUN_ID || Date.now())
 const refs = []
 const clients = []
@@ -45,18 +48,18 @@ async function createAccount(name) {
  const c = client()
  const email = 'mela-' + name + '-' + marker + '-' + randomBytes(16).toString('hex') + '@gmail.com'
  const password = randomBytes(32).toString('base64url') + 'Z9!'
- const {data,error} = await c.auth.signUp({email,password,options:{data:{test_account:true,role:'student',full_name:'Test ' + name}}})
+ const {data,error} = await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{test_account:true,role:'student',full_name:'Test ' + name},app_metadata:{mela_staging_test_account:true}})
  if (error || !data.user) throw new Error('Auth signup for '+name+': '+cleanError(error || 'no user returned'))
  refs.push({role:name,id:data.user.id,email,password,client:c})
  console.log('ACCOUNT_CREATED ' + JSON.stringify({name,id:data.user.id,email}))
  return refs[refs.length-1]
 }
 async function signIn(account) {
- for (let i=0;i<100;i++) {
+ for (let i=0;i<5;i++) {
   const {error} = await account.client.auth.signInWithPassword({email:account.email,password:account.password})
   if (!error) return
-  if (i===99) throw new Error('Auth sign-in not available after approval for '+account.role+': '+cleanError(error))
-  await sleep(2500)
+  if (i===4) throw new Error('Auth sign-in not available after approval for '+account.role+': '+cleanError(error))
+  await sleep(1000)
  }
 }
 function base32Decode(input) {
@@ -111,7 +114,10 @@ try {
  const learner=await createAccount('learner')
  const other=await createAccount('other-learner')
  console.log('TEST_ACCOUNT_CREATION_COMPLETE ' + refs.length)
- console.log('ACTIVATION_GATE Awaiting staging-only email confirmations and named reviewer assignment, no credentials exposed.')
+ check(await admin.rpc('staging_scholarship_test_setup_v1',{
+   p_reviewer:reviewer.id,p_learner:learner.id,p_other:other.id
+ }), 'staging service-role test account setup')
+ console.log('TEST_STAGING_SETUP_COMPLETE reviewer assigned and three test profiles active')
  await Promise.all(refs.map(signIn))
  const initial=await invoke(learner.client,'admin_grant',learner.id,'practice_plus_30d','Non-reviewer must be denied')
  expectRefusal(initial,'non-reviewer grant')
@@ -171,5 +177,16 @@ try {
  process.exitCode=1
 } finally {
  for(const item of refs){try{await item.client.auth.signOut({scope:'global'})}catch{}}
- console.log('STAGING_DATABASE_CLEANUP_REQUIRED '+JSON.stringify({ids:refs.map(x=>x.id)}))
+ if (refs.length) {
+   const ids=refs.map(x=>x.id)
+   const prep=await admin.rpc('staging_scholarship_test_cleanup_v1',{p_ids:ids})
+   if(prep.error) output('cleanup_preparation','FAIL',cleanError(prep.error))
+   else output('cleanup_preparation','PASS','Only tagged staging scholarship grants, reviewer rows and audit rows removed')
+   let failed=0
+   for(const item of refs){
+     const del=await admin.auth.admin.deleteUser(item.id)
+     if(del.error){failed++;console.log('CLEANUP_USER_FAILED '+JSON.stringify({role:item.role,error:cleanError(del.error)}))}
+   }
+   output('cleanup_auth',failed?'FAIL':'PASS',failed?String(failed)+' staging Auth users could not be deleted':'All staging Auth test users and their Auth MFA data deleted via Auth Admin API')
+ } else output('cleanup','PASS','No test accounts were created')
 }
