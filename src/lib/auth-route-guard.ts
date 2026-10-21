@@ -18,7 +18,7 @@ export type ProtectedSection =
 
 const SECTION_PERMISSIONS: Record<Exclude<ProtectedSection, 'overview'>, string> = {
   users: 'users.read',
-  scholarships: 'users.read',
+  scholarships: 'finance.manage',
   commissions: 'finance.manage',
   opportunities: 'employers.manage',
   payments: 'finance.manage',
