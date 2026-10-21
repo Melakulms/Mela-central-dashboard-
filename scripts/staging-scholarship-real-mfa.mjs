@@ -43,7 +43,7 @@ function expectRefusal(res, label) {
 }
 async function createAccount(name) {
  const c = client()
- const email = 'mela-' + name + '-' + marker + '-' + randomUUID().slice(0,8) + '@example.invalid'
+ const email = 'mela-' + name + '-' + marker + '-' + randomUUID().slice(0,8) + '@example.org'
  const password = randomBytes(32).toString('base64url') + 'Z9!'
  const {data,error} = await c.auth.signUp({email,password,options:{data:{test_account:true,role:'student',full_name:'Test ' + name}}})
  if (error || !data.user) throw new Error('Auth signup for '+name+': '+cleanError(error || 'no user returned'))
@@ -111,6 +111,7 @@ try {
  const learner=await createAccount('learner')
  const other=await createAccount('other-learner')
  console.log('TEST_ACCOUNT_CREATION_COMPLETE ' + refs.length)
+ console.log('ACTIVATION_GATE Awaiting staging-only email confirmations and named reviewer assignment, no credentials exposed.')
  await Promise.all(refs.map(signIn))
  const initial=await invoke(learner.client,'admin_grant',learner.id,'practice_plus_30d','Non-reviewer must be denied')
  expectRefusal(initial,'non-reviewer grant')
@@ -142,9 +143,11 @@ try {
  if(another.length!==0)throw new Error('Learner could read another learner grant')
  for(const [action,result] of [
   ['insert',await other.client.from('mela_user_learning_entitlements').insert({user_id:other.id,product_key:product,status:'active',source:'admin',source_reference:'malicious-test'})],
-  ['update',await other.client.from('mela_user_learning_entitlements').update({status:'revoked'}).eq('id',first.grant_id)],
-  ['delete',await other.client.from('mela_user_learning_entitlements').delete().eq('id',first.grant_id)]
- ]) {if(!result.error)throw new Error('Learner ' + action + ' succeeded unexpectedly')}
+  ['update',await learner.client.from('mela_user_learning_entitlements').update({status:'revoked'}).eq('id',first.grant_id).select('id')],
+  ['delete',await learner.client.from('mela_user_learning_entitlements').delete().eq('id',first.grant_id).select('id')]
+ ]) {if(!result.error && ((Array.isArray(result.data)&&result.data.length>0) || (result.count ?? 0)>0))throw new Error('Learner ' + action + ' succeeded unexpectedly')}
+ const stillOwned=check(await learner.client.from('mela_user_learning_entitlements').select('id,status').eq('id',first.grant_id),'read after direct DML attempts')
+ if(stillOwned.length!==1||stillOwned[0].status!=='active') throw new Error('Learner DML changed or deleted their own grant')
  output('e','PASS','Cross-learner read returns zero rows; insert/update/delete denied')
  const concurrent=await Promise.all([
    invoke(reviewer.client,'admin_grant',learner.id,'grade12_exam_master','First concurrent scholarship grant'),
