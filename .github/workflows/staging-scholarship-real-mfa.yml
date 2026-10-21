@@ -11,6 +11,8 @@ permissions:
   contents: read
 jobs:
   real-staging-auth:
+    # Use environment-scoped staging-only secret with required reviewer protection.
+    environment: staging-auth-mfa
     if: github.head_ref == 'staging/scholarship-access-20261021' && github.event.pull_request.head.repo.full_name == 'Melakulms/Mela-central-dashboard-'
     runs-on: ubuntu-latest
     timeout-minutes: 13
