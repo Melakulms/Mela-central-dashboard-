@@ -1,0 +1,49 @@
+name: STAGING Scholarship Portable Preview
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'package*.json'
+      - '.github/workflows/staging-scholarship-portable-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  package-staging:
+    if: github.head_ref == 'staging/scholarship-access-20261021' && github.event.pull_request.head.repo.full_name == 'Melakulms/Mela-central-dashboard-'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Compile isolated staging preview
+        run: npm run build
+      - name: Ensure staging-only and no production API endpoint
+        run: |
+          test -f dist/index.html
+          grep -q 'tungqfmypuwzeyrtaseh.supabase.co' dist/index.html
+          if grep -q 'duizgtmbptmlbyipreqg.supabase.co' dist/index.html; then
+            echo 'Production Supabase URL found in staging index.html; aborting.'
+            exit 1
+          fi
+      - name: Portable staging-only site bundle (no credentials)
+        uses: actions/upload-artifact@v4
+        with:
+          name: mela-scholarship-staging-site
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14

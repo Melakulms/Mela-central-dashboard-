@@ -1,0 +1,59 @@
+# Staging-only live tests. Privileged credentials NEVER enter a pull_request job.
+# A real Auth E2E run requires explicit workflow_dispatch, trusted branch,
+# and approval in the protected GitHub environment "staging-auth-mfa".
+name: STAGING Scholarship Real MFA Acceptance
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/staging-scholarship-real-mfa.yml"
+      - "scripts/staging-scholarship-real-mfa.mjs"
+      - "scripts/staging-scholarship-anon-smoke.mjs"
+  workflow_dispatch:
+    inputs:
+      confirm_staging_only:
+        description: "Confirm no production writes, staging test accounts and cleanup only"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+jobs:
+  live-anonymous-boundary:
+    if: github.event_name == 'pull_request' && github.head_ref == 'staging/scholarship-access-20261021' && github.event.pull_request.head.repo.full_name == 'Melakulms/Mela-central-dashboard-'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Staging real HTTP anonymous boundary checks
+        run: node scripts/staging-scholarship-anon-smoke.mjs
+
+  real-staging-auth:
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_staging_only == true && github.ref == 'refs/heads/staging/scholarship-access-20261021' && github.repository == 'Melakulms/Mela-central-dashboard-'
+    environment: staging-auth-mfa
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    env:
+      SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_GHvo0PVvPVP9oo8qaslUmA_reIC-6TT
+      STAGING_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.MELA_STAGING_SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Live staging Auth MFA grants and cleanup (approved only)
+        run: node scripts/staging-scholarship-real-mfa.mjs

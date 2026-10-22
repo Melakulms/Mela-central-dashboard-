@@ -4,6 +4,7 @@ import {
   type Session,
   type SupabaseClient,
 } from '@supabase/supabase-js'
+import { canPersistStagingReviewerSession } from './scholarship-staging'
 
 export type AdminMe = {
   user: { id: string; email?: string }
@@ -26,13 +27,25 @@ export function createAdminClient() {
     try { window.localStorage.removeItem(LEGACY_ADMIN_STORAGE_KEY) } catch { /* storage may be unavailable */ }
   }
 
+  // Staging scholarship is hosted on a separate preview origin. A tab-scoped
+  // session lets Android users switch to Google Authenticator and return,
+  // including when the browser reloads the tab. It is never localStorage.
+  // The normal/production Admin retains memory-only sessions.
+  const isolatedStaging = canPersistStagingReviewerSession(url, typeof window !== 'undefined' ? window.location.origin : '')
+  let tabStorage: Storage | undefined
+  if (isolatedStaging && typeof window !== 'undefined') {
+    try { tabStorage = window.sessionStorage } catch { /* restricted browsers stay memory-only */ }
+  }
+
   return createClient(url, key, {
     auth: {
-      storageKey: 'mela-central-supabase-auth-v1',
-      // Administrative bearer tokens must not be left in origin-wide localStorage.
-      // Until the admin UI is isolated on its own origin, keep the session in memory
-      // so another application served from the same origin cannot read a persisted token.
-      persistSession: false,
+      storageKey: isolatedStaging
+        ? 'mela-staging-scholarship-tab-v1'
+        : 'mela-central-supabase-auth-v1',
+      // Never persist production Admin tokens. On the isolated staging preview,
+      // only this tab's sessionStorage can persist MFA sign-in.
+      persistSession: isolatedStaging && Boolean(tabStorage),
+      ...(tabStorage ? { storage: tabStorage } : {}),
       autoRefreshToken: true,
       detectSessionInUrl: false,
     },

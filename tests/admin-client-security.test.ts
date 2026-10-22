@@ -5,9 +5,15 @@ const source = readFileSync(new URL('../src/lib/admin-api.ts', import.meta.url),
 
 describe('admin browser session hardening', () => {
   it('does not persist the privileged session in origin-wide browser storage', () => {
-    expect(source).toMatch(/persistSession:\s*false/)
+    // Production remains in memory. Only an exact-match, isolated staging
+    // preview may persist its session inside a single browser tab.
+    expect(source).toContain('const isolatedStaging = canPersistStagingReviewerSession(url,')
+    expect(source).toContain('persistSession: isolatedStaging && Boolean(tabStorage)')
+    expect(source).toContain('storageKey: isolatedStaging')
+    expect(source).toContain("'mela-central-supabase-auth-v1'")
+    expect(source).toContain("'mela-staging-scholarship-tab-v1'")
+    expect(source).toContain('window.sessionStorage')
     expect(source).toMatch(/detectSessionInUrl:\s*false/)
-    expect(source).toContain("storageKey: 'mela-central-supabase-auth-v1'")
     expect(source).not.toContain("storageKey: 'mela-central-admin-auth'")
   })
 
