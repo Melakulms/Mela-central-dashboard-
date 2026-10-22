@@ -37,8 +37,20 @@ function AuthorizationModule(){const[data,setData]=useState<any>(null),[access,s
 createRoot(document.getElementById('root')!).render(configurationError?<div className="center"><div className="card"role="alert"><h1>MELA Admin is unavailable</h1><p>Contact the platform administrator to restore access.</p></div></div>:scholarshipStaging?<StagingScholarshipApp client={supabase}/>:<><InstallAdminApp/><App/></>);
 window.addEventListener('pageshow', event => { if(event.persisted) window.location.reload() });
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL }).catch(() => { /* Online admin access remains available. */ });
-  });
+  if (scholarshipStaging) {
+    // Staging scholarship review is online-only. Remove any inherited preview
+    // service worker so Android sign-in never opens a stale cached admin shell.
+    void navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (const registration of registrations) {
+        if (new URL(registration.scope).origin === window.location.origin) {
+          void registration.unregister()
+        }
+      }
+    }).catch(() => { /* A blocked service-worker API does not block login. */ })
+  } else {
+    window.addEventListener('load', () => {
+      void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL }).catch(() => { /* Online admin access remains available. */ })
+    })
+  }
 }
 
