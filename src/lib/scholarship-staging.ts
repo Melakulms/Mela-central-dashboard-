@@ -16,5 +16,6 @@ export function isScholarshipStagingUrl(url: string | undefined | null): boolean
 export function canPersistStagingReviewerSession(supabaseUrl: string | undefined, browserOrigin: string): boolean {
   if (!isScholarshipStagingUrl(supabaseUrl)) return false
   return /^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(browserOrigin)
+    || /^https:\/\/mela-scholarship-admin-staging(?:-[a-z0-9]+)?\.onrender\.com$/.test(browserOrigin)
     || /^http:\/\/localhost(?::[0-9]+)?$/.test(browserOrigin)
 }
