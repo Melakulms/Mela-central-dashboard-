@@ -4,7 +4,7 @@ import {
   type Session,
   type SupabaseClient,
 } from '@supabase/supabase-js'
-import { isScholarshipStagingUrl } from './scholarship-staging'
+import { canPersistStagingReviewerSession } from './scholarship-staging'
 
 export type AdminMe = {
   user: { id: string; email?: string }
@@ -31,7 +31,7 @@ export function createAdminClient() {
   // session lets Android users switch to Google Authenticator and return,
   // including when the browser reloads the tab. It is never localStorage.
   // The normal/production Admin retains memory-only sessions.
-  const isolatedStaging = isScholarshipStagingUrl(url)
+  const isolatedStaging = canPersistStagingReviewerSession(url, typeof window !== 'undefined' ? window.location.origin : '')
   let tabStorage: Storage | undefined
   if (isolatedStaging && typeof window !== 'undefined') {
     try { tabStorage = window.sessionStorage } catch { /* restricted browsers stay memory-only */ }
