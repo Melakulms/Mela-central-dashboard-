@@ -7,7 +7,7 @@ describe('admin browser session hardening', () => {
   it('does not persist the privileged session in origin-wide browser storage', () => {
     // Production remains in memory. Only an exact-match, isolated staging
     // preview may persist its session inside a single browser tab.
-    expect(source).toContain('const isolatedStaging = isScholarshipStagingUrl(url)')
+    expect(source).toContain('const isolatedStaging = canPersistStagingReviewerSession(url,')
     expect(source).toContain('persistSession: isolatedStaging && Boolean(tabStorage)')
     expect(source).toContain('storageKey: isolatedStaging')
     expect(source).toContain("'mela-central-supabase-auth-v1'")
