@@ -29,6 +29,10 @@ export default function StagingScholarshipApp({ client }: { client: SupabaseClie
       if (identityError || !identified.user || identified.user.id !== current.user.id) {
         throw new Error('The staging Auth session could not be verified.')
       }
+      // Check reviewer assignment before offering authenticator enrollment.
+      const { data: canReview, error: reviewerError } = await client.rpc('staging_scholarship_reviewer_status_v1')
+      if (reviewerError) throw reviewerError
+      if (canReview !== true) throw new Error('This account has no active staging scholarship reviewer assignment.')
       const { data: aal, error: aalError } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
       if (aalError || !aal) throw aalError || new Error('Unable to verify MFA level.')
       if (aal.currentLevel !== 'aal2') {
