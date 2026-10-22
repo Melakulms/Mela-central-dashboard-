@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest'
-const { createSpy } = vi.hoisted(() => ({ createSpy: vi.fn(() => ({ auth: {} })) }))
+const { createSpy } = vi.hoisted(() => ({ createSpy: vi.fn((..._args: unknown[]) => ({ auth: {} })) }))
 vi.mock('@supabase/supabase-js', () => ({ createClient: createSpy }))
 import { createAdminClient } from '../src/lib/admin-api'
 
