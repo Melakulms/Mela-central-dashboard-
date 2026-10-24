@@ -4,6 +4,7 @@ import type { Session, SupabaseClient } from '@supabase/supabase-js'
 import { MfaEnrollment } from './MfaEnrollment'
 import GuardianVerificationPanel from './GuardianVerificationPanel'
 import ScholarshipResearchReviewPanel from './ScholarshipResearchReviewPanel'
+import ArenaJudgeReviewPanel from './ArenaJudgeReviewPanel'
 import { isScholarshipStagingUrl } from '../lib/scholarship-staging'
 
 type Gate = 'loading' | 'login' | 'mfa-enroll' | 'mfa-challenge' | 'authorized' | 'blocked'
@@ -182,6 +183,7 @@ export default function StagingScholarshipApp({ client }: { client: SupabaseClie
       <p className="notice">Authorized super-administrator · MFA verified. Scholarship research approval does not activate payments or automatically publish university awards.</p>
       <GuardianVerificationPanel client={client}/>
       <ScholarshipResearchReviewPanel client={client}/>
+      <ArenaJudgeReviewPanel client={client}/>
     </main>
   </div>
 }
