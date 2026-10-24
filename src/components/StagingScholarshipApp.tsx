@@ -8,6 +8,7 @@ import { isScholarshipStagingUrl } from '../lib/scholarship-staging'
 
 type Gate = 'loading' | 'login' | 'mfa-enroll' | 'mfa-challenge' | 'authorized' | 'blocked'
 type Connection = 'checking' | 'online' | 'unavailable'
+type PublicSummary = { university_count:number; funding_page_count:number; research_programme_count:number; administrator_reviewed_programme_count:number; published_scholarship_count:number }
 const ISSUE = 'This is an isolated staging administrator preview. It never grants administrator privileges automatically.'
 
 function humanError(reason: unknown): string {
@@ -32,16 +33,19 @@ export default function StagingScholarshipApp({ client }: { client: SupabaseClie
   const [error,setError] = useState('')
   const [connection,setConnection] = useState<Connection>('checking')
   const [connectionDetail,setConnectionDetail] = useState('')
+  const [summary,setSummary] = useState<PublicSummary|null>(null)
   const [revision,setRevision] = useState(0)
 
   const diagnose = useCallback(async () => {
-    setConnection('checking'); setConnectionDetail('')
+    setConnection('checking'); setConnectionDetail('');setSummary(null)
     if (!staging) { setConnection('unavailable');setConnectionDetail('Incorrect backend target. This admin preview must use MELA staging only.');return }
     try {
       const { error: testError } = await client.from('universities')
         .select('id', { count:'exact',head:true })
       if (testError) throw testError
       setConnection('online')
+      const {data:research,error:researchError}=await client.rpc('staging_scholarship_public_status_v1')
+      if(!researchError && research && typeof research==='object')setSummary(research as PublicSummary)
     } catch (cause) {
       setConnection('unavailable')
       setConnectionDetail(humanError(cause))
@@ -133,13 +137,20 @@ export default function StagingScholarshipApp({ client }: { client: SupabaseClie
     <p className="muted">Staging and production use separate accounts. This page cannot enable payment collection.</p>
     <button className="secondary" type="button" onClick={()=>void diagnose()} disabled={connection==='checking'}>Check connection again</button>
   </div>
+  const publicSnapshot=summary&&<section className="detail-card" aria-label="Read-only scholarship staging summary">
+    <h2>Scholarship research · read-only overview</h2>
+    <p><strong>{summary.university_count}</strong> universities · <strong>{summary.funding_page_count}</strong> official funding-page leads</p>
+    <p><strong>{summary.research_programme_count}</strong> individually researched programmes · <strong>{summary.administrator_reviewed_programme_count}</strong> administrator-reviewed programmes</p>
+    <p><strong>{summary.published_scholarship_count}</strong> published scholarships. An institution listing does not imply eligibility or funding.</p>
+    <small>No student records are shown. Editing requires verified staging super-admin MFA.</small>
+  </section>
   if(!staging)return <div className="center"><div className="card" role="alert"><h1>Staging configuration unavailable</h1><p>This page is restricted to MELA staging. Production has not been used.</p></div></div>
   if(gate==='loading')return <div className="center"><div className="card"><h1>Checking staging administration</h1>{diagnostic}</div></div>
   if(gate==='login')return <div className="center"><form className="card login" onSubmit={e=>void signIn(e)}>
     <div className="brand"><ShieldCheck size={32}/><div><strong>MELA</strong><span>Staging Guardian &amp; Scholarships</span></div></div>
     <h1>Staging administrator sign-in</h1>
     <p className="muted">{ISSUE} Existing super-administrator assignment and Authenticator MFA are required.</p>
-    {diagnostic}
+    {diagnostic}{publicSnapshot}
     <label>Email<input type="email" autoComplete="username" required value={email} onChange={e=>setEmail(e.target.value)}/></label>
     <label>Password<input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)}/></label>
     {error&&<div className="error" role="alert">{error}</div>}
@@ -147,7 +158,7 @@ export default function StagingScholarshipApp({ client }: { client: SupabaseClie
     <small>Only assigned staging administrators can proceed. No registration or payment setup is offered here.</small>
   </form></div>
   if(gate==='blocked')return <div className="center"><div className="card blocked">
-    <h1>Administrator access not available</h1>{diagnostic}
+    <h1>Administrator access not available</h1>{diagnostic}{publicSnapshot}
     {error&&<div className="error" role="alert">{error}</div>}
     <button onClick={()=>void check(session)} disabled={busy}>Retry access check</button>
     <button className="secondary" onClick={()=>void signOut()} disabled={busy}>Sign out</button>
