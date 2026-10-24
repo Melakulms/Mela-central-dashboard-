@@ -46,8 +46,8 @@ export default function GuardianVerificationPanel({ client }: { client: Supabase
       setError('Review the parent relationship independently, record the evidence, and confirm the check before verification.')
       return
     }
-    if (decision === 'revoked' && note.length < 12) {
-      setError('A revocation reason of at least 12 characters is required.')
+    if ((decision === 'revoked' || decision === 'rejected') && note.length < 12) {
+      setError('A review decision reason of at least 12 characters is required.')
       return
     }
     setBusy(true); setError(''); setSuccess('')
@@ -93,7 +93,7 @@ export default function GuardianVerificationPanel({ client }: { client: Supabase
           {r.status === 'pending' ? <>
             <button disabled={busy || !attested[r.id] || (notes[r.id] ?? '').trim().length < 12}
               onClick={() => void decide(r, 'verified')}>Verify guardian</button>
-            <button className="danger-btn" disabled={busy} onClick={() => void decide(r, 'rejected')}>Reject request</button>
+            <button className="danger-btn" disabled={busy || (notes[r.id] ?? '').trim().length < 12} onClick={() => void decide(r, 'rejected')}>Reject request</button>
           </> : <button className="danger-btn" disabled={busy || (notes[r.id] ?? '').trim().length < 12}
             onClick={() => void decide(r, 'revoked')}>Revoke verification</button>}
         </div>
