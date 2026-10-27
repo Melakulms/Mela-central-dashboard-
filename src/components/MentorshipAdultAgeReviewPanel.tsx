@@ -20,6 +20,7 @@ export default function MentorshipAdultAgeReviewPanel({client}:{client:SupabaseC
  useEffect(()=>{
   let active=true
   setLoading(true);setError('')
+    setRows([]);setSelected(null);setNotes('');setVerifiedEvidence(false)
   void (async()=>{
     try{
       const {data,error:readError}=await client.from('mentorship_adult_age_reviews')

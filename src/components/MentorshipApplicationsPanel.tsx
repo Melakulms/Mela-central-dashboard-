@@ -21,6 +21,7 @@ export default function MentorshipApplicationsPanel({ client }: { client: Supaba
   useEffect(() => {
     let active = true
     setLoading(true); setError('')
+    setRows([]);setSelected(null);setNote('');setDecision('')
     Promise.resolve(client.from('mentorship_applications')
       .select('id,applicant_id,headline,expertise,languages,background,status,submitted_at,review_notes')
       .order('submitted_at',{ ascending:false }).limit(100))

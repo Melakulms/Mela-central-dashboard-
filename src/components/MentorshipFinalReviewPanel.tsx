@@ -28,6 +28,7 @@ export default function MentorshipFinalReviewPanel({ client }: { client: Supabas
   useEffect(() => {
     let active = true
     setLoading(true); setError('')
+    setCandidates([]); setVerifiedIds(new Set()); setSelected(null); setCredentials(false); setSafeguarding(false); setNotes('')
     void (async () => {
       try {
         const { data, error: readError } = await client.from('mentorship_applications')

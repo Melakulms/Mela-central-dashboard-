@@ -27,6 +27,7 @@ export default function MentorshipGroupsPanel({client}:{client:SupabaseClient}) 
   useEffect(()=>{
     let active=true
     setLoading(true);setError('')
+    setGroups([]);setMentors([]);setInterests([]);setSelectedMentor('')
     void (async()=>{
       try{
         const [m,g,i] = await Promise.all([

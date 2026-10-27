@@ -58,3 +58,39 @@ describe('MFA mentorship case triage',()=>{
   expect(screen.queryByText(/Mentorship safety case updated/)).toBeNull()
  })
 })
+
+it('does not attach a delayed history response to another selected case',async()=>{
+ let resolveHistory!: (value: unknown)=>void
+ const rpc=vi.fn().mockImplementation(()=>new Promise(resolve=>{resolveHistory=resolve}))
+ const records=['First concern','Second concern'].map((reason,index)=>({
+   id:'case-'+index,reporter_id:'learner-'+index,target_type:'mentorship_request',target_id:'r-'+index,
+   reason,details:'Concern details',status:'open',created_at:'2026-10-27T10:00:00Z',
+ }))
+ const from=vi.fn().mockReturnValue({select:()=>({in:()=>({order:()=>({limit:async()=>({data:records,error:null})})})})})
+ render(<MentorshipSafetyCasesPanel client={{from,rpc} as unknown as SupabaseClient}/>)
+ const buttons=await screen.findAllByRole('button',{name:'Review case'})
+ fireEvent.click(buttons[0])
+ fireEvent.click(screen.getByRole('button',{name:'View confidential review history'}))
+ fireEvent.click(buttons[1])
+ resolveHistory({data:[{decision:'reviewing',notes:'Private first-case evidence',created_at:'2026-10-27'}],error:null})
+ await waitFor(()=>expect(screen.getByRole('button',{name:'View confidential review history'})).toBeTruthy())
+ expect(screen.queryByText('Private first-case evidence')).toBeNull()
+ expect(screen.getByText('Safeguarding review — Second concern')).toBeTruthy()
+})
+
+it('clears confidential case views when refresh access is denied',async()=>{
+ let denied=false
+ const from=vi.fn().mockReturnValue({select:()=>({in:()=>({order:()=>({limit:async()=>denied
+   ? {data:null,error:{message:'MFA required'}}
+   : {data:[{id:'case',reason:'Private concern',details:'Private learner details',status:'open',created_at:'2026-10-27',target_type:'mentorship_request'}],error:null}
+ })})})})
+ render(<MentorshipSafetyCasesPanel client={{from,rpc:vi.fn()} as unknown as SupabaseClient}/>)
+ fireEvent.click(await screen.findByRole('button',{name:'Review case'}))
+ expect(screen.getByText(/Private learner details/)).toBeTruthy()
+ denied=true
+ fireEvent.click(screen.getByRole('button',{name:'Refresh safety cases'}))
+ await screen.findByRole('alert')
+ expect(screen.queryByText(/Private learner details/)).toBeNull()
+ expect(screen.queryByRole('button',{name:'Review case'})).toBeNull()
+ expect(screen.queryByText('No mentorship-specific safety cases have been submitted.')).toBeNull()
+})

@@ -23,6 +23,7 @@ export default function MentorshipSafeguardingPanel({client}:{client:SupabaseCli
   useEffect(()=>{
     let active=true
     setLoading(true);setError('')
+    setMentors([]);setSelected(null);setReason('');setConfirmed(false)
     void Promise.resolve(client.from('mentor_profiles')
       .select('user_id,headline,organization,verified,active')
       .eq('verified',true).eq('active',true).order('updated_at',{ascending:false}).limit(100))

@@ -19,9 +19,12 @@ export default function MentorshipSafetyCasesPanel({client}:{client:SupabaseClie
   const [error,setError]=useState('')
   const [notice,setNotice]=useState('')
   const lock=useRef(false)
+  const historyRequest=useRef(0)
+  const [loadFailed,setLoadFailed]=useState(false)
 
   useEffect(()=>{
-    let active=true;setLoading(true);setError('')
+    let active=true;setLoading(true);setError('');setLoadFailed(false)
+    historyRequest.current++;setHistoryLoading(false);setSelected(null);setHistory(null);setCases([])
     void Promise.resolve(client.from('reports')
       .select('id,reporter_id,target_type,target_id,reason,details,status,created_at,assigned_to,resolution_notes')
       .in('target_type',['mentor_profile','mentorship_request','mentorship_session'])
@@ -30,9 +33,9 @@ export default function MentorshipSafetyCasesPanel({client}:{client:SupabaseClie
         if(fetchError)throw new Error(fetchError.message)
         if(active)setCases((data??[]) as MentorshipCase[])
       }).catch((cause)=>{
-        if(active)setError(cause instanceof Error?cause.message:'Could not read authorized mentorship safety cases.')
+        if(active){setLoadFailed(true);setError(cause instanceof Error?cause.message:'Could not read authorized mentorship safety cases.')}
       }).finally(()=>{if(active)setLoading(false)})
-    return()=>{active=false}
+    return()=>{active=false;historyRequest.current++}
   },[client,revision])
 
   const decide=async(event:React.FormEvent)=>{
@@ -58,19 +61,21 @@ export default function MentorshipSafetyCasesPanel({client}:{client:SupabaseClie
 
   const loadHistory=async()=>{
     if(!selected||historyLoading)return
-    setHistoryLoading(true);setError('')
+    const request=++historyRequest.current
+    setHistoryLoading(true);setError('');setHistory(null)
     try{
       const {data,error:rpcError}=await client.rpc('get_mentorship_case_review_history',{
         p_case_id:selected.id,
       })
+      if(request!==historyRequest.current)return
       if(rpcError)throw new Error(rpcError.message)
       if(!Array.isArray(data))throw new Error('Confidential case history could not be verified.')
       setHistory(data.filter((v):v is {decision:string;notes:string;created_at:string}=>
         v!==null&&typeof v==='object'&&typeof v.decision==='string'
         &&typeof v.notes==='string'&&typeof v.created_at==='string'))
     }catch(cause){
-      setError(cause instanceof Error?cause.message:'Could not load protected case history.')
-    }finally{setHistoryLoading(false)}
+      if(request===historyRequest.current)setError(cause instanceof Error?cause.message:'Could not load protected case history.')
+    }finally{if(request===historyRequest.current)setHistoryLoading(false)}
   }
 
   const open=cases.filter(c=>c.status==='open'||c.status==='reviewing')
@@ -80,7 +85,7 @@ export default function MentorshipSafetyCasesPanel({client}:{client:SupabaseClie
     <button type="button" disabled={busy||loading} onClick={()=>setRevision(n=>n+1)}>Refresh safety cases</button>
     {notice&&<p role="status">{notice}</p>}
     {error&&<p role="alert" className="error">{error}</p>}
-    {loading?<p role="status">Loading authorized reports…</p>:
+    {loading?<p role="status">Loading authorized reports…</p>:loadFailed?null:
       <><p><strong>{open.length}</strong> open or under review (within the 100 most recent reports shown).</p>
         {cases.length===0?<p>No mentorship-specific safety cases have been submitted.</p>:
           <div className="table-wrap"><table>
@@ -90,7 +95,7 @@ export default function MentorshipSafetyCasesPanel({client}:{client:SupabaseClie
               <td>{report.target_type.replaceAll('_',' ')}</td>
               <td>{report.status}</td>
               <td><button type="button" disabled={busy} onClick={()=>{
-                  setSelected(report);setDecision(report.status==='reviewing'?'resolved':'reviewing')
+                  historyRequest.current++;setHistoryLoading(false);setSelected(report);setDecision(report.status==='reviewing'?'resolved':'reviewing')
                   setNotes('');setError('');setHistory(null)
                 }}>{['open','reviewing'].includes(report.status)?'Review case':'View closed case'}</button></td>
             </tr>)}</tbody>
@@ -128,7 +133,7 @@ export default function MentorshipSafetyCasesPanel({client}:{client:SupabaseClie
         {busy?'Recording decision…':'Record reviewed decision'}
       </button>{' '}
       </>}
-      <button type="button" disabled={busy} onClick={()=>{setSelected(null);setHistory(null)}}>Close case view</button>
+      <button type="button" disabled={busy} onClick={()=>{historyRequest.current++;setHistoryLoading(false);setSelected(null);setHistory(null)}}>Close case view</button>
       <p>For imminent safety risks, follow your organization's urgent safeguarding procedure. Closing a report does not automatically reactivate or suspend a mentor.</p>
     </form>}
   </section>
