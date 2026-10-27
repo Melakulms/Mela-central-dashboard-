@@ -21,9 +21,9 @@ export default function MentorshipApplicationsPanel({ client }: { client: Supaba
   useEffect(() => {
     let active = true
     setLoading(true); setError('')
-    client.from('mentorship_applications')
+    Promise.resolve(client.from('mentorship_applications')
       .select('id,applicant_id,headline,expertise,languages,background,status,submitted_at,review_notes')
-      .order('submitted_at',{ ascending:false }).limit(100)
+      .order('submitted_at',{ ascending:false }).limit(100))
       .then(({data,error:fetchError}) => {
         if (fetchError) throw fetchError
         if (active) setRows((data ?? []) as Row[])
