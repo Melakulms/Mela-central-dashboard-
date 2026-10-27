@@ -1,0 +1,77 @@
+\set ON_ERROR_STOP on
+select :'HOST' = 'db.tungqfmypuwzeyrtaseh.supabase.co' as correct_staging_host \gset
+\if :correct_staging_host
+\else
+  \echo 'Refusing non-staging connection'
+  \quit 3
+\endif
+-- Synthetic JWT claims test DB logic only, not a real Auth/MFA sign-in.
+-- All fixture changes, administrator assignment and audit rows roll back.
+begin;
+create temp table bootstrap_test_results(test text, passed boolean) on commit drop;
+do $test$
+declare
+  test_user uuid := pg_catalog.gen_random_uuid();
+  result jsonb;
+  audit_before bigint;
+begin
+  if exists(select 1 from admin.admin_users) or exists(select 1 from auth.users where lower(email)='melakuanteneh1@gmail.com') then
+    raise exception 'test requires empty staging bootstrap and no enrolled owner';
+  end if;
+  perform set_config('request.jwt.claim.sub','',true);
+  perform set_config('request.jwt.claims','{}',true);
+  result := admin.bootstrap_first_super_admin();
+  if result->>'code' is distinct from 'authentication_required' then raise exception 'unauthenticated test failed: %',result; end if;
+  insert into bootstrap_test_results values('Unauthenticated denied',true);
+
+  insert into auth.users(id,email,role,aud,raw_app_meta_data,raw_user_meta_data,is_anonymous,created_at,updated_at)
+    values(test_user,'mela-bootstrap-security-test@gmail.com','authenticated','authenticated',
+      '{"provider":"email","providers":["email"],"mela_staging_test_account":true}'::jsonb,
+      '{"test_account":true,"full_name":"Rollback bootstrap security test"}'::jsonb,false,now(),now());
+  perform set_config('request.jwt.claim.sub',test_user::text,true);
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',test_user,'aal','aal2','role','authenticated')::text,true);
+  result := admin.bootstrap_first_super_admin();
+  if result->>'code' is distinct from 'bootstrap_not_authorized' then raise exception 'wrong identity test failed: %',result; end if;
+  insert into bootstrap_test_results values('Non-owner denied',true);
+
+  update auth.users set email='melakuanteneh1@gmail.com' where id=test_user;
+  result := admin.bootstrap_first_super_admin();
+  if result->>'code' is distinct from 'email_verification_required' then raise exception 'unverified test failed: %',result; end if;
+  insert into bootstrap_test_results values('Unverified owner denied',true);
+
+  perform set_config('request.jwt.claims','{"role":"service_role"}',true);
+  update auth.users set email_confirmed_at=now() where id=test_user;
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',test_user,'aal','aal1','role','authenticated')::text,true);
+  result := admin.bootstrap_first_super_admin();
+  if result->>'code' is distinct from 'mfa_required' then raise exception 'aal1 test failed: %',result; end if;
+  insert into bootstrap_test_results values('Owner without MFA denied',true);
+
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',test_user,'aal','aal2','role','authenticated')::text,true);
+  delete from admin.bootstrap_state where id=true;
+  result := admin.bootstrap_first_super_admin();
+  if result->>'code' is distinct from 'bootstrap_state_missing' or exists(select 1 from admin.admin_users) then raise exception 'missing lock test failed: %',result; end if;
+  insert into bootstrap_test_results values('Missing lock fails closed',true);
+
+  insert into admin.bootstrap_state(id) values(true);
+  select count(*) into audit_before from admin.audit_log where action='first_admin_bootstrap_completed';
+  result := admin.bootstrap_first_super_admin();
+  if result->>'success' is distinct from 'true' then raise exception 'success test failed: %',result; end if;
+  if not exists(select 1 from admin.bootstrap_state where id=true and consumed_at is not null and consumed_by=test_user) then raise exception 'lock not consumed'; end if;
+  if (select count(*) from admin.admin_users) <> 1 then raise exception 'admin count invalid'; end if;
+  if (select count(*) from admin.audit_log where action='first_admin_bootstrap_completed') <> audit_before+1 then raise exception 'completion not audited'; end if;
+  insert into bootstrap_test_results values('Verified owner with simulated aal2 succeeds and consumes lock',true);
+
+  result := admin.bootstrap_first_super_admin();
+  if result->>'code' is distinct from 'bootstrap_already_consumed' then raise exception 'reuse test failed: %',result; end if;
+  insert into bootstrap_test_results values('Reuse denied',true);
+
+  insert into admin.bootstrap_state(id,consumed_at,consumed_by) values(true,null,null) on conflict(id) do nothing;
+  if not exists(select 1 from admin.bootstrap_state where consumed_at is not null and consumed_by=test_user) then raise exception 'seed reset consumed lock'; end if;
+  insert into bootstrap_test_results values('Repeated seed preserves consumed lock',true);
+  
+  if (select count(*) from admin.audit_log where action='first_admin_bootstrap_denied' and (actor_user_id=test_user or metadata->>'reason'='authentication_required')) < 6 then raise exception 'denial auditing missing'; end if;
+  insert into bootstrap_test_results values('Handled denials audited',true);
+end;
+$test$;
+select * from bootstrap_test_results;
+rollback;
