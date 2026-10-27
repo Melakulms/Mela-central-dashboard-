@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import MentorshipGroupAttendancePanel from './MentorshipGroupAttendancePanel'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Mentor = { user_id: string; headline: string | null }
@@ -136,5 +137,6 @@ export default function MentorshipGroupsPanel({client}:{client:SupabaseClient}) 
       </table></div>}
       <p className="muted">This queue is limited to 100 recent applications; capacity is strictly checked by the server under a group row lock. The seat summary may be partial if there are more than 100 applications.</p>
     </>}
+    <MentorshipGroupAttendancePanel client={client}/>
   </section>
 }
