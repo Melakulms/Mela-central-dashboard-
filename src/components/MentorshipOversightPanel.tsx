@@ -22,29 +22,30 @@ export default function MentorshipOversightPanel({ client }: { client: SupabaseC
   useEffect(() => {
     let active = true
     setLoading(true); setError('')
-    // Aggregate only counts; never load profile documents, meeting notes,
-    // contact information or learner-submitted assignments to this panel.
+    // Supabase returns COUNT without loading private student or mentor records.
     Promise.all([
-      client.from('mentor_profiles').select('user_id, verified, active').limit(2000),
-      client.from('mentorship_requests').select('id,status').limit(2000),
-      client.from('mentorship_sessions').select('id,status').limit(2000),
-    ]).then(([mentorsResult, requestsResult, sessionsResult]) => {
-      if (mentorsResult.error) throw mentorsResult.error
-      if (requestsResult.error) throw requestsResult.error
-      if (sessionsResult.error) throw sessionsResult.error
-      const mentors = mentorsResult.data ?? []
-      const requests = requestsResult.data ?? []
-      const sessions = sessionsResult.data ?? []
+      client.from('mentor_profiles').select('user_id',{count:'exact',head:true}),
+      client.from('mentor_profiles').select('user_id',{count:'exact',head:true}).eq('verified',true).eq('active',true),
+      client.from('mentor_profiles').select('user_id',{count:'exact',head:true}).eq('verified',false),
+      client.from('mentorship_requests').select('id',{count:'exact',head:true}),
+      client.from('mentorship_requests').select('id',{count:'exact',head:true}).eq('status','pending'),
+      client.from('mentorship_requests').select('id',{count:'exact',head:true}).eq('status','accepted'),
+      client.from('mentorship_sessions').select('id',{count:'exact',head:true}),
+      client.from('mentorship_sessions').select('id',{count:'exact',head:true}).eq('status','scheduled'),
+      client.from('mentorship_sessions').select('id',{count:'exact',head:true}).eq('status','completed'),
+    ]).then((results) => {
+      for (const result of results) if (result.error) throw result.error
+      const values = results.map((result) => result.count ?? 0)
       const result: Snapshot = {
-        mentorCount: mentors.length,
-        activeVerified: mentors.filter((m) => m.verified && m.active).length,
-        pendingVerification: mentors.filter((m) => !m.verified).length,
-        requestCount: requests.length,
-        pendingRequests: requests.filter((r) => r.status === 'pending').length,
-        acceptedRequests: requests.filter((r) => r.status === 'accepted').length,
-        sessionCount: sessions.length,
-        scheduledSessions: sessions.filter((s) => s.status === 'scheduled').length,
-        completedSessions: sessions.filter((s) => s.status === 'completed').length,
+        mentorCount: values[0],
+        activeVerified: values[1],
+        pendingVerification: values[2],
+        requestCount: values[3],
+        pendingRequests: values[4],
+        acceptedRequests: values[5],
+        sessionCount: values[6],
+        scheduledSessions: values[7],
+        completedSessions: values[8],
       }
       if (active) setSnapshot(result)
     }).catch((cause) => {
@@ -74,6 +75,6 @@ export default function MentorshipOversightPanel({ client }: { client: SupabaseC
     {snapshot && !error && <div className="grid">
       {rows.map(([label,value]) => <div className="metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}
     </div>}
-    <p className="muted">Counts are limited to the first 2,000 authorized records per type. They are not guaranteed platform-wide totals if that limit is reached.</p>
+    <p className="muted">Counts use authorized database COUNT queries; no private records are loaded into this summary.</p>
   </section>
 }
