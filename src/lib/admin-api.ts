@@ -18,6 +18,14 @@ export function createAdminClient() {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
   const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
   if (!url || !key) throw new Error('Missing Supabase public configuration')
+  // This source branch is for a completely isolated staging admin host.
+  // A misconfigured Vercel preview must fail before contacting production.
+  if (url !== 'https://tungqfmypuwzeyrtaseh.supabase.co') {
+    throw new Error('This staging administrator build requires the staging Supabase URL.')
+  }
+  if (!key.startsWith('sb_publishable_')) {
+    throw new Error('This staging administrator build requires a publishable Supabase key.')
+  }
 
   // Older builds persisted the privileged session under this origin-wide key.
   // Remove it before creating the non-persistent client so an old refresh/access
