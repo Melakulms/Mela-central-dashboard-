@@ -1,0 +1,104 @@
+-- Manual psql entry point; never put this file in supabase/migrations.
+\set ON_ERROR_STOP on
+select :'HOST' = 'db.tungqfmypuwzeyrtaseh.supabase.co' as correct_staging_host \gset
+\if :correct_staging_host
+\else
+  \echo 'Refusing: connect directly to staging db.tungqfmypuwzeyrtaseh.supabase.co'
+  \quit 3
+\endif
+begin;
+do $preflight$
+begin
+  if to_regprocedure('admin.bootstrap_first_super_admin()') is null then
+    raise exception 'Existing bootstrap function required; refuse default PUBLIC execute grant';
+  end if;
+  if has_function_privilege('anon','admin.bootstrap_first_super_admin()','EXECUTE')
+     or has_function_privilege('authenticated','admin.bootstrap_first_super_admin()','EXECUTE') then
+    raise exception 'Unexpected bootstrap grants: review before applying';
+  end if;
+end;
+$preflight$;
+-- Staging repair; invoked only against tungqfmypuwzeyrtaseh.
+-- Preserve existing function ACLs. No new execute grants.
+create or replace function admin.bootstrap_first_super_admin()
+returns jsonb language plpgsql security definer set search_path = ''
+as $function$
+declare
+  caller uuid := auth.uid();
+  caller_email text;
+  confirmed_at timestamptz;
+  anonymous_user boolean;
+  super_role uuid;
+  bootstrap_consumed timestamptz;
+  bootstrap_actor uuid;
+  req_id uuid := pg_catalog.gen_random_uuid();
+  denial text;
+  reason text;
+  updated_rows integer;
+begin
+  if caller is null then
+    denial := 'authentication_required';
+  else
+    select email, email_confirmed_at, is_anonymous
+      into caller_email, confirmed_at, anonymous_user
+      from auth.users where id = caller;
+    if not found then
+      caller := null;
+      denial := 'bootstrap_not_authorized';
+    elsif lower(coalesce(caller_email,'')) <> 'melakuanteneh1@gmail.com' or coalesce(anonymous_user,true) then
+      denial := 'bootstrap_not_authorized';
+    elsif confirmed_at is null then
+      denial := 'email_verification_required';
+    elsif coalesce(auth.jwt()->>'aal','') <> 'aal2' then
+      denial := 'mfa_required';
+    else
+      select consumed_at, consumed_by into bootstrap_consumed, bootstrap_actor
+        from admin.bootstrap_state where id=true for update;
+      if not found then
+        denial := 'bootstrap_state_missing';
+      elsif bootstrap_consumed is not null or bootstrap_actor is not null
+         or exists(select 1 from admin.admin_users)
+         or exists(select 1 from admin.audit_log where action='first_admin_bootstrap_completed') then
+        denial := 'bootstrap_already_consumed';
+      else
+        select id into super_role from admin.roles where key='super_admin' and is_privileged=true;
+        if not found then denial := 'super_admin_role_missing'; end if;
+      end if;
+    end if;
+  end if;
+  if denial is not null then
+    reason := case denial
+      when 'bootstrap_not_authorized' then 'identity_not_authorized'
+      when 'bootstrap_already_consumed' then 'bootstrap_already_consumed_or_admin_exists'
+      else denial end;
+    insert into admin.audit_log(actor_user_id,actor_role,action,target_schema,target_table,target_id,metadata,request_id)
+    values(caller,'bootstrap_candidate','first_admin_bootstrap_denied','admin','bootstrap_state','true',
+      pg_catalog.jsonb_build_object('reason',reason),req_id::text);
+    return pg_catalog.jsonb_build_object('success',false,'code',denial);
+  end if;
+  insert into admin.admin_users(user_id,role_id,mfa_required,active)
+    values(caller,super_role,true,true);
+  update admin.bootstrap_state set consumed_at=pg_catalog.now(),consumed_by=caller
+    where id=true and consumed_at is null and consumed_by is null;
+  get diagnostics updated_rows = row_count;
+  if updated_rows <> 1 then raise exception 'bootstrap_lock_update_failed'; end if;
+  insert into admin.audit_log(actor_user_id,actor_role,action,target_schema,target_table,target_id,after_data,metadata,request_id)
+  values(caller,'bootstrap_candidate','first_admin_bootstrap_completed','admin','admin_users',caller::text,
+    pg_catalog.jsonb_build_object('user_id',caller,'role_id',super_role,'mfa_required',true,'active',true),
+    pg_catalog.jsonb_build_object('bootstrap','one_time','bootstrap_locked',true),req_id::text);
+  return pg_catalog.jsonb_build_object('success',true,'role','super_admin','mfa_required',true,'bootstrap_locked',true);
+exception when unique_violation then
+  insert into admin.audit_log(actor_user_id,actor_role,action,target_schema,target_table,target_id,metadata,request_id)
+  values(caller,'bootstrap_candidate','first_admin_bootstrap_denied','admin','admin_users',caller::text,
+    pg_catalog.jsonb_build_object('reason','admin_assignment_conflict'),req_id::text);
+  return pg_catalog.jsonb_build_object('success',false,'code','bootstrap_conflict');
+end;
+$function$;
+-- Preserve a consumed row; never reopen bootstrap after prior administrator use.
+insert into admin.bootstrap_state(id,consumed_at,consumed_by)
+select true,null,null
+where not exists(select 1 from admin.admin_users)
+  and not exists(select 1 from admin.audit_log where action='first_admin_bootstrap_completed')
+on conflict(id) do nothing;
+
+commit;

@@ -1,0 +1,27 @@
+\set ON_ERROR_STOP on
+select :'HOST' = 'db.tungqfmypuwzeyrtaseh.supabase.co' as correct_staging_host \gset
+\if :correct_staging_host
+\else
+  \echo 'Refusing non-staging connection'
+  \quit 3
+\endif
+-- Staging only: minimum server-side access for the deployed admin API.
+begin;
+do $guard$
+begin
+  if has_schema_privilege('anon','admin','usage') or has_schema_privilege('authenticated','admin','usage') then
+    raise exception 'Unexpected client admin schema access; stop for review';
+  end if;
+end;
+$guard$;
+grant usage on schema admin to service_role;
+grant select on admin.admin_users, admin.roles, admin.role_permissions, admin.permissions, admin.audit_log, admin.access_requests to service_role;
+grant insert on admin.audit_log to service_role;
+grant usage on sequence admin.audit_log_id_seq to service_role;
+grant execute on function admin.apply_audited_update(uuid,text,text,jsonb,jsonb,text,jsonb) to service_role;
+-- Existing REST schema list independently verified as public, graphql_public.
+-- Only the trusted server role can use admin; browser roles retain no USAGE.
+alter role authenticator set pgrst.db_schemas = 'public, graphql_public, admin';
+notify pgrst, 'reload config';
+notify pgrst, 'reload schema';
+commit;
