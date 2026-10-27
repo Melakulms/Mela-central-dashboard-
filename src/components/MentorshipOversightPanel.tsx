@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import MentorshipIndependentOutcomePanel from './MentorshipIndependentOutcomePanel'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Snapshot = {
@@ -76,5 +77,6 @@ export default function MentorshipOversightPanel({ client }: { client: SupabaseC
       {rows.map(([label,value]) => <div className="metric" key={label}><span>{label}</span><strong>{value}</strong></div>)}
     </div>}
     <p className="muted">Counts use authorized database COUNT queries; no private records are loaded into this summary.</p>
+    <MentorshipIndependentOutcomePanel client={client}/>
   </section>
 }
