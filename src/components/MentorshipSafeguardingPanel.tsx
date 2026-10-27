@@ -23,9 +23,9 @@ export default function MentorshipSafeguardingPanel({client}:{client:SupabaseCli
   useEffect(()=>{
     let active=true
     setLoading(true);setError('')
-    void client.from('mentor_profiles')
+    void Promise.resolve(client.from('mentor_profiles')
       .select('user_id,headline,organization,verified,active')
-      .eq('verified',true).eq('active',true).order('updated_at',{ascending:false}).limit(100)
+      .eq('verified',true).eq('active',true).order('updated_at',{ascending:false}).limit(100))
       .then(({data,error:readError})=>{
         if(readError)throw new Error(readError.message)
         if(active)setMentors((data??[]) as VerifiedMentor[])
