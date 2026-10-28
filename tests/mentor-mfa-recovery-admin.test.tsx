@@ -53,6 +53,7 @@ it('rejects sensitive staff actions without AAL2 on recheck', async () => {
   aal.mockResolvedValue({ data: { currentLevel: 'aal1' }, error: null })
   render(<MentorMfaRecoveryPanel client={client} />)
   await screen.findByText(/Recovery request abc00000/)
+  fireEvent.focus(screen.getByLabelText('Independent identity-verification case reference'))
   fireEvent.click(screen.getByRole('button', { name: 'Reject' }))
   await screen.findByText(/Staff authenticator verification is required/)
   expect(rpc.mock.calls.some(([name]) => name === 'review_mentor_mfa_recovery')).toBe(false)
