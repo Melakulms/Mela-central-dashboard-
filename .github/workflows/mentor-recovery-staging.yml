@@ -1,0 +1,29 @@
+name: Mentor recovery admin staging verification
+on:
+  push:
+    branches:
+      - staging/mentor-mfa-recovery-console-20261028
+  pull_request:
+    branches:
+      - staging/admin-hosting-isolation-20261027
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_staging_ci_placeholder
