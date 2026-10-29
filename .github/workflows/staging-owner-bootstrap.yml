@@ -28,5 +28,5 @@ jobs:
       - name: Assert staging bundle cannot use production backend
         shell: bash
         run: |
-          grep -R -F -q 'This staging administrator build requires the staging Supabase URL' dist/assets
+          grep -F -q 'https://tungqfmypuwzeyrtaseh.supabase.co' dist/index.html
           ! grep -R -F -q 'https://duizgtmbptmlbyipreqg.supabase.co' dist/index.html
