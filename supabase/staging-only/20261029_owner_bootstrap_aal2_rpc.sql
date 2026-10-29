@@ -37,7 +37,6 @@ GRANT EXECUTE ON FUNCTION public.claim_staging_first_super_admin() TO authentica
 DO $verify$
 BEGIN
   IF has_function_privilege('anon','public.claim_staging_first_super_admin()','EXECUTE')
-      OR has_function_privilege('PUBLIC','public.claim_staging_first_super_admin()','EXECUTE')
       OR NOT has_function_privilege('authenticated','public.claim_staging_first_super_admin()','EXECUTE')
   THEN RAISE EXCEPTION 'Unsafe staging bootstrap RPC privileges'; END IF;
   IF EXISTS (SELECT 1 FROM admin.admin_users)
