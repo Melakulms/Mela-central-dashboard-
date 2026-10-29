@@ -7,6 +7,7 @@ Environment: **Supabase staging** `tungqfmypuwzeyrtaseh`; admin frontend: **sepa
 - Three existing Auth users have confirmed emails; none is the designated owner.
 - Zero administrator registry entries, zero enrolled TOTP factors and zero mentors.
 - General registrations stay disabled. Staging-only migration `confirmed_owner_auth_admin_only_staging_20261029` now permits only the designated owner Auth user created **already confirmed by a trusted Auth Admin operation**, while the one-use bootstrap lock is unused. It rejects normal public email-password signup and every other email.
+- Staging-only `confirmed_owner_profile_active_staging_20261029` makes that same server-confirmed owner profile active immediately; otherwise the admin API would reject the account with `ACCOUNT_DISABLED`. All other registration role/status logic remains unchanged. Forward/guarded rollback passed in a transaction.
 - Staging-only RPC `public.claim_staging_first_super_admin()` was installed with anonymous EXECUTE revoked. It checks staging token issuer and AAL2 before calling the existing owner-email, confirmed-email, one-use, audited bootstrap.
 - The admin UI branch offers a single explicit claim button only after the designated owner signs in, verifies TOTP and receives `ADMIN_MEMBERSHIP_REQUIRED` from the real admin API. It does not automatically claim an administrator role.
 
