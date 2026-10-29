@@ -6,14 +6,14 @@ Environment: **Supabase staging** `tungqfmypuwzeyrtaseh`; admin frontend: **sepa
 - The one-time `admin.bootstrap_first_super_admin()` lock is present and unused.
 - Three existing Auth users have confirmed emails; none is the designated owner.
 - Zero administrator registry entries, zero enrolled TOTP factors and zero mentors.
-- Ordinary registrations are disabled by the platform's Auth trigger; do not enable broad signup.
+- General registrations stay disabled. Staging-only migration `confirmed_owner_auth_admin_only_staging_20261029` now permits only the designated owner Auth user created **already confirmed by a trusted Auth Admin operation**, while the one-use bootstrap lock is unused. It rejects normal public email-password signup and every other email.
 - Staging-only RPC `public.claim_staging_first_super_admin()` was installed with anonymous EXECUTE revoked. It checks staging token issuer and AAL2 before calling the existing owner-email, confirmed-email, one-use, audited bootstrap.
 - The admin UI branch offers a single explicit claim button only after the designated owner signs in, verifies TOTP and receives `ADMIN_MEMBERSHIP_REQUIRED` from the real admin API. It does not automatically claim an administrator role.
 
 ## One user-controlled prerequisite (cannot be performed through an unauthenticated SQL client)
-A trusted owner must create/confirm their own staging Auth account using an authorized Supabase Auth Admin workflow. Use the project dashboard Authentication > Users and the managed invite/create-user flow **only if it works with the project's registration restriction**. Do not paste passwords, MFA setup keys, TOTP codes, private invite links, service-role keys or session JWTs into chat.
+Using the staging Supabase Dashboard on your own phone: go to **Authentication → Users → Add user → Create new user** for the designated bootstrap email. Choose your own strong password privately and **enable Auto Confirm User** (the new staging registration exception requires an already-confirmed Auth Admin-created owner identity). Confirm the target project is `tungqfmypuwzeyrtaseh` before pressing Create. The trusted dashboard action is required; the assistant cannot impersonate a signed-in Supabase Auth Admin or retrieve the password. Do not paste passwords, MFA setup keys, TOTP codes, private invite links, service-role keys or session JWTs into chat.
 
-**Important:** The existing Auth insert trigger rejects ordinary registration while `registrations` is off. If Dashboard owner invitation fails with that message, do NOT turn on general registration as a shortcut. Add and review a separately scoped, audited invitation procedure, with admin Auth proof and an allowlisted recipient. Do not insert rows into `auth.users` manually.
+**Important:** Public signup and unconfirmed email invitations remain blocked. If the Dashboard displays a registration/confirmation or database trigger error, stop and report only the non-sensitive error code; do **not** enable general registration, create a duplicate owner account, or manually insert into `auth.users`.
 
 After a confirmed account exists:
 1. On Android, open the dedicated staging administrator URL and enter the owner email and private password.
