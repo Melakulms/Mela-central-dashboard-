@@ -1,0 +1,32 @@
+name: First-owner staging bootstrap security verification
+on:
+  push:
+    branches:
+      - staging/owner-bootstrap-aal2-20261029
+  pull_request:
+    branches:
+      - staging/mentor-mfa-recovery-console-20261028
+permissions:
+  contents: read
+jobs:
+  staging-owner-bootstrap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://tungqfmypuwzeyrtaseh.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_staging_ci_placeholder
+      - name: Assert staging bundle cannot use production backend
+        shell: bash
+        run: |
+          grep -F -q 'https://tungqfmypuwzeyrtaseh.supabase.co' dist/index.html
+          ! grep -R -F -q 'https://duizgtmbptmlbyipreqg.supabase.co' dist/index.html
