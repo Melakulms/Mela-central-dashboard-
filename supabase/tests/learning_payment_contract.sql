@@ -40,12 +40,14 @@ begin
  if first_entitlement is null or not exists(select 1 from public.user_subscriptions where user_id=actor and status='premium_active') then raise exception 'Verified full amount did not activate premium'; end if;
  result:=public.finalize_mela_learning_payment(pay,provider_ref,'test','test',5000,'{}');
  if (result->>'idempotent')::boolean is distinct from true or (result->>'entitlement_id')::uuid is distinct from first_entitlement then raise exception 'Repeated settlement was not idempotent'; end if;
- update public.referral_program_config set enabled=true,free_commission_amount=10,premium_commission_amount=20,currency='ETB' where id=true;
+ update public.referral_program_config set enabled=true,free_commission_amount=20,premium_commission_amount=40,currency='ETB' where id=true;
  select code into code_value from public.referral_codes where owner_user_id=inviter and active limit 1;
  if code_value is null then raise exception 'Referral code not generated'; end if;
- commission:=public.process_registration_invitation(actor,code_value);
- if commission.amount<>20 or commission.invitee_tier<>'premium' or commission.status<>'pending' then raise exception 'Premium provisional commission is not 20 ETB pending'; end if;
- if exists(select 1 from public.earnings_ledger where source_type='referral_reward' and source_id=commission.id) then raise exception 'Referral issued spendable funds before settlement fraud review'; end if;
+ perform public.process_registration_invitation(actor,code_value);
+ if not exists(select 1 from public.registration_referrals where registered_user_id=actor)
+ then raise exception 'Attribution missing after registration'; end if;
+ if exists(select 1 from public.invitation_commissions where registered_user_id=actor)
+ then raise exception 'Old learning payment path created a premature referral commission'; end if;
 end $test$;
-select 'PASS: fee rejected; full amount activates once; settlement replay idempotent; premium provisional reward is 20 ETB pending' as result;
+select 'PASS: fee rejected; full amount activates once; settlement replay idempotent; registration attribution without premature referral reward' as result;
 rollback;
