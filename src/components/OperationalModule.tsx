@@ -8,6 +8,7 @@ import PassportVerificationReviewPanel from './PassportVerificationReviewPanel'
 import MfaBackupSetup from './MfaBackupSetup'
 import AdminAppUpdates from './AdminAppUpdates'
 import ContentStudioPanel from './ContentStudioPanel'
+import ManualSubscriptionReview from './ManualSubscriptionReview'
 
 type Row = Record<string, unknown>
 type Group = { title: string; rows: Row[] }
@@ -96,6 +97,7 @@ export default function OperationalModule({ client, section, permissions }: { cl
   }
 
   return <section className="panel">
+    {section === 'payments' && <ManualSubscriptionReview client={client} />}
     {section === 'disputes' && <p>Disputed contracts remain on hold. Reviewing a report does not release escrow, pay out funds, or issue a refund. Settlement requires provider reconciliation.</p>}
     {section === 'moderation' && <p>Proctored assessment decisions are MFA-protected and audited. Clear only when the integrity evidence supports verification; void prevents credential issuance.</p>}
     {section === 'education' && <PassportVerificationReviewPanel client={client}/>}
