@@ -41,9 +41,20 @@ export default function PaymentReadinessPanel({client}:{client:SupabaseClient}){
     const {data:result,error}=await client.rpc('mela_payment_readiness_v1',{p_action:action,p_data:payload})
     if(error)throw error
     if(result?.status!==(action==='verify_account'?'verified':'deactivated'))throw new Error('The bank account status was not confirmed.')
-    setNotice(action==='verify_account'?'Receiving account marked verified. This does NOT enable checkout.':'Receiving account deactivated. No new orders can use it.')
+    // Do not report verified until an independent server read confirms the write.
+    const {data:fresh,error:refreshError}=await client.rpc('mela_payment_readiness_v1',{p_action:'status',p_data:{}})
+    if(refreshError)throw new Error('The submission returned, but its saved status could not be confirmed. Refresh to check the account.')
+    if(!fresh || !Array.isArray(fresh.accounts))throw new Error('Could not read the bank account status from MELA.')
+    const saved=(fresh as Readiness).accounts.find(a=>a.id===selected.id)
+    const persisted=action==='verify_account'
+      ? saved?.active===true && saved?.verified===true
+      : saved?.active===false && saved?.verified===false
+    if(!persisted)throw new Error('The verification was not recorded. Check the admin MFA session and try again.')
+    setData(fresh as Readiness)
     setSelected(null)
-    await load()
+    setNotice(action==='verify_account'
+      ? 'Verified and active — confirmed from MELA production records. Checkout remains separately disabled.'
+      : 'Deactivation confirmed from MELA production records.')
    }catch(e){setError(e instanceof Error?e.message:'Could not update the account. No checkout setting changed.')}
    finally{setBusy(false)}
  }
