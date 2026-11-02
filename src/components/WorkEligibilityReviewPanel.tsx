@@ -8,6 +8,7 @@ type Review = {user_id:string;status:string;requested_at:string}
 
 export default function WorkEligibilityReviewPanel({client}:{client:Client}) {
   const [rows,setRows] = useState<Review[]>([])
+  const [queueStatus,setQueueStatus] = useState<'pending'|'approved'>('pending')
   const [selected,setSelected] = useState<Review|null>(null)
   const [note,setNote] = useState('')
   const [evidenceConfirmed,setEvidenceConfirmed] = useState(false)
@@ -22,16 +23,17 @@ export default function WorkEligibilityReviewPanel({client}:{client:Client}) {
     try {
       const {data,error:loadError}=await client.from('earn_work_eligibility_reviews')
         .select('user_id,status,requested_at')
-        .eq('status','pending').order('requested_at',{ascending:true}).limit(100)
+.eq('status',queueStatus).order('requested_at',{ascending:true}).limit(100)
       if(loadError)throw loadError
       setRows((data??[]) as Review[])
     }catch(e){setError(e instanceof Error?e.message:'Could not load adult work reviews.')}
     finally{setLoading(false)}
   }
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{void load()},[queueStatus])
   const decide=async(approved:boolean)=>{
     if(!selected||lock.current||note.trim().length<20||note.trim().length>500||!evidenceConfirmed)return
     if(approved&&!window.confirm('Confirm you independently verified this person is 18 or older using an authorized private process? No payout is activated.'))return
+    if(!approved&&selected.status==='approved'&&!window.confirm('Revoke this existing approval? New paid work access will immediately be denied. Existing contracts are retained.'))return
     lock.current=true;setBusy(true);setError('');setNotice('')
     try {
       const {data,error:reviewError}=await client.rpc('mela_review_work_eligibility_v1',{
@@ -54,7 +56,11 @@ export default function WorkEligibilityReviewPanel({client}:{client:Client}) {
     {loading&&<p role="status">Loading pending reviews…</p>}
     {error&&<div className="error" role="alert">{error}</div>}
     {notice&&<p role="status">{notice}</p>}
-    {!loading&&!rows.length&&<p>No pending adult work verification requests.</p>}
+    <label htmlFor="work-review-filter">Review status</label>
+    <select id="work-review-filter" value={queueStatus} onChange={e=>{setQueueStatus(e.target.value as 'pending'|'approved');setSelected(null)}}>
+      <option value="pending">Pending requests</option><option value="approved">Approved adults (revocation)</option>
+    </select>
+    {!loading&&!rows.length&&<p>No {queueStatus} adult work verification records.</p>}
     {!loading&&<div className="table-wrap"><table><thead><tr><th>Applicant account</th><th>Requested</th><th>Status</th><th>Review</th></tr></thead>
       <tbody>{rows.map(r=><tr key={r.user_id}><td>{r.user_id}</td>
         <td>{new Date(r.requested_at).toLocaleDateString()}</td><td>{r.status}</td>
@@ -66,10 +72,10 @@ export default function WorkEligibilityReviewPanel({client}:{client:Client}) {
       <label htmlFor="adult-work-review-note">Verification note (20–500 characters)</label>
       <textarea id="adult-work-review-note" value={note} maxLength={500} onChange={e=>setNote(e.target.value)} disabled={busy}/>
       <label><input type="checkbox" checked={evidenceConfirmed} onChange={e=>setEvidenceConfirmed(e.target.checked)} disabled={busy}/>
-        I independently checked the applicant's age/identity through an authorized process and did not rely on a self-declaration alone.</label>
+        {selected.status==='approved' ? 'I independently verified the basis for revoking eligibility and will document it without sensitive ID numbers.' : 'I independently checked the applicant\'s age/identity through an authorized process and did not rely on a self-declaration alone.'}</label>
       <div className="toolbar">
-        <button type="button" className="refresh" disabled={busy||note.trim().length<20||!evidenceConfirmed} onClick={()=>void decide(false)}>Reject eligibility</button>
-        <button type="button" disabled={busy||note.trim().length<20||!evidenceConfirmed} onClick={()=>void decide(true)}>Approve verified adult</button>
+        <button type="button" className="refresh" disabled={busy||note.trim().length<20||!evidenceConfirmed} onClick={()=>void decide(false)}>{selected.status==='approved'?'Revoke approval':'Reject eligibility'}</button>
+        {selected.status==='pending'&&<button type="button" disabled={busy||note.trim().length<20||!evidenceConfirmed} onClick={()=>void decide(true)}>Approve verified adult</button>}
         <button type="button" className="refresh" disabled={busy} onClick={()=>{setSelected(null);setNote('');setEvidenceConfirmed(false)}}>Cancel</button>
       </div>
       <p className="muted">This decision never releases funds, enables new paid work, or changes a membership plan.</p>
