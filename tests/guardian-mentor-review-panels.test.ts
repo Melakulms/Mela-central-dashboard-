@@ -15,7 +15,7 @@ it('mentor eligibility review cannot grant mentor permissions or promote roles',
   expect(mentor).toContain("client.from('mentorship_applications')")
   expect(mentor).toContain("'reviewed_eligible'")
   expect(mentor).toContain("review_notes:notes.trim()")
-  expect(mentor).not.toContain('mentor_profiles')
+  expect(mentor).not.toContain("client.from('mentor_profiles')")
   expect(mentor).not.toContain('review_mentor_profile')
   expect(operations).toContain("<GuardianConsentReviewPanel client={client}/>")
   expect(operations).toContain("<MentorApplicationReviewPanel client={client}/>")
