@@ -4,6 +4,7 @@ import { canUseModule } from '../modules/operations'
 export type ProtectedSection =
   | 'overview'
   | 'users'
+  | 'work_eligibility'
   | 'commissions'
   | 'opportunities'
   | 'payments'
@@ -17,6 +18,7 @@ export type ProtectedSection =
 
 const SECTION_PERMISSIONS: Record<Exclude<ProtectedSection, 'overview'>, string> = {
   users: 'users.read',
+  work_eligibility: 'users.manage',
   commissions: 'finance.manage',
   opportunities: 'employers.manage',
   payments: 'finance.manage',
