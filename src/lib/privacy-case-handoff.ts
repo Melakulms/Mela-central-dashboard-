@@ -43,7 +43,7 @@ export function privacyReviewHandoff({
     `Request category: ${safeCategory}`,
     'Status: in review (open)',
     `Visible staff observations: ${observedCount} of 6 categories (last 60 records only)`,
-    `Categories lacking a clear staff observation: ${unresolved}`,
+    `Categories missing or needing follow-up: ${unresolved}`,
     '',
     ...observations.map(row=>`- ${row.label}: ${row.finding}`),
     '',
