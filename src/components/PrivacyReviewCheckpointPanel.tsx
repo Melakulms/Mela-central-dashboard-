@@ -119,14 +119,14 @@ export default function PrivacyReviewCheckpointPanel({client,requestId,assignedR
     {notice && <p role="status">{notice}</p>}
     {error && <p role="alert" className="error">{error}</p>}
     {loading ? <p role="status">Loading restricted checkpoints…</p> : <>
-      <p role="status">{observed} of {CHECKPOINTS.length} categories have recorded observations; {attention} currently need follow-up. An entry does not mean the related legal requirement is satisfied.</p>
+      <p role="status">{observed} of {CHECKPOINTS.length} categories appear in the latest loaded observations; {attention} currently need follow-up. An entry does not mean the related legal requirement is satisfied.</p>
       <ul>{latest.map(item=><li key={item.value}>
         <strong>{item.label}</strong> — {item.entry
           ? FINDING_LABELS[item.entry.finding]
-          : 'Not assessed'}
+          : 'No observation in the latest 60 entries'}
         {item.entry && <span className="muted"> (recorded {new Date(item.entry.recorded_at).toLocaleString()})</span>}
       </li>)}</ul>
-      <p className="muted">This view shows the latest observation in each category; {entries.length} recorded entries loaded. Older observations remain append-only. Do not upload documents or write identifying details into checklist fields.</p>
+      <p className="muted">This view summarizes the last {entries.length} entries (maximum 60), so earlier categories may not be shown. Older observations remain append-only. Do not upload documents or write identifying details into checklist fields.</p>
       {!canRecord && !error && <p role="status">Only the assigned reviewer can record checkpoints. Other authorized super administrators can inspect the checklist.</p>}
       {canRecord && <form onSubmit={event=>void submit(event)}>
         <label htmlFor="privacy-checkpoint-category">Review checkpoint
