@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+vi.mock('../src/components/PrivacyReviewCheckpointPanel', () => ({
+  default: ({requestId}: {requestId:string}) => <section>Restricted checkpoint panel for {requestId}</section>,
+}))
 import DataRightsReviewQueue from '../src/components/DataRightsReviewQueue'
 
 const mocks = vi.hoisted(() => ({

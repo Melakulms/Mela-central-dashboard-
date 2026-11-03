@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type FormEvent } from 'react'
+const PrivacyReviewCheckpointPanel = lazy(() => import('./PrivacyReviewCheckpointPanel'))
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 type PrivacyRequest = {
@@ -10,6 +11,7 @@ type PrivacyRequest = {
   updated_at: string
   details: string | null
   response_notes: string | null
+  handled_by: string | null
 }
 const validRequestTypes = new Set(['access', 'export', 'rectification', 'erasure', 'objection', 'restriction'])
 
@@ -43,7 +45,7 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
         if (assurance?.currentLevel !== 'aal2') throw new Error('Authenticator verification is required to view privacy requests.')
         const { data, error: readError } = await client
           .from('data_subject_requests')
-          .select('id,user_id,request_type,status,requested_at,updated_at,details,response_notes')
+          .select('id,user_id,request_type,status,requested_at,updated_at,details,response_notes,handled_by')
           .in('status', ['pending', 'in_review'])
           .order('requested_at', { ascending: true })
           .limit(100)
@@ -164,6 +166,9 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
           {saving ? 'Recording review…' : selected.status === 'pending' ? 'Begin review (audited)' : 'Send review update (audited)'}
         </button>
       </form>}
+      {selected.status === 'in_review' && <Suspense fallback={<p role="status">Loading restricted review checkpoints…</p>}>
+        <PrivacyReviewCheckpointPanel client={client} requestId={selected.id} assignedReviewerId={selected.handled_by} />
+      </Suspense>}
       <button type="button" disabled={saving} onClick={() => {setSelectedId(null);setPublicNote('');setConfirmed(false)}}>Close request details</button>
     </section>}
   </section>
