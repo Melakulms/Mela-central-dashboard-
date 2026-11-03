@@ -87,7 +87,7 @@ BEGIN
      old.id::text);
   RETURN new;
 END;
-$function$
+$function$;
 
 REVOKE ALL ON FUNCTION private.guard_audit_data_subject_request_update()
 FROM PUBLIC, anon, authenticated;
