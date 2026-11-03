@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { privacyReviewHandoff } from '../lib/privacy-case-handoff'
 
 type Checkpoint = 'requester_identity' | 'guardian_authority' | 'scope_and_third_parties' |
   'retention_and_legal_basis' | 'safeguarding_review' | 'fulfillment_plan'
@@ -36,10 +37,11 @@ const FINDING_LABELS: Record<Finding,string> = {
  * These are staff attestations, not proof of actual identity verification,
  * legal approval or fulfillment. Never collect sensitive evidence in this table.
  */
-export default function PrivacyReviewCheckpointPanel({client,requestId,assignedReviewerId}:{
+export default function PrivacyReviewCheckpointPanel({client,requestId,assignedReviewerId,requestType='other'}:{
   client: SupabaseClient
   requestId: string
   assignedReviewerId: string | null
+  requestType?: string
 }) {
   const [entries,setEntries] = useState<RecordedCheckpoint[]>([])
   const [currentUserId,setCurrentUserId] = useState<string | null>(null)
@@ -51,6 +53,7 @@ export default function PrivacyReviewCheckpointPanel({client,requestId,assignedR
   const [busy,setBusy] = useState(false)
   const [error,setError] = useState('')
   const [notice,setNotice] = useState('')
+  const [copyNotice,setCopyNotice] = useState('')
   const lock = useRef(false)
 
   useEffect(() => {
@@ -85,6 +88,19 @@ export default function PrivacyReviewCheckpointPanel({client,requestId,assignedR
   }))
   const observed = latest.filter(item=>item.entry).length
   const attention = latest.filter(item=>item.entry?.finding==='needs_follow_up').length
+  const handoff = privacyReviewHandoff({requestId,requestType,entries})
+
+  async function copyRedactedHandoff() {
+    setCopyNotice('')
+    try {
+      if (typeof navigator.clipboard?.writeText !== 'function')
+        throw new Error('Clipboard unavailable')
+      await navigator.clipboard.writeText(handoff)
+      setCopyNotice('Redacted summary copied. Share only through an approved private case-management channel.')
+    } catch {
+      setCopyNotice('Clipboard access is unavailable; select the text in the read-only summary to copy it manually.')
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>){
     event.preventDefault()
@@ -128,6 +144,16 @@ export default function PrivacyReviewCheckpointPanel({client,requestId,assignedR
         {item.entry && <span className="muted"> (recorded {new Date(item.entry.recorded_at).toLocaleString()})</span>}
       </li>)}</ul>
       <p className="muted">This view summarizes the last {entries.length} entries (maximum 60), so earlier categories may not be shown. Older observations remain append-only. Do not upload documents or write identifying details into checklist fields.</p>
+      <details>
+        <summary>Redacted case handoff for authorized legal review</summary>
+        <p className="muted">This draft has no user name, user ID, private message, file or identity evidence. It is not a decision, certificate or proof of fulfillment. Share only through an approved private case-management channel.</p>
+        <label htmlFor="privacy-case-handoff-summary">Private handoff summary</label>
+        <textarea id="privacy-case-handoff-summary" readOnly rows={13} value={handoff}
+          style={{width:'100%',maxWidth:'100%',whiteSpace:'pre-wrap'}} />
+        <button type="button" onClick={()=>void copyRedactedHandoff()}>Copy redacted handoff</button>
+        {copyNotice && <p role="status">{copyNotice}</p>}
+      </details>
+      <p className="muted"><strong>Final fulfillment remains blocked:</strong> these observations cannot independently establish identity, guardian authority, legal approval or actual secure data delivery. No completion, rejection, export or deletion is performed here.</p>
       {!canRecord && !error && <p role="status">Only the assigned reviewer can record checkpoints. Other authorized super administrators can inspect the checklist.</p>}
       {canRecord && <form onSubmit={event=>void submit(event)}>
         <label htmlFor="privacy-checkpoint-category">Review checkpoint
