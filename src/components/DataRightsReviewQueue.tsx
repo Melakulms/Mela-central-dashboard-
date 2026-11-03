@@ -167,7 +167,7 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
         </button>
       </form>}
       {selected.status === 'in_review' && <Suspense fallback={<p role="status">Loading restricted review checkpoints…</p>}>
-        <PrivacyReviewCheckpointPanel client={client} requestId={selected.id} assignedReviewerId={selected.handled_by} />
+        <PrivacyReviewCheckpointPanel client={client} requestId={selected.id} requestType={selected.request_type} assignedReviewerId={selected.handled_by} />
       </Suspense>}
       <button type="button" disabled={saving} onClick={() => {setSelectedId(null);setPublicNote('');setConfirmed(false)}}>Close request details</button>
     </section>}
