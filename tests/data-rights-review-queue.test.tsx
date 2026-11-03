@@ -125,4 +125,53 @@ describe('super-admin privacy request review queue', () => {
     expect(await screen.findByRole('alert')).toHaveProperty('textContent', expect.stringContaining('Privacy queue unavailable'))
     expect(screen.queryByText(/No pending or in-review privacy requests were returned/)).toBeNull()
   })
+  it('lets an MFA-verified assigned reviewer send a progress update while keeping the case open', async () => {
+    const reviewed = {...caseRow, status:'in_review', response_notes:'Initial review is under way.'}
+    mocks.limit.mockResolvedValue({data:[reviewed],error:null})
+    render(<DataRightsReviewQueue client={client}/>)
+    fireEvent.click(await screen.findByRole('button',{name:'Inspect privacy request abc12345'}))
+    fireEvent.change(screen.getByLabelText(/Message to requester/), {
+      target:{value:'We are still reviewing your request; no action has been taken yet.'},
+    })
+    fireEvent.click(screen.getByRole('checkbox',{name:/I am the assigned reviewer/}))
+    fireEvent.click(screen.getByRole('button',{name:'Send review update (audited)'}))
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({
+      response_notes:'We are still reviewing your request; no action has been taken yet.',
+    }))
+    expect(mocks.updateEq).toHaveBeenCalledWith('id',caseRow.id)
+    expect(mocks.updateEq).toHaveBeenCalledWith('status','in_review')
+    expect(mocks.updateEq).toHaveBeenCalledWith('updated_at',caseRow.updated_at)
+    expect(await screen.findByText(/Follow-up message recorded for the requester/)).toBeTruthy()
+    expect(screen.queryByRole('button',{name:/complete request|delete personal data|reject request/i})).toBeNull()
+  })
+
+  it('rejects unchanged progress notes before any database write', async () => {
+    const reviewed = {...caseRow, status:'in_review', response_notes:'Initial review is under way.'}
+    mocks.limit.mockResolvedValue({data:[reviewed],error:null})
+    render(<DataRightsReviewQueue client={client}/>)
+    fireEvent.click(await screen.findByRole('button',{name:'Inspect privacy request abc12345'}))
+    fireEvent.change(screen.getByLabelText(/Message to requester/), {
+      target:{value:'Initial review is under way.'},
+    })
+    fireEvent.click(screen.getByRole('checkbox',{name:/I am the assigned reviewer/}))
+    expect(screen.getByRole('button',{name:'Send review update (audited)'}).hasAttribute('disabled')).toBe(true)
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  it('fails closed if reviewer MFA expires before a follow-up message', async () => {
+    const reviewed = {...caseRow, status:'in_review', response_notes:'Initial review is under way.'}
+    mocks.limit.mockResolvedValue({data:[reviewed],error:null})
+    mocks.assurance.mockResolvedValueOnce({data:{currentLevel:'aal2'},error:null})
+      .mockResolvedValueOnce({data:{currentLevel:'aal1'},error:null})
+    render(<DataRightsReviewQueue client={client}/>)
+    fireEvent.click(await screen.findByRole('button',{name:'Inspect privacy request abc12345'}))
+    fireEvent.change(screen.getByLabelText(/Message to requester/), {
+      target:{value:'Please check back after identity verification has been completed.'},
+    })
+    fireEvent.click(screen.getByRole('checkbox',{name:/I am the assigned reviewer/}))
+    fireEvent.click(screen.getByRole('button',{name:'Send review update (audited)'}))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/Authenticator verification expired/))
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
 })

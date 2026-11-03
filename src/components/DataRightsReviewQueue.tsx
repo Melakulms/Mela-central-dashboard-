@@ -13,9 +13,8 @@ type PrivacyRequest = {
 }
 const validRequestTypes = new Set(['access', 'export', 'rectification', 'erasure', 'objection', 'restriction'])
 
-/** The RLS policy and audited BEFORE UPDATE trigger are authoritative.
- * The only administrative mutation offered here is pending -> in_review.
- * Deletion, export, completion, and rejection are unavailable.
+/** RLS and the audited BEFORE UPDATE trigger enforce MFA, role and case assignment.
+ * Admin can begin or update an active review; final decision is not available.
  */
 export default function DataRightsReviewQueue({ client }: { client: SupabaseClient }) {
   const [rows, setRows] = useState<PrivacyRequest[]>([])
@@ -68,10 +67,12 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
     return Number.isFinite(date) && Date.now() - date > 14 * 24 * 60 * 60 * 1000
   }).length
 
-  async function beginReview(event: FormEvent<HTMLFormElement>) {
+  async function saveReviewMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (saveLock.current || saving || !confirmed || !selected || selected.status !== 'pending' ||
-        publicNote.trim().length < 12 || publicNote.trim().length > 500) return
+    if (saveLock.current || saving || !confirmed || !selected ||
+        (selected.status !== 'pending' && selected.status !== 'in_review') ||
+        publicNote.trim().length < 12 || publicNote.trim().length > 500 ||
+        (selected.status === 'in_review' && publicNote.trim() === (selected.response_notes ?? '').trim())) return
     saveLock.current = true
     setSaving(true)
     setError('')
@@ -80,16 +81,22 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
       const { data: assurance, error: assuranceError } = await client.auth.mfa.getAuthenticatorAssuranceLevel()
       if (assuranceError) throw assuranceError
       if (assurance?.currentLevel !== 'aal2') throw new Error('Authenticator verification expired. Please sign in and verify again.')
+      const starting = selected.status === 'pending'
+      const patch = starting
+        ? { status: 'in_review', response_notes: publicNote.trim() }
+        : { response_notes: publicNote.trim() }
       const { data, error: writeError } = await client.from('data_subject_requests')
-        .update({ status: 'in_review', response_notes: publicNote.trim() })
+        .update(patch)
         .eq('id', selected.id)
-        .eq('status', 'pending')
+        .eq('status', selected.status)
         .eq('updated_at', selected.updated_at)
         .select('id,status')
         .maybeSingle()
       if (writeError) throw writeError
       if (!data) throw new Error('This request changed or was cancelled. Refresh before retrying.')
-      setSuccess('Review started and recorded. The case remains open; no personal information was deleted or exported.')
+      setSuccess(starting
+        ? 'Review started and recorded. The case remains open; no personal information was deleted or exported.'
+        : 'Follow-up message recorded for the requester. The case remains under review; no records were deleted or exported.')
       setRevision(value => value + 1)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not start the review.')
@@ -107,7 +114,7 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
       </div>
       <button type="button" disabled={loading || saving} onClick={() => setRevision(value => value + 1)}>Refresh privacy queue</button>
     </div>
-    <p className="muted">This screen may only begin a pending review with a user-visible message and an audit entry. It cannot approve, export, delete, reject or complete a request. Separate identity and legal-retention checks remain required.</p>
+    <p className="muted">This screen can begin a review or send a follow-up message from the assigned reviewer, with MFA and database audit logging. It cannot approve, export, delete, reject or complete a request. Identity verification and legal-retention checks remain required.</p>
     <p><a href="https://github.com/Melakulms/Mela-central-dashboard-/blob/main/docs/legal/PRIVACY_REQUEST_REVIEW_RUNBOOK_2026-11-03.md" target="_blank" rel="noopener noreferrer">Open the draft privacy-request review procedure</a></p>
     {success && <p role="status">{success}</p>}
     {loading && <p role="status">Loading private requests…</p>}
@@ -138,21 +145,23 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
       <pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{selected.details || 'No additional details submitted.'}</pre>
       {selected.response_notes && <><h4>Message on record</h4><pre style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{selected.response_notes}</pre></>}
       <p className="muted">Do not copy personal data into public tickets or chats. Beginning review does not fulfill this request.</p>
-      {selected.status === 'pending' && <form onSubmit={event => void beginReview(event)}>
-        <h4>Begin administrative review</h4>
+      {(selected.status === 'pending' || selected.status === 'in_review') && <form onSubmit={event => void saveReviewMessage(event)}>
+        <h4>{selected.status === 'pending' ? 'Begin administrative review' : 'Update the requester on review progress'}</h4>
         <label htmlFor="privacy-review-public-note">Message to requester (12–500 characters)
           <textarea id="privacy-review-public-note" value={publicNote}
             onChange={event => setPublicNote(event.target.value)}
             minLength={12} maxLength={500} required disabled={saving}
             placeholder="Your request is being reviewed. We may need to verify your identity before taking action." />
         </label>
-        <p className="muted">This note is visible to the requester. Do not include private identity documents, internal staff findings, confidential evidence or third-party information.</p>
+        <p className="muted">This message is visible to the requester. An update replaces the previous visible message; the audit retains a SHA-256 fingerprint of each message change, not the message text. Only the assigned MFA-verified reviewer may update an in-review case. Do not include identity documents, confidential findings or third-party information.</p>
         <label><input type="checkbox" checked={confirmed}
           onChange={event => setConfirmed(event.target.checked)} disabled={saving} />
-          {' '}I am authorized to begin review. I understand this does not fulfill or reject the request, and my action is audited.
+          {' '}{selected.status === 'pending'
+            ? 'I am authorized to begin review. I understand this does not fulfill or reject the request, and my action is audited.'
+            : 'I am the assigned reviewer. I understand this updates the user-visible message, keeps the case open, and is audited.'}
         </label>
-        <button type="submit" disabled={saving || !confirmed || publicNote.trim().length < 12 || publicNote.trim().length > 500}>
-          {saving ? 'Recording review…' : 'Begin review (audited)'}
+        <button type="submit" disabled={saving || !confirmed || publicNote.trim().length < 12 || publicNote.trim().length > 500 || (selected.status === 'in_review' && publicNote.trim() === (selected.response_notes ?? '').trim())}>
+          {saving ? 'Recording review…' : selected.status === 'pending' ? 'Begin review (audited)' : 'Send review update (audited)'}
         </button>
       </form>}
       <button type="button" disabled={saving} onClick={() => {setSelectedId(null);setPublicNote('');setConfirmed(false)}}>Close request details</button>
