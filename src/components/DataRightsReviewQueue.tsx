@@ -167,7 +167,7 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
       <button type="submit" disabled={loading || lookupBusy || saving}>{lookupBusy ? 'Finding…' : 'Find active request'}</button>
     </form>
     <p className="muted">The request reference is not proof of identity. Independently verify the account holder or guardian before acting. Only pending or in-review cases are returned; no global user search is provided.</p>
-    {lookupError && <p role="alert">{lookupError}</p>
+    {lookupError && <p role="alert">{lookupError}</p>}
     <p><a href="https://github.com/Melakulms/Mela-central-dashboard-/blob/main/docs/legal/PRIVACY_REQUEST_REVIEW_RUNBOOK_2026-11-03.md" target="_blank" rel="noopener noreferrer">Open the draft privacy-request review procedure</a></p>
     {success && <p role="status">{success}</p>}
     {loading && <p role="status">Loading private requests…</p>}
