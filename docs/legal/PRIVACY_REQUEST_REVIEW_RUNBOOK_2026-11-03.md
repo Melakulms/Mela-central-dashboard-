@@ -5,7 +5,7 @@
 
 ## Authorized access
 
-The live `public.data_subject_requests` table is guarded by RLS. The `private.is_admin_user()` policy currently allows an active MFA-required super administrator only when the session is at `aal2` (aside from system/service access). The admin UI exposes a read-only request queue under **Audit Log** only when the administrative permissions include `*`. The UI's permissions check is not the security boundary; database RLS is.
+The live `public.data_subject_requests` table is guarded by RLS. The `private.is_admin_user()` policy currently allows an active MFA-required super administrator only when the session is at `aal2` (aside from system/service access). The admin UI exposes a restricted request queue under **Audit Log** only when the administrative permissions include `*`. The UI's permissions check is not the security boundary; database RLS is.
 
 Do not grant broad access to child-data or rights requests for ordinary administrator roles. If additional data-protection reviewers are approved, introduce a scoped server-side authorization role with MFA and independently tested RLS before enabling access.
 
@@ -16,9 +16,10 @@ Do not grant broad access to child-data or rights requests for ordinary administ
 3. Independently confirm the requesting user's identity and relationship to any affected learner or guardian. A Telegram registration code or an email string alone does not prove legal authority to request a child's information.
 4. Review the relevant lawful basis, any safety risks, exemptions and required retention. Do not disclose third-party, child, employer or mentor personal information through a data export.
 5. Route requests needing safeguarding, financial/accounting, regulatory or evidence-preservation review to the trained responsible staff under approved access controls. Never paste personal details into public GitHub issues, Telegram channels or unverified email threads.
-6. Document a reasoned decision in an approved audited case-management workflow when available. At present this admin UI is **read-only** and deliberately does **not** provide a mutation action. Do not claim a request is complete simply because it appears in this queue.
-7. Send the decision through a verified private contact channel. If the request cannot lawfully be fully fulfilled, explain the applicable reason and any available review or complaint channel, after legal review.
-8. Recheck statuses until all requests are accounted for. Use the 14-day age indicator as an **internal monitoring alert**, not a statutory deadline or promise of response time.
+6. **Begin review only:** for an eligible pending request, select **Inspect**, enter a 12–500 character **user-visible** review message, confirm that you are authorized, and choose **Begin review (audited)**. Do not put identity evidence, confidential staff notes or third-party details in this message. The database requires an active super administrator at `aal2`, enforces the `pending → in_review` transition, attributes the reviewer to the authenticated user, updates the timestamp, and appends a redacted event to `admin.audit_log`. A stale or cancelled request cannot be reopened by this action. This is not a final review decision.
+7. **Final resolution remains unavailable:** there is no completed/rejected/erased/exported button and no automatic account deletion. The completed or rejected status must not be set using manual SQL as a substitute for an approved, tested, legally reviewed workflow.
+8. Send any final decision through a verified private contact channel. If the request cannot lawfully be fully fulfilled, explain the applicable reason and any available review or complaint channel, after legal review.
+9. Recheck statuses until all requests are accounted for. Use the 14-day age indicator as an **internal monitoring alert**, not a statutory deadline or promise of response time.
 
 ## Escalation and security
 
@@ -32,7 +33,8 @@ Do not grant broad access to child-data or rights requests for ordinary administ
 
 - Qualified Ethiopian counsel must approve user-rights wording, access process, storage locations, cross-border safeguards, regulator registrations and statutory deadlines under Personal Data Protection Proclamation No. 1321/2024.
 - MELA's current Supabase production region is **eu-west-1**. Ethiopia-local storage obligations and applicable approved transfer/processing arrangements remain unresolved. Do not mark data-hosting compliance passed.
-- A dedicated audited decision mechanism and negative/positive authorization tests are required before administrative status transitions can be enabled.
+- The **begin-review** transition has staging rollback-only positive and negative tests (owner cancellation, MFA administrator review, non-admin attempts, attempts to change immutable fields, and AAL1 denial). No test requests or audit rows were retained.
+- A **separate** counsel-approved and audited decision mechanism with independent authorization and fulfillment tests is still required before completion, rejection, information export or erasure can be enabled.
 - Test with real MFA-verified super administrator and distinct non-admin/guardian/learner accounts in a permitted environment. No production sample users or personal requests should be fabricated for testing.
 - Retention schedule, verified operator/privacy contact, staffing and incident response procedures must be finalized before unrestricted public launch.
 
