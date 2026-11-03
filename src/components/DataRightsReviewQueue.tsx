@@ -25,6 +25,10 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [referenceInput, setReferenceInput] = useState('')
+  const [lookupResult, setLookupResult] = useState<PrivacyRequest | null>(null)
+  const [lookupError, setLookupError] = useState('')
+  const [lookupBusy, setLookupBusy] = useState(false)
   const [publicNote, setPublicNote] = useState('')
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -36,6 +40,8 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
     setError('')
     setRows([])
     setSelectedId(null)
+    setLookupResult(null)
+    setLookupError('')
     setPublicNote('')
     setConfirmed(false)
     void (async () => {
@@ -62,12 +68,47 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
 
   const pending = rows.filter(row => row.status === 'pending').length
   const reviewing = rows.filter(row => row.status === 'in_review').length
-  const selected = rows.find(row => row.id === selectedId) ?? null
+  const selected = rows.find(row => row.id === selectedId) ??
+    (lookupResult?.id === selectedId ? lookupResult : null)
   // Internal attention threshold, not a representation of the legal deadline.
   const attention = rows.filter(row => {
     const date = Date.parse(row.requested_at)
     return Number.isFinite(date) && Date.now() - date > 14 * 24 * 60 * 60 * 1000
   }).length
+
+  async function findByReference(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const reference = referenceInput.trim().toLowerCase()
+    setLookupError('')
+    setLookupResult(null)
+    if (!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(reference)) {
+      setLookupError('Enter the exact UUID request reference supplied by the account owner.')
+      return
+    }
+    if (lookupBusy || loading || saving) return
+    setLookupBusy(true)
+    try {
+      const {data: assurance,error: assuranceError} = await client.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (assuranceError) throw assuranceError
+      if (assurance?.currentLevel !== 'aal2')
+        throw new Error('Authenticator verification is required to locate private requests.')
+      const {data,error: findError} = await client.from('data_subject_requests')
+        .select('id,user_id,request_type,status,requested_at,updated_at,details,response_notes,handled_by')
+        .eq('id', reference)
+        .in('status', ['pending','in_review'])
+        .maybeSingle()
+      if (findError) throw findError
+      if (!data) throw new Error('No active request was found for this reference. Confirm it privately with the account owner.')
+      setLookupResult(data as PrivacyRequest)
+      setSelectedId((data as PrivacyRequest).id)
+      setPublicNote('')
+      setConfirmed(false)
+    } catch (cause) {
+      setLookupError(cause instanceof Error ? cause.message : 'Could not locate the active request.')
+    } finally {
+      setLookupBusy(false)
+    }
+  }
 
   async function saveReviewMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -117,6 +158,16 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
       <button type="button" disabled={loading || saving} onClick={() => setRevision(value => value + 1)}>Refresh privacy queue</button>
     </div>
     <p className="muted">This screen can begin a review or send a follow-up message from the assigned reviewer, with MFA and database audit logging. It cannot approve, export, delete, reject or complete a request. Identity verification and legal-retention checks remain required.</p>
+    <form onSubmit={event=>void findByReference(event)}>
+      <label htmlFor="privacy-exact-reference">Find an active privacy request by its exact private reference</label>
+      <input id="privacy-exact-reference" value={referenceInput} maxLength={36}
+        placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        onChange={event=>setReferenceInput(event.target.value)}
+        disabled={loading || lookupBusy || saving} />
+      <button type="submit" disabled={loading || lookupBusy || saving}>{lookupBusy ? 'Finding…' : 'Find active request'}</button>
+    </form>
+    <p className="muted">The request reference is not proof of identity. Independently verify the account holder or guardian before acting. Only pending or in-review cases are returned; no global user search is provided.</p>
+    {lookupError && <p role="alert">{lookupError}</p>
     <p><a href="https://github.com/Melakulms/Mela-central-dashboard-/blob/main/docs/legal/PRIVACY_REQUEST_REVIEW_RUNBOOK_2026-11-03.md" target="_blank" rel="noopener noreferrer">Open the draft privacy-request review procedure</a></p>
     {success && <p role="status">{success}</p>}
     {loading && <p role="status">Loading private requests…</p>}
