@@ -36,14 +36,18 @@ jobs:
           done
           grep -Fq 'MELA' /tmp/mela-learner.html
           grep -Fq 'MELA Central Admin' /tmp/mela-admin.html
-          asset="$(grep -oE '/Mela-central-dashboard-/assets/[^" ]+\.js' /tmp/mela-admin.html | head -1)"
+          asset="$(grep -oE '/Mela-central-dashboard-/assets/[^" ]+\.js' /tmp/mela-admin.html | head -1 || true)"
           if [ -z "$asset" ]; then echo '::error::Admin HTML contains no scoped JS bundle'; exit 1; fi
           curl -fsSL --max-time 20 -D /tmp/mela-js.headers -o /tmp/mela-bundle.js "https://central-dashboard-gamma.vercel.app${asset}"
           grep -Eiq '^content-type:.*(javascript|ecmascript)' /tmp/mela-js.headers || { echo '::error::Admin bundle is not JavaScript'; exit 1; }
           curl -fsSL --max-time 20 "${admin}manifest.webmanifest" -o /tmp/mela-admin-manifest.json
           grep -Fq 'MELA Central Admin' /tmp/mela-admin-manifest.json
           curl -fsSL --max-time 20 "${admin}sw.js" -o /tmp/mela-admin-sw.js
-          grep -Fq 'Admin-only scope' /tmp/mela-admin-sw.js
+          # The shipped navigation-only service worker never caches private records.
+          # Validate its actual privacy boundary instead of an obsolete label.
+          grep -Fq 'No account data is cached.' /tmp/mela-admin-sw.js || { echo '::error::Admin service worker privacy declaration missing'; exit 1; }
+          grep -Fq "event.request.mode !== 'navigate'" /tmp/mela-admin-sw.js || { echo '::error::Admin service worker is not limited to navigation requests'; exit 1; }
+          grep -Fq "url.origin !== scope.origin" /tmp/mela-admin-sw.js || { echo '::error::Admin service worker origin restriction missing'; exit 1; }
           curl -fsSL --max-time 15 "${learner}mela-release.json" -o /tmp/mela-release.json
           grep -Eq '"commit"[[:space:]]*:[[:space:]]*"[a-f0-9]{40}"' /tmp/mela-release.json
           code="$(curl -sS -o /tmp/mela-admin-unauth.json -w '%{http_code}' --max-time 15 -X POST "${backend}/functions/v1/mela-admin-api" -H 'Content-Type: application/json' -d '{"action":"me"}')"
