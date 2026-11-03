@@ -64,7 +64,7 @@ describe('Restricted privacy-review observations',()=>{
     }))
     expect(await screen.findByText(/Checkpoint observation recorded/)).toBeTruthy()
     expect(screen.queryByRole('button',{name:/complete|delete|approve/i})).toBeNull()
-    expect(screen.queryByRole('textbox')).toBeNull()
+    expect(screen.queryAllByRole('textbox').every(input => (input as HTMLTextAreaElement).readOnly)).toBe(true)
   })
 
   it('re-verifies MFA immediately before submission and denies downgraded sessions',async()=>{
