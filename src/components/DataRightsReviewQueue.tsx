@@ -153,7 +153,7 @@ export default function DataRightsReviewQueue({ client }: { client: SupabaseClie
             minLength={12} maxLength={500} required disabled={saving}
             placeholder="Your request is being reviewed. We may need to verify your identity before taking action." />
         </label>
-        <p className="muted">This message is visible to the requester. An update replaces the previous visible message; the audit retains a non-reversible SHA-256 fingerprint of each message change, not the message text. Only the assigned MFA-verified reviewer may update an in-review case. Do not include identity documents, confidential findings or third-party information.</p>
+        <p className="muted">This message is visible to the requester. An update replaces the previous visible message; the audit retains a SHA-256 fingerprint of each message change, not the message text. Only the assigned MFA-verified reviewer may update an in-review case. Do not include identity documents, confidential findings or third-party information.</p>
         <label><input type="checkbox" checked={confirmed}
           onChange={event => setConfirmed(event.target.checked)} disabled={saving} />
           {' '}{selected.status === 'pending'
