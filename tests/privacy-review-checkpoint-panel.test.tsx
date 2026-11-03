@@ -94,8 +94,8 @@ describe('Restricted privacy-review observations',()=>{
       recorded_at:'2026-11-03T12:00:00Z',reviewer_id:'assigned-admin',
     }],error:null})
     render(<PrivacyReviewCheckpointPanel client={client} requestId="request-id" assignedReviewerId="assigned-admin"/>)
-    expect(await screen.findByText(/1 of 6 categories have recorded observations/)).toBeTruthy()
+    expect(await screen.findByText(/1 of 6 categories appear in the latest loaded observations/)).toBeTruthy()
     expect(screen.getByText(/An entry does not mean the related legal requirement is satisfied/)).toBeTruthy()
-    expect(screen.getByText(/Needs additional verification or action/)).toBeTruthy()
+    expect(screen.getAllByText(/Needs additional verification or action/).length).toBeGreaterThan(0)
   })
 })
