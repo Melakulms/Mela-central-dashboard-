@@ -115,6 +115,7 @@ export default function PrivacyReviewCheckpointPanel({client,requestId,assignedR
 
   return <section aria-label="Internal privacy review checkpoints" className="detail-card">
     <h4>Pre-decision review checkpoints (restricted)</h4>
+    <p><a href="https://github.com/Melakulms/Mela-central-dashboard-/blob/main/docs/legal/PRIVACY_REQUEST_PRE_DECISION_CHECKPOINTS_2026-11-03.md" target="_blank" rel="noopener noreferrer">Draft checkpoint procedure and legal safeguards</a></p>
     <p className="muted">Append-only staff observations. These are not independent evidence, verified identity documents, legal approval, or permission to complete the request. The audit logs the category and finding, not private documents.</p>
     {notice && <p role="status">{notice}</p>}
     {error && <p role="alert" className="error">{error}</p>}
