@@ -1,9 +1,10 @@
-import { useEffect,useState } from 'react'
+import { lazy, Suspense, useEffect,useState } from 'react'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { adminApi } from '../lib/admin-api'
 import UserWorkflowAudit from './UserWorkflowAudit'
+const DataRightsReviewQueue = lazy(() => import('./DataRightsReviewQueue'))
 type Entry={id:string;created_at:string;actor_role?:string;actor_user_id?:string;action?:string;target_schema?:string;target_table?:string;target_id?:string;request_id?:string;before_data?:unknown;after_data?:unknown;metadata?:unknown}
-export default function AuditPanel({client}:{client:SupabaseClient}) {
+export default function AuditPanel({client,permissions=[]}:{client:SupabaseClient;permissions?:string[]}) {
  const [rows,setRows]=useState<Entry[]>([]),[total,setTotal]=useState(0),[page,setPage]=useState(0),[search,setSearch]=useState(''),[applied,setApplied]=useState(''),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0),[selected,setSelected]=useState<Entry|null>(null)
  useEffect(()=>{let active=true;setLoading(true);setError('');setSelected(null);adminApi(client,'audit.list',{limit:25,offset:page*25,search:applied}).then(result=>{if(active){setRows(result.data??[]);setTotal(result.total??0)}}).catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'Unable to load audit history.')}).finally(()=>{if(active)setLoading(false)});return ()=>{active=false}},[client,page,applied,revision])
  return <section className="panel"><div className="module-head"><div><h2>Audit Log</h2><p>{total} matching administrative records.</p></div><button disabled={loading} onClick={()=>setRevision(v=>v+1)}>Refresh audit log</button></div>
@@ -13,5 +14,6 @@ export default function AuditPanel({client}:{client:SupabaseClient}) {
  <div className="toolbar"><button disabled={loading||page===0} onClick={()=>setPage(v=>v-1)}>Previous audit records</button><span>Page {page+1} · {total} records</span><button disabled={loading||(page+1)*25>=total} onClick={()=>setPage(v=>v+1)}>Next audit records</button></div>
  {selected&&<section className="detail-card" aria-label="Audit details"><h3>{selected.action}</h3><p>Actor: {selected.actor_user_id??'—'}</p><p>Request: {selected.request_id??'—'}</p><h4>Before</h4><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(selected.before_data,null,2)}</pre><h4>After</h4><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(selected.after_data,null,2)}</pre><h4>Audit context</h4><pre style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(selected.metadata,null,2)}</pre><button onClick={()=>setSelected(null)}>Close audit details</button></section>}
  <UserWorkflowAudit client={client}/>
+ {permissions.includes('*') && <Suspense fallback={<p role="status">Loading privacy review controls…</p>}><DataRightsReviewQueue client={client}/></Suspense>}
  </section>
 }
