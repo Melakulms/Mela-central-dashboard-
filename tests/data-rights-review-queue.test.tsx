@@ -16,6 +16,9 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   updateEq: vi.fn(),
   updateResult: vi.fn(),
+  lookupEq: vi.fn(),
+  lookupIn: vi.fn(),
+  lookupResult: vi.fn(),
 }))
 const client = { auth: { mfa: { getAuthenticatorAssuranceLevel: mocks.assurance } },
   from: mocks.from } as any
@@ -36,10 +39,13 @@ beforeEach(() => {
     select: () => ({ maybeSingle: mocks.updateResult }),
   }
   mocks.from.mockReturnValue({ select: mocks.select, update: mocks.update })
-  mocks.select.mockReturnValue({ in: mocks.inStatus })
+  mocks.select.mockReturnValue({ in: mocks.inStatus, eq: mocks.lookupEq })
   mocks.inStatus.mockReturnValue({ order: mocks.order })
   mocks.order.mockReturnValue({ limit: mocks.limit })
   mocks.limit.mockResolvedValue({ data: [], error: null })
+  mocks.lookupEq.mockReturnValue({in:mocks.lookupIn})
+  mocks.lookupIn.mockReturnValue({maybeSingle:mocks.lookupResult})
+  mocks.lookupResult.mockResolvedValue({data:null,error:null})
   mocks.update.mockReturnValue(updateChain)
   mocks.updateResult.mockResolvedValue({ data: {id: caseRow.id, status: 'in_review'}, error: null })
 })
@@ -175,6 +181,41 @@ describe('super-admin privacy request review queue', () => {
     fireEvent.click(screen.getByRole('button',{name:'Send review update (audited)'}))
     expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/Authenticator verification expired/))
     expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  it('finds an active case only by exact reference after MFA verification',async()=>{
+    const id='11111111-2222-4333-8444-555555555555'
+    mocks.lookupResult.mockResolvedValue({data:{...caseRow,id},error:null})
+    render(<DataRightsReviewQueue client={client}/>)
+    await screen.findByText(/No pending or in-review privacy requests were returned/)
+    fireEvent.change(screen.getByLabelText(/Find an active privacy request by its exact private reference/),{target:{value:id}})
+    fireEvent.click(screen.getByRole('button',{name:'Find active request'}))
+    expect(await screen.findByText('Request reference: '+id)).toBeTruthy()
+    expect(mocks.lookupEq).toHaveBeenCalledWith('id',id)
+    expect(mocks.lookupIn).toHaveBeenCalledWith('status',['pending','in_review'])
+    expect(mocks.update).not.toHaveBeenCalled()
+  })
+
+  it('never issues a database lookup for an invalid reference',async()=>{
+    render(<DataRightsReviewQueue client={client}/>)
+    await screen.findByText(/No pending or in-review privacy requests were returned/)
+    fireEvent.change(screen.getByLabelText(/Find an active privacy request by its exact private reference/),{target:{value:'user@example.com'}})
+    fireEvent.click(screen.getByRole('button',{name:'Find active request'}))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/exact UUID request reference/))
+    expect(mocks.lookupEq).not.toHaveBeenCalled()
+  })
+
+  it('refuses private reference lookup after MFA assurance downgrades',async()=>{
+    mocks.assurance.mockResolvedValueOnce({data:{currentLevel:'aal2'},error:null})
+      .mockResolvedValueOnce({data:{currentLevel:'aal1'},error:null})
+    render(<DataRightsReviewQueue client={client}/>)
+    await screen.findByText(/No pending or in-review privacy requests were returned/)
+    fireEvent.change(screen.getByLabelText(/Find an active privacy request by its exact private reference/),{
+      target:{value:'11111111-2222-4333-8444-555555555555'},
+    })
+    fireEvent.click(screen.getByRole('button',{name:'Find active request'}))
+    expect(await screen.findByRole('alert')).toHaveProperty('textContent',expect.stringMatching(/Authenticator verification is required/))
+    expect(mocks.lookupEq).not.toHaveBeenCalled()
   })
 
 })

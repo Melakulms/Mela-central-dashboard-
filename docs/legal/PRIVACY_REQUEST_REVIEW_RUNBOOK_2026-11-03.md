@@ -31,6 +31,20 @@ Do not grant broad access to child-data or rights requests for ordinary administ
 - Restriction or objection: assess the legal basis and stop affected optional processing only after reviewing impacts on child protection and account safety.
 - Suspected breach, abuse or coercion: escalate through the safeguarding/security incident route immediately, not only the ordinary rights request workflow.
 
+## Exact private request reference lookup
+
+The requester can see and copy the opaque request UUID in their signed-in MELA account. A verified super administrator can enter that exact UUID in **Audit Log → Personal-data rights requests → Find an active privacy request by its exact private reference**. This performs an AAL2-checked, RLS-protected lookup restricted to pending and in-review requests; it does not search other users by email, phone, name, or school.
+
+A reference is **not proof of identity or guardianship**. Never disclose data or act on a request simply because someone supplies a matching reference. Confirm authorization independently using an approved private process. A missing search result does not imply the person or account does not exist; the case may be closed or the reference may be wrong.
+
+## Redacted case handoff (draft, not proof of fulfillment)
+
+Once the case is in review, open **Pre-decision review checkpoints → Redacted case handoff for authorized legal review**. The read-only summary lists the request's opaque case reference, request category, and latest available structured checkpoint observations; it **never** includes requester names, user IDs, private messages, uploaded documents, identity evidence, or fulfillment data. It shows at most the last 60 observations and may omit earlier records, so it must not be mistaken for the full case history.
+
+On Android, use **Copy redacted handoff** or select the read-only text manually if clipboard permission is unavailable. Share only through an approved private case-management process, after confirming the recipient's authority. Never paste it into public GitHub issues, unverified Telegram chats, or public email lists. The request reference itself is pseudonymous case information and still needs careful handling.
+
+**Important:** Even with all six checkpoint categories marked reviewed, MELA must not infer that identity, guardian authority, legal approval, Ethiopia-local data hosting, independent fulfillment evidence, or secure delivery have been proven. The admin dashboard does not expose a final-resolution, export, erase or rejection control. Genuine fulfillment still requires a separately implemented and legally approved process plus independent real-account acceptance tests.
+
 ## Remaining launch gates
 
 - Qualified Ethiopian counsel must approve user-rights wording, access process, storage locations, cross-border safeguards, regulator registrations and statutory deadlines under Personal Data Protection Proclamation No. 1321/2024.
