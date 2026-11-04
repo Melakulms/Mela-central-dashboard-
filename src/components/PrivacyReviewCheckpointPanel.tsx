@@ -132,6 +132,12 @@ export default function PrivacyReviewCheckpointPanel({client,requestId,assignedR
   return <section aria-label="Internal privacy review checkpoints" className="detail-card">
     <h4>Pre-decision review checkpoints (restricted)</h4>
     <p><a href="https://github.com/Melakulms/Mela-central-dashboard-/blob/main/docs/legal/PRIVACY_REQUEST_PRE_DECISION_CHECKPOINTS_2026-11-03.md" target="_blank" rel="noopener noreferrer">Draft checkpoint procedure and legal safeguards</a></p>
+    <details>
+      <summary>Data footprint for export/deletion (read-only, not case evidence)</summary>
+      <p className="muted">Production metadata snapshot, 4 November 2026: 308 application database tables, of which 212 have a direct profile/Auth identity foreign key, plus 8 private Storage buckets. This is not an inventory of every personal-data record. Other tables, indirect links, Auth identities, documents, backups and processors may also contain personal information.</p>
+      <p><a href="https://github.com/Melakulms/Mela-central-dashboard-/blob/main/docs/legal/PRIVACY_DATA_FOOTPRINT_AND_FULFILLMENT_GATES_2026-11-04.md" target="_blank" rel="noopener noreferrer">View the data map and mandatory fulfillment gates</a></p>
+      <p className="muted"><strong>Do not delete a profile to fulfill a privacy request.</strong> Related privacy requests, payment records and documents have cascading foreign keys. Independent identity/guardian checks, legal retention decisions, safeguarding, redaction, secure delivery and proof of actual fulfillment remain mandatory. This panel does not fetch, export or delete personal records.</p>
+    </details>
     <p className="muted">Append-only staff observations. These are not independent evidence, verified identity documents, legal approval, or permission to complete the request. The audit logs the category and finding, not private documents.</p>
     {notice && <p role="status">{notice}</p>}
     {error && <p role="alert" className="error">{error}</p>}
