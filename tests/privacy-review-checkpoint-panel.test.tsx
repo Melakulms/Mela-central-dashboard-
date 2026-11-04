@@ -122,4 +122,18 @@ describe('Restricted privacy-review observations',()=>{
     Object.defineProperty(navigator,'clipboard',{configurable:true,value:undefined})
   })
 
+  it('makes read-only data mapping and retention gates accessible without exposing a fulfillment action',async()=>{
+    render(<PrivacyReviewCheckpointPanel client={client} requestId="case-1" assignedReviewerId="assigned-admin"/>)
+    await screen.findByText(/of 6 categories appear in the latest loaded observations/)
+    fireEvent.click(screen.getByText('Data footprint for export/deletion (read-only, not case evidence)'))
+    const link=screen.getByRole('link',{name:'View the data map and mandatory fulfillment gates'})
+    expect(link.getAttribute('href')).toContain('PRIVACY_DATA_FOOTPRINT_AND_FULFILLMENT_GATES_2026-11-04.md')
+    expect(link.getAttribute('rel')).toContain('noopener')
+    expect(screen.getByText(/308 application database tables/)).toBeTruthy()
+    expect(screen.getByText(/Do not delete a profile to fulfill a privacy request/)).toBeTruthy()
+    expect(screen.queryByRole('button',{name:/export personal|erase account|complete request/i})).toBeNull()
+    expect(mocks.from).toHaveBeenCalledWith('privacy_review_checkpoints')
+    expect(mocks.insert).not.toHaveBeenCalled()
+  })
+
 })
