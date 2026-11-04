@@ -53,7 +53,7 @@ export default function PaymentReadinessPanel({client}:{client:SupabaseClient}){
     setData(fresh as Readiness)
     setSelected(null)
     setNotice(action==='verify_account'
-      ? 'Verified and active — confirmed from MELA production records. Checkout remains separately disabled.'
+      ? 'Receiving account ownership recorded. This does NOT establish payment-provider authorization or approve checkout.'
       : 'Deactivation confirmed from MELA production records.')
    }catch(e){setError(e instanceof Error?e.message:'Could not update the account. No checkout setting changed.')}
    finally{setBusy(false)}
@@ -65,7 +65,8 @@ export default function PaymentReadinessPanel({client}:{client:SupabaseClient}){
    {notice&&<p role="status">{notice}</p>}
    {!data&&<p>{busy?'Loading payment setup…':'Payment setup is not available.'}</p>}
    {data&&<>
-     <p><strong>Subscription checkout:</strong> {data.checkout_enabled?'Enabled':'Disabled — no subscription transfers should be requested'}</p>
+     <p><strong>Subscription checkout setting:</strong> {data.checkout_enabled?'Enabled in database — NOT proof of launch approval':'Disabled — no subscription transfers should be requested'}</p>
+     {(data.checkout_enabled || data.platform_payments_enabled) && <p className="error" role="alert">Payment collection is enabled in configuration. Account verification is not the same as legal registration, provider authorization, live reconciliation, or permission to ask customers to transfer funds. Issue #168 requires separate launch evidence and server-side gating.</p>}
      <p><strong>Platform payment flag:</strong> {data.platform_payments_enabled?'Enabled':'Disabled'} · <strong>Commission payouts:</strong> {data.payouts_enabled?'Enabled':'Disabled'} · <strong>Active payment reviewers:</strong> {data.active_reviewers}</p>
      <h3>Configured plans</h3>
      <ul>{data.paid_products.map(p=><li key={p.product_key}>{p.title} — {(p.amount_minor/100).toFixed(0)} ETB · {p.active?'Available':'Not available for checkout'}</li>)}</ul>
@@ -76,7 +77,7 @@ export default function PaymentReadinessPanel({client}:{client:SupabaseClient}){
          <td>{a.verified&&a.active?'Verified and active':'Not verified for new orders'}</td>
          <td><button type="button" disabled={busy} onClick={()=>choose(a)}>{a.active?'Review / deactivate':'Verify ownership'}</button></td>
        </tr>)}</tbody></table></div>
-     <p className="muted">A bank statement or verified banking-app account details must confirm the real owner and exact receiving number. No screenshots or unverified transfer claims are proof of ownership. Payment collection and payouts remain separately disabled until a full finance launch review.</p>
+     <p className="muted">A bank statement or verified banking-app account details must confirm the real owner and exact receiving number. Account ownership verification does not establish settlement, payment-provider authorization, or payout readiness. Only the live settings above indicate whether configuration switches are enabled; the financial launch requirements must be reviewed separately.</p>
    </>}
    {selected&&<div className="detail-card" aria-label="Receiving account confirmation">
       <h3>Verify {selected.provider} receiving account</h3>
