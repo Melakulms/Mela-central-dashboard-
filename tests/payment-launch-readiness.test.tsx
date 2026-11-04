@@ -19,7 +19,7 @@ it('warns when checkout is enabled without assuming provider authorization',asyn
  const alert=screen.getByRole('alert')
  expect(alert.textContent).toContain('Account verification is not the same')
  expect(alert.textContent).toContain('server-side gating')
- expect(screen.getByText(/Commission payouts:/).textContent).toContain('Disabled')
+ expect(screen.getByText('Commission payouts:').parentElement?.textContent).toContain('Disabled')
  expect(screen.queryByText(/Payment collection and payouts remain separately disabled/)).toBeNull()
 })
 
