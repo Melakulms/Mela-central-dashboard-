@@ -3,7 +3,13 @@ import type {SupabaseClient} from '@supabase/supabase-js'
 
 type Receiver={id:string;provider:string;recipient:string;label:string;active:boolean;verified:boolean}
 type Product={title:string;amount_minor:number;active:boolean;product_key:string}
-type Readiness={checkout_enabled:boolean;platform_payments_enabled:boolean;payouts_enabled:boolean;active_reviewers:number;paid_products:Product[];accounts:Receiver[]}
+type ReleaseGate={requirement_key:string;status:string;required:boolean;evidence_recorded:boolean}
+type Readiness={checkout_enabled:boolean;platform_payments_enabled:boolean;payouts_enabled:boolean;active_reviewers:number;paid_products:Product[];accounts:Receiver[];financial_launch_approved?:boolean;financial_release_requirements?:ReleaseGate[]}
+const gateLabel:Record<string,string>={
+ payments_provider:'Licensed payment-provider agreement and verified settlement',
+ legal_review:'Qualified Ethiopian legal review',
+ wallet_business_legal:'Business and financial operating authorization',
+}
 export default function PaymentReadinessPanel({client}:{client:SupabaseClient}){
  const [data,setData]=useState<Readiness|null>(null)
  const [selected,setSelected]=useState<Receiver|null>(null)
@@ -65,6 +71,19 @@ export default function PaymentReadinessPanel({client}:{client:SupabaseClient}){
    {notice&&<p role="status">{notice}</p>}
    {!data&&<p>{busy?'Loading payment setup…':'Payment setup is not available.'}</p>}
    {data&&<>
+     <section aria-label="Production financial launch requirements">
+       <h3>Required approvals for new payment orders</h3>
+       {data.financial_launch_approved===true
+         ? <p role="status">Three approval evidence records are marked complete. Verify their authenticity and the independent settlement arrangements before inviting payments; this screen does not certify legal authorization.</p>
+         : <p role="status">New subscription orders and Telegram payment linking are blocked by the production server until all required provider and legal approvals are independently recorded.</p>}
+       {Array.isArray(data.financial_release_requirements)
+         ? <ul>{data.financial_release_requirements.map(g=><li key={g.requirement_key}>
+             <strong>{gateLabel[g.requirement_key]??g.requirement_key}:</strong>{' '}
+             {g.status==='complete'&&g.evidence_recorded?'Evidence recorded — independent review still required':g.status==='complete'?'Incomplete evidence — blocked':g.status+' — blocked'}
+           </li>)}</ul>
+         : <p>Release-gate details could not be verified. Treat new orders as blocked and refresh readiness.</p>}
+       <p className="muted">Complete these only after obtaining the actual provider agreement, professional legal assessment and verifiable operating evidence. Do not enter confidential bank statements into public source control.</p>
+     </section>
      <p><strong>Subscription checkout setting:</strong> {data.checkout_enabled?'Enabled in database — NOT proof of launch approval':'Disabled — no subscription transfers should be requested'}</p>
      {(data.checkout_enabled || data.platform_payments_enabled) && <p className="error" role="alert">Payment collection is enabled in configuration. Account verification is not the same as legal registration, provider authorization, live reconciliation, or permission to ask customers to transfer funds. Issue #168 requires separate launch evidence and server-side gating.</p>}
      <p><strong>Platform payment flag:</strong> {data.platform_payments_enabled?'Enabled':'Disabled'} · <strong>Commission payouts:</strong> {data.payouts_enabled?'Enabled':'Disabled'} · <strong>Active payment reviewers:</strong> {data.active_reviewers}</p>
