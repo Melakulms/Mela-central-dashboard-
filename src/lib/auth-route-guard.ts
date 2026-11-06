@@ -8,6 +8,8 @@ export type ProtectedSection =
   | 'commissions'
   | 'opportunities'
   | 'payments'
+  | 'subscription_review'
+  | 'payment_readiness'
   | 'disputes'
   | 'moderation'
   | 'education'
@@ -22,6 +24,8 @@ const SECTION_PERMISSIONS: Record<Exclude<ProtectedSection, 'overview'>, string>
   commissions: 'finance.manage',
   opportunities: 'employers.manage',
   payments: 'finance.manage',
+  subscription_review: 'finance.manage',
+  payment_readiness: 'finance.manage',
   disputes: 'support.manage',
   moderation: 'moderation.manage',
   education: 'content.manage',
