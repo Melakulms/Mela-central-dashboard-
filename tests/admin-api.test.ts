@@ -50,7 +50,8 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
   const request = (body: unknown, authenticated = true, origin?:string) => { profileReads = 0; return handler!(new Request('https://example.invalid/admin', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(origin?{Origin:origin}:{}), ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) }, body: JSON.stringify(body),
   })) }
-  const preflight = (origin: string) => handler!(new Request('https://example.invalid/admin', { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization,content-type' } }))\n  return { request, preflight, queried, ranges, filters, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
+  const preflight = (origin: string) => handler!(new Request('https://example.invalid/admin', { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization,content-type' } }))
+  return { request, preflight, queried, ranges, filters, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
 }
 
 describe('Admin API security boundary', () => {
