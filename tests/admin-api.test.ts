@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 const source = readFileSync(new URL('../supabase/functions/mela-admin-api/index.ts', import.meta.url), 'utf8').replace(/^import .*\n/gm, '')
 const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
 
-function server(permissions: string[], options: { user?: boolean; admin?: boolean; aal?: string; fixtures?: Record<string, object>; rpcError?: object; actorProfile?: object | null; actorError?: object; mfaRequired?: boolean } = {}) {
+function server(permissions: string[], options: { user?: boolean; admin?: boolean; aal?: string; fixtures?: Record<string, object>; rpcError?: object; actorProfile?: object | null; actorError?: object; mfaRequired?: boolean; appOrigin?: string } = {}) {
   let handler: (request: Request) => Promise<Response>
   const queried: string[] = []
   const ranges: unknown[][] = []
@@ -44,13 +44,14 @@ function server(permissions: string[], options: { user?: boolean; admin?: boolea
   }
   let calls = 0
   new Function('Deno', 'createClient', code)(
-    { env: { get: () => 'test-config' }, serve: (callback: typeof handler) => { handler = callback } },
+    { env: { get: (key: string) => ({ SUPABASE_URL: 'https://staging.example.invalid', SUPABASE_ANON_KEY: 'anon-test', SUPABASE_SERVICE_ROLE_KEY: 'service-test', ADMIN_APP_ORIGIN: options.appOrigin } as Record<string, string | undefined>)[key] }, serve: (callback: typeof handler) => { handler = callback } },
     () => calls++ % 2 === 0 ? caller : database,
   )
   const request = (body: unknown, authenticated = true, origin?:string) => { profileReads = 0; return handler!(new Request('https://example.invalid/admin', {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...(origin?{Origin:origin}:{}), ...(authenticated ? { Authorization: 'Bearer test-token' } : {}) }, body: JSON.stringify(body),
   })) }
-  return { request, queried, ranges, filters, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
+  const preflight = (origin: string) => handler!(new Request('https://example.invalid/admin', { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization,content-type' } }))
+  return { request, preflight, queried, ranges, filters, rpc, assurance: caller.auth.mfa.getAuthenticatorAssuranceLevel }
 }
 
 describe('Admin API security boundary', () => {
@@ -59,6 +60,15 @@ describe('Admin API security boundary', () => {
     expect(response.status).toBe(200)
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://melakulms.github.io')
     expect((await server([]).request({action:'me'},true,'https://untrusted.invalid')).status).toBe(403)
+  })
+  it('allows only the explicitly configured staging origin and answers its preflight', async () => {
+    const api = server([], { appOrigin: 'https://mela-admin-staging.vercel.app' })
+    const response = await api.preflight('https://mela-admin-staging.vercel.app')
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://mela-admin-staging.vercel.app')
+    expect(response.headers.get('Access-Control-Allow-Methods')).toContain('POST')
+    expect(response.headers.get('Access-Control-Allow-Headers')).toContain('authorization')
+    expect((await api.preflight('https://untrusted.invalid')).status).toBe(403)
   })
   it('rejects requests without an authenticated session', async () => {
     expect((await server([]).request({ action: 'me' }, false)).status).toBe(401)
